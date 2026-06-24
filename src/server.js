@@ -115,15 +115,17 @@ app.post('/api/run', async (req, res) => {
 
 // ─── SCANNER ───────────────────────────────────────────────────
 
-// Inicia scan (fire-and-forget)
+// Inicia scan (fire-and-forget) — ?period=200 ou ?period=90
 app.post('/api/scanner/start', (req, res) => {
-  startScan(50);
+  const period = parseInt(req.query.period) || 200;
+  startScan(period, 50);
   res.json({ ok: true });
 });
 
 // Estado atual do scan (polling)
 app.get('/api/scanner', (req, res) => {
-  res.json(getState());
+  const period = parseInt(req.query.period) || 200;
+  res.json(getState(period));
 });
 
 // ─── STATIC FILES (React build) ────────────────────────────────
