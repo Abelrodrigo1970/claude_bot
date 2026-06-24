@@ -8,6 +8,24 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
+  MACDRider: {
+    description: 'Entra em tendências usando o cruzamento da linha MACD com a linha de sinal, filtrado pela EMA200 para garantir alinhamento com a tendência macro.',
+    tags: ['trend-following', 'MACD', 'EMA200', 'crossover'],
+    difficulty: 'Easy',
+    source: 'Custom',
+  },
+  BBBreaker: {
+    description: 'Detecta breakouts das Bandas de Bollinger após períodos de baixa volatilidade (squeeze). Entra quando o preço rompe a banda com confirmação de volume.',
+    tags: ['breakout', 'bollinger-bands', 'volatility', 'volume', 'squeeze'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
+  StochMomentum: {
+    description: 'Combina o Estocástico (14,3) com EMAs de curto e médio prazo para entrar em reversões de momento em zonas de sobrecompra/sobrevenda com tendência favorável.',
+    tags: ['momentum', 'stochastic', 'mean-reversion', 'EMA', 'scalping'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
 };
 
 function DifficultyBadge({ level }) {

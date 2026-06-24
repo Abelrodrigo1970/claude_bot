@@ -1,18 +1,44 @@
 const pool = require('../db/pool');
 const bybit = require('./bybit');
-const trendSurfer = require('../strategies/trendSurfer');
+const trendSurfer    = require('../strategies/trendSurfer');
+const macdRider      = require('../strategies/macdRider');
+const bbBreaker      = require('../strategies/bbBreaker');
+const stochMomentum  = require('../strategies/stochMomentum');
 
 // Registry de estratégias ativas
 const STRATEGIES = [
   {
     name: trendSurfer.STRATEGY_NAME,
-    symbol: 'BIC/USDT:USDT',
+    symbol: 'BTC/USDT:USDT',
     timeframe: '1h',
     generateSignal: trendSurfer.generateSignal,
-    positionSize: 10, // USDT
+    positionSize: 10,
     enabled: true,
   },
-  // Adiciona mais estratégias aqui no futuro
+  {
+    name: macdRider.STRATEGY_NAME,
+    symbol: 'BTC/USDT:USDT',
+    timeframe: '4h',
+    generateSignal: macdRider.generateSignal,
+    positionSize: 10,
+    enabled: true,
+  },
+  {
+    name: bbBreaker.STRATEGY_NAME,
+    symbol: 'ETH/USDT:USDT',
+    timeframe: '1h',
+    generateSignal: bbBreaker.generateSignal,
+    positionSize: 10,
+    enabled: true,
+  },
+  {
+    name: stochMomentum.STRATEGY_NAME,
+    symbol: 'SOL/USDT:USDT',
+    timeframe: '1h',
+    generateSignal: stochMomentum.generateSignal,
+    positionSize: 10,
+    enabled: true,
+  },
 ];
 
 /**
