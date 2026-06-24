@@ -5,6 +5,7 @@ const path = require('path');
 const cron = require('node-cron');
 const pool = require('./db/pool');
 const { runAll, STRATEGIES } = require('./services/runner');
+const { startScan, getState } = require('./services/scanner');
 
 const app = express();
 app.use(cors());
@@ -110,6 +111,19 @@ app.post('/api/run', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ─── SCANNER ───────────────────────────────────────────────────
+
+// Inicia scan (fire-and-forget)
+app.post('/api/scanner/start', (req, res) => {
+  startScan(50);
+  res.json({ ok: true });
+});
+
+// Estado atual do scan (polling)
+app.get('/api/scanner', (req, res) => {
+  res.json(getState());
 });
 
 // ─── STATIC FILES (React build) ────────────────────────────────

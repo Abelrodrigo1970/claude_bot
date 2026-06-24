@@ -3,11 +3,13 @@ import Dashboard from './pages/Dashboard';
 import Trades from './pages/Trades';
 import Signals from './pages/Signals';
 import Strategies from './pages/Strategies';
+import Scanner from './pages/Scanner';
 import './App.css';
 
 const PAGES = [
   { id: 'dashboard',   label: '📊 Dashboard' },
   { id: 'strategies',  label: '🧠 Estratégias' },
+  { id: 'scanner',     label: '🔍 Scanner' },
   { id: 'trades',      label: '📋 Trades' },
   { id: 'signals',     label: '📡 Sinais' },
 ];
@@ -37,6 +39,7 @@ function App() {
       <main className="main">
         {page === 'dashboard'  && <Dashboard />}
         {page === 'strategies' && <Strategies />}
+        {page === 'scanner'    && <Scanner />}
         {page === 'trades'     && <Trades />}
         {page === 'signals'    && <Signals />}
       </main>

@@ -295,6 +295,65 @@ tr:hover td { background: var(--bg3); }
 .badge-diff-medium { background: rgba(245,200,66,0.15); color: var(--yellow); }
 .badge-diff-hard   { background: rgba(255,77,109,0.15); color: var(--red); }
 
+/* SCANNER */
+.scanner-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sort-group { display: flex; align-items: center; gap: 6px; }
+
+.sort-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sort-btn:hover  { color: var(--text); border-color: var(--green); }
+.sort-btn.active { color: var(--green); border-color: var(--green); background: rgba(0,212,160,0.08); }
+
+.scan-time { font-family: var(--font-mono); font-size: 11px; }
+
+.symbol-name   { font-family: var(--font-mono); font-weight: 600; color: var(--text); }
+.symbol-suffix { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+/* PROGRESS BAR */
+.progress-bar {
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* TREND BAR */
+.trend-bar-wrap {
+  width: 80px;
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.trend-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
 /* SIGNAL DOT */
 .signal-dot {
   width: 8px; height: 8px;
