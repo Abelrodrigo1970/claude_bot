@@ -116,12 +116,18 @@ export default function Strategies() {
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span className="muted">
-                  {runState.strategy && <><strong style={{ color: 'var(--text)' }}>{runState.strategy}</strong> · </>}
-                  {runState.current}/{runState.total} símbolos
+                  {runState.phase?.startsWith('scanner') ? (
+                    <><span className="yellow">🔍 A correr scanner automático...</span></>
+                  ) : (
+                    <>{runState.strategy && <><strong style={{ color: 'var(--text)' }}>{runState.strategy}</strong> · </>}
+                    {runState.current}/{runState.total} símbolos</>
+                  )}
                 </span>
-                <span className="mono muted">{runPct}%</span>
+                {runState.total > 0 && <span className="mono muted">{runPct}%</span>}
               </div>
-              <div className="progress-bar"><div className="progress-fill" style={{ width: `${runPct}%` }} /></div>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: runState.phase?.startsWith('scanner') ? '100%' : `${runPct}%`, opacity: runState.phase?.startsWith('scanner') ? 0.4 : 1 }} />
+              </div>
             </>
           ) : runState.summary && (
             <div className="run-summary">

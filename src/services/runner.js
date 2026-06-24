@@ -1,6 +1,6 @@
 const pool = require('../db/pool');
 const bybit = require('./bybit');
-const { getState: getScannerState } = require('./scanner');
+const { getState: getScannerState, startScan } = require('./scanner');
 const trendSurfer   = require('../strategies/trendSurfer');
 const macdRider     = require('../strategies/macdRider');
 const bbBreaker     = require('../strategies/bbBreaker');
@@ -46,7 +46,7 @@ const STRATEGIES = [
 
 // Estado de execução em curso (para progresso na UI)
 let runState = {
-  running: false, strategy: null, current: 0, total: 0,
+  running: false, phase: null, strategy: null, current: 0, total: 0,
   log: [],
   summary: null, // { finishedAt, analyzed, signals, holds, errors }
 };
@@ -191,16 +191,34 @@ async function runStrategy(strategy) {
 async function runAll() {
   if (runState.running) return;
   _counts = { signals: 0, holds: 0, errors: 0 };
-  runState = { running: true, strategy: null, current: 0, total: 0, log: runState.log, summary: runState.summary };
+  runState = { running: true, phase: null, strategy: null, current: 0, total: 0, log: runState.log, summary: runState.summary };
 
   let totalAnalyzed = 0;
   try {
+    // Pré-passo: correr scanner automático para estratégias dinâmicas sem símbolos
+    for (const strategy of STRATEGIES) {
+      if (!strategy.enabled || !strategy.scannerPeriod) continue;
+      if (resolveSymbols(strategy).length === 0) {
+        const msg = `🔍 Scanner EMA${strategy.scannerPeriod} não tem dados — a correr automaticamente (pode demorar ~1min)...`;
+        runState.log.unshift(msg);
+        runState.phase = `scanner_ema${strategy.scannerPeriod}`;
+        console.log(`[Runner] ${msg}`);
+        await startScan(strategy.scannerPeriod, 50);
+        const n = resolveSymbols(strategy).length;
+        const doneMsg = `✅ Scanner EMA${strategy.scannerPeriod} concluído — ${n} símbolos carregados`;
+        runState.log.unshift(doneMsg);
+        console.log(`[Runner] ${doneMsg}`);
+      }
+    }
+
+    runState.phase = 'running';
+
     for (const strategy of STRATEGIES) {
       if (!strategy.enabled) continue;
       const symbols = resolveSymbols(strategy);
 
       if (!symbols.length) {
-        const warn = `⚠️  [${strategy.name}] Sem símbolos${strategy.scannerPeriod ? ` — corre o Scanner EMA${strategy.scannerPeriod} primeiro` : ''}`;
+        const warn = `⚠️  [${strategy.name}] Sem símbolos após scanner — a saltar`;
         runState.log.unshift(warn);
         console.warn(warn);
         continue;
