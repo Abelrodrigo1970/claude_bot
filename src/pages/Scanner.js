@@ -128,10 +128,17 @@ export default function Scanner() {
                     <tr key={r.symbol}>
                       <td className="muted">{i + 1}</td>
                       <td>
-                        <span className="symbol-name">
-                          {r.symbol.replace('/USDT:USDT', '').replace('/USDT', '')}
-                        </span>
-                        <span className="symbol-suffix">/USDT</span>
+                        <a
+                          className="symbol-link"
+                          href={`https://www.tradingview.com/chart/?symbol=BYBIT:${r.symbol.split('/')[0]}USDT.P`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Ver no TradingView"
+                        >
+                          <span className="symbol-name">{r.symbol.split('/')[0]}</span>
+                          <span className="symbol-suffix">/USDT</span>
+                          <span className="tv-icon">↗</span>
+                        </a>
                       </td>
                       <td className="mono">{fmt(r.price, 4)}</td>
                       <td className="mono muted">{fmt(r.ema200, 4)}</td>

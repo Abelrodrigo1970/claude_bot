@@ -323,8 +323,19 @@ tr:hover td { background: var(--bg3); }
 
 .scan-time { font-family: var(--font-mono); font-size: 11px; }
 
+.symbol-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.symbol-link:hover { opacity: 0.75; }
+.symbol-link:hover .tv-icon { color: var(--green); }
+
 .symbol-name   { font-family: var(--font-mono); font-weight: 600; color: var(--text); }
 .symbol-suffix { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.tv-icon       { font-size: 11px; color: var(--muted); }
 
 /* PROGRESS BAR */
 .progress-bar {

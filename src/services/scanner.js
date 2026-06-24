@@ -27,7 +27,7 @@ async function startScan(limit = 50) {
     const perps = Object.values(markets)
       .filter(m => m.linear && m.settle === 'USDT' && m.active && !m.symbol.includes('USDC'))
       .sort((a, b) => parseFloat(b.info.turnover24h || 0) - parseFloat(a.info.turnover24h || 0))
-      .slice(0, 150);
+      .slice(0, 250);
 
     state.total = perps.length;
     const results = [];
