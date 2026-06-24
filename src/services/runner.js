@@ -44,6 +44,12 @@ const STRATEGIES = [
   },
 ];
 
+// Sinais em memória (fallback quando BD não está configurada)
+const memorySignals = [];
+const MAX_MEMORY_SIGNALS = 500;
+
+function getMemorySignals() { return memorySignals; }
+
 // Estado de execução em curso (para progresso na UI)
 let runState = {
   running: false, phase: null, strategy: null, current: 0, total: 0,
@@ -54,13 +60,29 @@ let runState = {
 function getRunState() { return runState; }
 
 async function saveSignal(strategyName, symbol, signalType, price, timeframe, indicators) {
+  const signal = {
+    id: Date.now() + Math.random(),
+    strategy_name: strategyName,
+    symbol,
+    signal_type: signalType,
+    price,
+    timeframe,
+    indicators,
+    created_at: new Date().toISOString(),
+  };
+
+  // Guarda sempre em memória (sobrevive sem BD)
+  memorySignals.unshift(signal);
+  if (memorySignals.length > MAX_MEMORY_SIGNALS) memorySignals.pop();
+
+  // Tenta persistir na BD
   try {
     await pool.query(
       `INSERT INTO signals (strategy_name, symbol, signal_type, price, timeframe, indicators)
        VALUES ($1, $2, $3, $4, $5, $6)`,
       [strategyName, symbol, signalType, price, timeframe, JSON.stringify(indicators)]
     );
-  } catch { /* BD não configurada */ }
+  } catch { /* BD não configurada — sinal já está em memória */ }
 }
 
 async function openTrade(strategyName, symbol, side, entryPrice, quantity, metadata = {}) {
@@ -250,4 +272,4 @@ async function runAll() {
   }
 }
 
-module.exports = { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols };
+module.exports = { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemorySignals };

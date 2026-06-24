@@ -60,7 +60,8 @@ export default function Signals() {
               <tbody>
                 {signals.map(s => {
                   const ind = s.indicators || {};
-                  const volRatio = ind.volume && ind.avgVolume ? (ind.volume / ind.avgVolume).toFixed(1) : '—';
+                  const volRatio = ind.volRatio != null ? parseFloat(ind.volRatio).toFixed(1)
+                    : (ind.volume && ind.avgVolume ? (ind.volume / ind.avgVolume).toFixed(1) : '—');
                   return (
                     <tr key={s.id}>
                       <td>

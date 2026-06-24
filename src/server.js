@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 const pool = require('./db/pool');
-const { runAll, STRATEGIES, getRunState, resolveSymbols } = require('./services/runner');
+const { runAll, STRATEGIES, getRunState, resolveSymbols, getMemorySignals } = require('./services/runner');
 const { startScan, getState } = require('./services/scanner');
 
 const app = express();
@@ -52,21 +52,22 @@ app.get('/api/trades', async (req, res) => {
   }
 });
 
-// Sinais recentes
+// Sinais recentes (BD com fallback em memória)
 app.get('/api/signals', async (req, res) => {
+  const { limit = 100, strategy } = req.query;
   try {
-    const { limit = 50, strategy } = req.query;
     let query = 'SELECT * FROM signals WHERE 1=1';
     const params = [];
-
     if (strategy) { params.push(strategy); query += ` AND strategy_name=$${params.length}`; }
     params.push(parseInt(limit));
     query += ` ORDER BY created_at DESC LIMIT $${params.length}`;
-
     const { rows } = await pool.query(query, params);
     res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch {
+    // BD não disponível — devolve sinais em memória
+    let signals = getMemorySignals();
+    if (strategy) signals = signals.filter(s => s.strategy_name === strategy);
+    res.json(signals.slice(0, parseInt(limit)));
   }
 });
 
