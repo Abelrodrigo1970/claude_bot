@@ -61,9 +61,23 @@ async function migrate() {
         UNIQUE(strategy_name, symbol)
       );
 
-      CREATE INDEX IF NOT EXISTS idx_trades_strategy ON trades(strategy_name);
-      CREATE INDEX IF NOT EXISTS idx_trades_status ON trades(status);
-      CREATE INDEX IF NOT EXISTS idx_signals_created ON signals(created_at DESC);
+      CREATE TABLE IF NOT EXISTS scanner_results (
+        id         SERIAL PRIMARY KEY,
+        ema_period INT            NOT NULL,
+        rank       INT            NOT NULL,
+        symbol     VARCHAR(50)    NOT NULL,
+        price      DECIMAL(20,8)  NOT NULL,
+        ema        DECIMAL(20,8)  NOT NULL,
+        pct_above  DECIMAL(10,4)  NOT NULL,
+        change_24h DECIMAL(10,4),
+        volume     DECIMAL(20,8),
+        scanned_at TIMESTAMP      NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_trades_strategy    ON trades(strategy_name);
+      CREATE INDEX IF NOT EXISTS idx_trades_status      ON trades(status);
+      CREATE INDEX IF NOT EXISTS idx_signals_created    ON signals(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_scanner_period_time ON scanner_results(ema_period, scanned_at DESC);
     `);
     console.log('✅ Migration completed successfully');
   } catch (err) {

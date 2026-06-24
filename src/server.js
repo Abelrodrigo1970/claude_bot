@@ -128,6 +128,44 @@ app.get('/api/scanner', (req, res) => {
   res.json(getState(period));
 });
 
+// Histórico de scans anteriores — ?period=200&sessions=10
+app.get('/api/scanner/history', async (req, res) => {
+  try {
+    const period   = parseInt(req.query.period)   || 200;
+    const sessions = parseInt(req.query.sessions) || 10;
+
+    // Últimas N sessões distintas
+    const { rows: sessionRows } = await pool.query(
+      `SELECT DISTINCT scanned_at FROM scanner_results
+       WHERE ema_period = $1
+       ORDER BY scanned_at DESC LIMIT $2`,
+      [period, sessions]
+    );
+
+    if (!sessionRows.length) return res.json([]);
+
+    const dates = sessionRows.map(r => r.scanned_at);
+    const { rows } = await pool.query(
+      `SELECT * FROM scanner_results
+       WHERE ema_period = $1 AND scanned_at = ANY($2)
+       ORDER BY scanned_at DESC, rank ASC`,
+      [period, dates]
+    );
+
+    // Agrupa por sessão
+    const grouped = {};
+    rows.forEach(r => {
+      const key = r.scanned_at.toISOString();
+      if (!grouped[key]) grouped[key] = { scanned_at: r.scanned_at, results: [] };
+      grouped[key].results.push(r);
+    });
+
+    res.json(Object.values(grouped));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── STATIC FILES (React build) ────────────────────────────────
 
 if (process.env.NODE_ENV === 'production') {

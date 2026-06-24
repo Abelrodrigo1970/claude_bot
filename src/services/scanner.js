@@ -1,5 +1,6 @@
 const { EMA } = require('technicalindicators');
 const bybit = require('./bybit');
+const pool  = require('../db/pool');
 
 const CACHE_TTL = 60 * 60 * 1000;
 
@@ -59,9 +60,37 @@ async function startScan(period = 200, limit = 50) {
     }
 
     results.sort((a, b) => b.pctAbove - a.pctAbove);
-    states[period].results   = results.slice(0, limit);
-    states[period].scannedAt = Date.now();
+    const top = results.slice(0, limit);
+    const scannedAt = new Date();
+
+    states[period].results   = top;
+    states[period].scannedAt = scannedAt.getTime();
     states[period].status    = 'done';
+
+    // Guarda no histórico da BD (silencioso se BD não estiver configurada)
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (let i = 0; i < top.length; i++) {
+          const r = top[i];
+          await client.query(
+            `INSERT INTO scanner_results (ema_period, rank, symbol, price, ema, pct_above, change_24h, volume, scanned_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [period, i + 1, r.symbol, r.price, r.ema, r.pctAbove, r.change24h, r.volume, scannedAt]
+          );
+        }
+        await client.query('COMMIT');
+        console.log(`[Scanner] EMA${period}: ${top.length} resultados guardados na BD`);
+      } catch (dbErr) {
+        await client.query('ROLLBACK');
+        console.warn('[Scanner] Erro ao guardar no BD:', dbErr.message);
+      } finally {
+        client.release();
+      }
+    } catch {
+      // BD não configurada — continua sem guardar
+    }
   } catch (err) {
     states[period].status = 'error';
     states[period].error  = err.message;
