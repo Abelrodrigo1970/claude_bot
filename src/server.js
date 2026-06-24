@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const cron = require('node-cron');
 const pool = require('./db/pool');
 const { runAll, STRATEGIES, getRunState, resolveSymbols } = require('./services/runner');
@@ -173,10 +174,11 @@ app.get('/api/scanner/history', async (req, res) => {
 
 // ─── STATIC FILES (React build) ────────────────────────────────
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../build')));
+const buildPath = path.join(__dirname, '../build');
+if (fs.existsSync(buildPath)) {
+  app.use(express.static(buildPath));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../build', 'index.html'));
+    res.sendFile(path.join(buildPath, 'index.html'));
   });
 }
 
