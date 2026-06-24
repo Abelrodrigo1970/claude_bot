@@ -305,14 +305,47 @@ tr:hover td { background: var(--bg3); }
   color: var(--yellow);
 }
 
-.run-log-line {
-  margin-top: 8px;
+.run-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.summary-pill {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
   font-family: var(--font-mono);
   font-size: 11px;
+  color: var(--muted);
+}
+.summary-pill.signal  { border-color: var(--green); color: var(--green); background: rgba(0,212,160,0.08); }
+.summary-pill.error   { border-color: var(--red);   color: var(--red);   background: rgba(255,77,109,0.08); }
+
+.run-log {
+  margin-top: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.run-log-line {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 0;
+  color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.run-log-line.signal  { color: var(--green); }
+.run-log-line.error   { color: var(--red); }
+.run-log-line.success { color: var(--text); }
 
 /* SCANNER */
 /* SCANNER TABS */

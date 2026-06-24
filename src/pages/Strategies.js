@@ -109,19 +109,40 @@ export default function Strategies() {
         </button>
       </div>
 
-      {/* BARRA DE PROGRESSO GLOBAL */}
-      {runState.running && (
+      {/* PROGRESSO / RESUMO */}
+      {(runState.running || runState.summary) && (
         <div className="card" style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span className="muted">
-              {runState.strategy && <><strong style={{ color: 'var(--text)' }}>{runState.strategy}</strong> · </>}
-              {runState.current}/{runState.total} símbolos
-            </span>
-            <span className="mono muted">{runPct}%</span>
-          </div>
-          <div className="progress-bar"><div className="progress-fill" style={{ width: `${runPct}%` }} /></div>
-          {runState.log?.[0] && (
-            <div className="run-log-line muted">{runState.log[0]}</div>
+          {runState.running ? (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span className="muted">
+                  {runState.strategy && <><strong style={{ color: 'var(--text)' }}>{runState.strategy}</strong> · </>}
+                  {runState.current}/{runState.total} símbolos
+                </span>
+                <span className="mono muted">{runPct}%</span>
+              </div>
+              <div className="progress-bar"><div className="progress-fill" style={{ width: `${runPct}%` }} /></div>
+            </>
+          ) : runState.summary && (
+            <div className="run-summary">
+              <span className="green">✅ Concluído</span>
+              <span className="summary-pill">{runState.summary.analyzed} analisados</span>
+              <span className="summary-pill signal">{runState.summary.signals} sinais</span>
+              <span className="summary-pill">{runState.summary.holds} hold</span>
+              {runState.summary.errors > 0 && <span className="summary-pill error">{runState.summary.errors} erros</span>}
+              <span className="muted" style={{ fontSize: 11, marginLeft: 'auto' }}>
+                {new Date(runState.summary.finishedAt).toLocaleTimeString('pt-PT')}
+              </span>
+            </div>
+          )}
+          {runState.log?.length > 0 && (
+            <div className="run-log">
+              {runState.log.slice(0, 30).map((line, i) => (
+                <div key={i} className={`run-log-line ${line.startsWith('🔔') ? 'signal' : line.startsWith('❌') ? 'error' : line.startsWith('✅') ? 'success' : ''}`}>
+                  {line}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

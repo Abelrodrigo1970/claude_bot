@@ -45,7 +45,11 @@ const STRATEGIES = [
 ];
 
 // Estado de execução em curso (para progresso na UI)
-let runState = { running: false, strategy: null, current: 0, total: 0, log: [] };
+let runState = {
+  running: false, strategy: null, current: 0, total: 0,
+  log: [],
+  summary: null, // { finishedAt, analyzed, signals, holds, errors }
+};
 
 function getRunState() { return runState; }
 
@@ -109,6 +113,9 @@ async function updateStats(strategyName, symbol, isWin) {
 // Estado em memória das posições abertas: { 'TrendSurfer_BTC/USDT:USDT': { tradeId, side } }
 const openPositions = {};
 
+// Contadores do run atual
+let _counts = { signals: 0, holds: 0, errors: 0 };
+
 async function runStrategyOnSymbol(strategy, symbol) {
   const key = `${strategy.name}_${symbol}`;
   try {
@@ -119,13 +126,18 @@ async function runStrategyOnSymbol(strategy, symbol) {
 
     const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos);
 
-    const logLine = `[${symbol}] ${signal} — ${reason}`;
+    const isAction = signal !== 'hold' && signal !== 'none';
+    const icon = isAction ? '🔔' : '·';
+    const logLine = `${icon} [${symbol.split('/')[0]}] ${signal} — ${reason}`;
     runState.log.unshift(logLine);
-    if (runState.log.length > 100) runState.log.pop();
+    if (runState.log.length > 200) runState.log.pop();
     console.log(`[${strategy.name}] ${logLine}`);
 
-    if (signal !== 'hold' && signal !== 'none') {
+    if (isAction) {
+      _counts.signals++;
       await saveSignal(strategy.name, symbol, signal, currentPrice, strategy.timeframe, indicators);
+    } else {
+      _counts.holds++;
     }
 
     if (signal === 'long' || signal === 'flip_to_long') {
@@ -149,7 +161,8 @@ async function runStrategyOnSymbol(strategy, symbol) {
       openPositions[key] = { tradeId, side: 'short' };
     }
   } catch (err) {
-    const errLine = `[${symbol}] Erro: ${err.message}`;
+    _counts.errors++;
+    const errLine = `❌ [${symbol.split('/')[0]}] Erro: ${err.message}`;
     runState.log.unshift(errLine);
     console.error(`[${strategy.name}] ${errLine}`);
   }
@@ -177,24 +190,45 @@ async function runStrategy(strategy) {
 
 async function runAll() {
   if (runState.running) return;
-  runState = { running: true, strategy: null, current: 0, total: 0, log: runState.log };
+  _counts = { signals: 0, holds: 0, errors: 0 };
+  runState = { running: true, strategy: null, current: 0, total: 0, log: runState.log, summary: runState.summary };
 
+  let totalAnalyzed = 0;
   try {
     for (const strategy of STRATEGIES) {
       if (!strategy.enabled) continue;
       const symbols = resolveSymbols(strategy);
+
+      if (!symbols.length) {
+        const warn = `⚠️  [${strategy.name}] Sem símbolos${strategy.scannerPeriod ? ` — corre o Scanner EMA${strategy.scannerPeriod} primeiro` : ''}`;
+        runState.log.unshift(warn);
+        console.warn(warn);
+        continue;
+      }
+
       runState.strategy = strategy.name;
       runState.current  = 0;
       runState.total    = symbols.length;
 
       for (const symbol of symbols) {
         runState.current++;
+        totalAnalyzed++;
         await runStrategyOnSymbol(strategy, symbol);
       }
     }
   } finally {
-    runState.running = false;
+    runState.running  = false;
     runState.strategy = null;
+    runState.summary  = {
+      finishedAt: new Date().toISOString(),
+      analyzed:   totalAnalyzed,
+      signals:    _counts.signals,
+      holds:      _counts.holds,
+      errors:     _counts.errors,
+    };
+    const sumLine = `✅ Concluído — ${totalAnalyzed} analisados · ${_counts.signals} sinais · ${_counts.holds} hold · ${_counts.errors} erros`;
+    runState.log.unshift(sumLine);
+    console.log(sumLine);
   }
 }
 
