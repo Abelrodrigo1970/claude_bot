@@ -1,131 +1,119 @@
 /**
- * TREND SURFER STRATEGY
- * ---------------------
- * Baseado no gráfico BICOUSDT 1h com Pivot Boss 4 EMA (12, 30, 80, 200)
- * 
+ * TREND SURFER STRATEGY (Scanner Edition)
+ * ----------------------------------------
+ * Otimizada para símbolos pré-filtrados pelo Scanner EMA90 diário
+ * (já confirmados em tendência de alta no daily).
+ *
+ * No 1h, procura entradas long quando o momentum de curto prazo confirma
+ * a tendência, sem exigir crossover exato nem volume extraordinário.
+ *
  * LÓGICA:
- * - Entra LONG quando o mercado começa a subir forte (EMA rápidas acima das lentas + volume)
- * - Inverte para SHORT quando deteta topo (EMA crossover descendente + volume a secar)
- * - Surfa tanto a alta como a baixa
+ * - LONG : EMA12 > EMA30 no 1h  +  RSI 40-65  +  volume > 0.7x
+ * - SHORT: EMA12 < EMA30 no 1h  +  RSI 35-55  +  volume > 0.7x  (contra-tendência, mais raro)
+ * - Flip : quando a posição aberta vai contra os EMAs + RSI extremo
+ * - Hold : tudo o resto
  */
 
-const { EMA, RSI, BollingerBands } = require('technicalindicators');
+const { EMA, RSI } = require('technicalindicators');
 
 const STRATEGY_NAME = 'TrendSurfer';
 
-/**
- * Calcula todos os indicadores necessários
- */
 function calculateIndicators(candles) {
-  const closes = candles.map(c => c.close);
+  const closes  = candles.map(c => c.close);
   const volumes = candles.map(c => c.volume);
 
   const ema12 = EMA.calculate({ period: 12, values: closes });
   const ema30 = EMA.calculate({ period: 30, values: closes });
   const ema80 = EMA.calculate({ period: 80, values: closes });
-  const ema200 = EMA.calculate({ period: 200, values: closes });
-  const rsi = RSI.calculate({ period: 14, values: closes });
+  const rsi   = RSI.calculate({ period: 14, values: closes });
 
-  // Volume médio das últimas 20 velas
-  const recentVols = volumes.slice(-20);
-  const avgVolume = recentVols.reduce((a, b) => a + b, 0) / recentVols.length;
-
-  // Alinhamento das EMAs (bullish quando ema12 > ema30 > ema80 > ema200)
   const lastEma12 = ema12[ema12.length - 1];
   const lastEma30 = ema30[ema30.length - 1];
   const lastEma80 = ema80[ema80.length - 1];
-  const lastEma200 = ema200[ema200.length - 1];
-  const lastRsi = rsi[rsi.length - 1];
-  const lastVolume = volumes[volumes.length - 1];
+  const lastRsi   = rsi[rsi.length - 1];
   const lastClose = closes[closes.length - 1];
 
-  // Crossover detection: compara penúltimo vs último
-  const prevEma12 = ema12[ema12.length - 2];
-  const prevEma30 = ema30[ema30.length - 2];
+  const recentVols = volumes.slice(-20);
+  const avgVolume  = recentVols.reduce((a, b) => a + b, 0) / recentVols.length;
+  const lastVolume = volumes[volumes.length - 1];
+  const volRatio   = lastVolume / avgVolume;
+  const volumeOk   = volRatio >= 0.7; // relaxado vs 1.3x anterior
 
-  const bullishCrossover = prevEma12 <= prevEma30 && lastEma12 > lastEma30;
-  const bearishCrossover = prevEma12 >= prevEma30 && lastEma12 < lastEma30;
+  // Tendência no 1h
+  const trend1h = lastEma12 > lastEma30 ? 'bull' : 'bear';
 
-  // Trend Matrix: força da tendência
-  const emaBullishAlignment = lastEma12 > lastEma30 && lastEma30 > lastEma80 && lastEma80 > lastEma200;
-  const emaBearishAlignment = lastEma12 < lastEma30 && lastEma30 < lastEma80 && lastEma80 < lastEma200;
-
-  // Volume acima da média (confirma movimento)
-  const volumeConfirm = lastVolume > avgVolume * 1.3;
-
-  // Deteção de topo: RSI sobrecomprado + EMA começando a cruzar para baixo
-  const topDetected = lastRsi > 70 && bearishCrossover && volumeConfirm;
-
-  // Deteção de fundo: RSI sobrevendido + EMA cruzando para cima
-  const bottomDetected = lastRsi < 30 && bullishCrossover && volumeConfirm;
+  // Zonas RSI
+  const rsiLong  = lastRsi >= 40 && lastRsi <= 65; // momentum bullish sem sobrecompra
+  const rsiShort = lastRsi >= 35 && lastRsi <= 55; // momentum bearish neutro
+  const rsiOverbought  = lastRsi > 70;
+  const rsiOversold    = lastRsi < 30;
 
   return {
-    ema12: lastEma12,
-    ema30: lastEma30,
-    ema80: lastEma80,
-    ema200: lastEma200,
-    rsi: lastRsi,
-    volume: lastVolume,
-    avgVolume,
-    volumeConfirm,
-    bullishCrossover,
-    bearishCrossover,
-    emaBullishAlignment,
-    emaBearishAlignment,
-    topDetected,
-    bottomDetected,
+    ema12: lastEma12, ema30: lastEma30, ema80: lastEma80,
+    rsi: lastRsi, volRatio, volumeOk,
+    trend1h, rsiLong, rsiShort, rsiOverbought, rsiOversold,
     price: lastClose,
   };
 }
 
-/**
- * Gera sinal de trading
- * @param {Array} candles - Array de candles OHLCV
- * @param {string|null} currentPosition - 'long' | 'short' | null
- * @returns {{ signal: string, reason: string, indicators: object }}
- */
 function generateSignal(candles, currentPosition = null) {
-  if (candles.length < 210) {
-    return { signal: 'none', reason: 'Candles insuficientes (mínimo 210)', indicators: {} };
+  if (candles.length < 90) {
+    return { signal: 'none', reason: 'Candles insuficientes (mínimo 90)', indicators: {} };
   }
 
   const ind = calculateIndicators(candles);
 
-  // LÓGICA DE INVERSÃO (a core da estratégia)
-  // Estamos LONG e detetamos topo -> inverter para SHORT
-  if (currentPosition === 'long' && ind.topDetected) {
-    return {
-      signal: 'flip_to_short',
-      reason: `Topo detetado: RSI=${ind.rsi.toFixed(1)} > 70, bearish crossover EMA12/30, volume ${(ind.volume / ind.avgVolume).toFixed(1)}x`,
-      indicators: ind,
-    };
+  // ── INVERSÃO de posição existente ──────────────────────────────
+  if (currentPosition === 'long') {
+    if (ind.trend1h === 'bear' && ind.rsiOverbought) {
+      return {
+        signal: 'flip_to_short',
+        reason: `EMA12 cruzou abaixo EMA30 + RSI sobrecomprado (${ind.rsi.toFixed(1)})`,
+        indicators: ind,
+      };
+    }
+    if (ind.trend1h === 'bear' && ind.rsi < 45) {
+      return {
+        signal: 'flip_to_short',
+        reason: `Tendência 1h invertida para bear + RSI=${ind.rsi.toFixed(1)}`,
+        indicators: ind,
+      };
+    }
   }
 
-  // Estamos SHORT e detetamos fundo -> inverter para LONG
-  if (currentPosition === 'short' && ind.bottomDetected) {
-    return {
-      signal: 'flip_to_long',
-      reason: `Fundo detetado: RSI=${ind.rsi.toFixed(1)} < 30, bullish crossover EMA12/30, volume ${(ind.volume / ind.avgVolume).toFixed(1)}x`,
-      indicators: ind,
-    };
+  if (currentPosition === 'short') {
+    if (ind.trend1h === 'bull' && ind.rsiOversold) {
+      return {
+        signal: 'flip_to_long',
+        reason: `EMA12 cruzou acima EMA30 + RSI sobrevendido (${ind.rsi.toFixed(1)})`,
+        indicators: ind,
+      };
+    }
+    if (ind.trend1h === 'bull' && ind.rsi > 50) {
+      return {
+        signal: 'flip_to_long',
+        reason: `Tendência 1h voltou para bull + RSI=${ind.rsi.toFixed(1)}`,
+        indicators: ind,
+      };
+    }
   }
 
-  // ENTRADA INICIAL sem posição
+  // ── ENTRADA nova sem posição ────────────────────────────────────
   if (!currentPosition) {
-    // Entrada long: EMAs alinhadas bullish + bullish crossover + volume
-    if (ind.emaBullishAlignment && ind.bullishCrossover && ind.volumeConfirm) {
+    // LONG: tendência 1h bull + RSI em zona saudável + volume mínimo
+    if (ind.trend1h === 'bull' && ind.rsiLong && ind.volumeOk) {
       return {
         signal: 'long',
-        reason: `Entrada LONG: EMAs alinhadas bullish (${ind.ema12.toFixed(6)} > ${ind.ema30.toFixed(6)} > ${ind.ema80.toFixed(6)}), volume ${(ind.volume / ind.avgVolume).toFixed(1)}x`,
+        reason: `EMA12(${ind.ema12.toFixed(4)}) > EMA30(${ind.ema30.toFixed(4)}) · RSI=${ind.rsi.toFixed(1)} · Vol=${ind.volRatio.toFixed(1)}x`,
         indicators: ind,
       };
     }
 
-    // Entrada short: EMAs alinhadas bearish + bearish crossover + volume
-    if (ind.emaBearishAlignment && ind.bearishCrossover && ind.volumeConfirm) {
+    // SHORT: tendência 1h bear + RSI neutro/baixo + volume mínimo
+    if (ind.trend1h === 'bear' && ind.rsiShort && ind.volumeOk) {
       return {
         signal: 'short',
-        reason: `Entrada SHORT: EMAs alinhadas bearish, RSI=${ind.rsi.toFixed(1)}, volume ${(ind.volume / ind.avgVolume).toFixed(1)}x`,
+        reason: `EMA12(${ind.ema12.toFixed(4)}) < EMA30(${ind.ema30.toFixed(4)}) · RSI=${ind.rsi.toFixed(1)} · Vol=${ind.volRatio.toFixed(1)}x`,
         indicators: ind,
       };
     }
@@ -133,7 +121,7 @@ function generateSignal(candles, currentPosition = null) {
 
   return {
     signal: 'hold',
-    reason: `Hold: EMA12=${ind.ema12.toFixed(6)}, RSI=${ind.rsi.toFixed(1)}, Vol=${(ind.volume / ind.avgVolume).toFixed(1)}x da média`,
+    reason: `Hold: EMA12=${ind.ema12.toFixed(4)} ${ind.trend1h === 'bull' ? '>' : '<'} EMA30=${ind.ema30.toFixed(4)} · RSI=${ind.rsi.toFixed(1)} · Vol=${ind.volRatio.toFixed(1)}x`,
     indicators: ind,
   };
 }
