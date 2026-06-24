@@ -2,7 +2,15 @@ import React, { useState } from 'react';
 import Dashboard from './pages/Dashboard';
 import Trades from './pages/Trades';
 import Signals from './pages/Signals';
+import Strategies from './pages/Strategies';
 import './App.css';
+
+const PAGES = [
+  { id: 'dashboard',   label: '📊 Dashboard' },
+  { id: 'strategies',  label: '🧠 Estratégias' },
+  { id: 'trades',      label: '📋 Trades' },
+  { id: 'signals',     label: '📡 Sinais' },
+];
 
 function App() {
   const [page, setPage] = useState('dashboard');
@@ -15,21 +23,22 @@ function App() {
           <span>CriptoBot</span>
         </div>
         <div className="nav-links">
-          {['dashboard', 'trades', 'signals'].map(p => (
+          {PAGES.map(p => (
             <button
-              key={p}
-              className={`nav-btn ${page === p ? 'active' : ''}`}
-              onClick={() => setPage(p)}
+              key={p.id}
+              className={`nav-btn ${page === p.id ? 'active' : ''}`}
+              onClick={() => setPage(p.id)}
             >
-              {p === 'dashboard' ? '📊 Dashboard' : p === 'trades' ? '📋 Trades' : '📡 Sinais'}
+              {p.label}
             </button>
           ))}
         </div>
       </nav>
       <main className="main">
-        {page === 'dashboard' && <Dashboard />}
-        {page === 'trades' && <Trades />}
-        {page === 'signals' && <Signals />}
+        {page === 'dashboard'  && <Dashboard />}
+        {page === 'strategies' && <Strategies />}
+        {page === 'trades'     && <Trades />}
+        {page === 'signals'    && <Signals />}
       </main>
     </div>
   );
