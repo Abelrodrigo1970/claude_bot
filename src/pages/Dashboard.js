@@ -12,22 +12,16 @@ export default function Dashboard() {
   const [running, setRunning] = useState(false);
 
   const load = useCallback(async () => {
-    try {
-      const [s, p, t, sig] = await Promise.all([
-        axios.get('/api/stats'),
-        axios.get('/api/pnl/daily'),
-        axios.get('/api/trades?limit=5'),
-        axios.get('/api/signals?limit=5'),
-      ]);
-      setStats(s.data);
-      setPnl(p.data);
-      setTrades(t.data);
-      setSignals(sig.data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    const safe = async (fn, setter) => {
+      try { setter((await fn()).data); } catch { /* BD pode não estar configurada ainda */ }
+    };
+    await Promise.all([
+      safe(() => axios.get('/api/stats'),            setStats),
+      safe(() => axios.get('/api/pnl/daily'),        setPnl),
+      safe(() => axios.get('/api/trades?limit=5'),   setTrades),
+      safe(() => axios.get('/api/signals?limit=5'),  setSignals),
+    ]);
+    setLoading(false);
   }, []);
 
   useEffect(() => { load(); const id = setInterval(load, 30000); return () => clearInterval(id); }, [load]);

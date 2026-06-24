@@ -50,20 +50,22 @@ export default function Strategies() {
 
   const load = useCallback(async () => {
     try {
-      const [s, st] = await Promise.all([
-        axios.get('/api/strategies'),
-        axios.get('/api/stats'),
-      ]);
+      const s = await axios.get('/api/strategies');
       setStrategies(s.data);
-      // Indexa stats por strategy_name
+    } catch (e) {
+      console.error('Erro ao carregar estratégias:', e);
+    }
+
+    try {
+      const st = await axios.get('/api/stats');
       const statsMap = {};
       st.data.forEach(row => { statsMap[row.strategy_name] = row; });
       setStats(statsMap);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+    } catch {
+      // stats podem falhar se BD ainda não está configurada
     }
+
+    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
