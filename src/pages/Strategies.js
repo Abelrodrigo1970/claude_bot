@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 const STRATEGY_META = {
@@ -44,9 +44,10 @@ function StarRating({ winRate }) {
 
 export default function Strategies() {
   const [strategies, setStrategies] = useState([]);
-  const [stats, setStats] = useState({});
-  const [running, setRunning] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats]           = useState({});
+  const [runState, setRunState]     = useState({ running: false, strategy: null, current: 0, total: 0, log: [] });
+  const [loading, setLoading]       = useState(true);
+  const pollRef = useRef(null);
 
   const load = useCallback(async () => {
     try {
@@ -68,15 +69,33 @@ export default function Strategies() {
     setLoading(false);
   }, []);
 
+  const pollRunState = useCallback(async () => {
+    try {
+      const { data } = await axios.get('/api/run/state');
+      setRunState(data);
+      if (!data.running) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+        load();
+      }
+    } catch { clearInterval(pollRef.current); pollRef.current = null; }
+  }, [load]);
+
   useEffect(() => { load(); }, [load]);
 
-  const handleRun = async (name) => {
-    setRunning(name);
-    try { await axios.post('/api/run'); await load(); }
-    finally { setRunning(null); }
+  const handleRun = async () => {
+    if (runState.running) return;
+    axios.post('/api/run'); // fire-and-forget
+    setRunState(s => ({ ...s, running: true }));
+    clearInterval(pollRef.current);
+    pollRef.current = setInterval(pollRunState, 1500);
   };
 
+  useEffect(() => () => clearInterval(pollRef.current), []);
+
   if (loading) return <div className="loading"><div className="spinner" /><span>A carregar...</span></div>;
+
+  const runPct = runState.total > 0 ? Math.round((runState.current / runState.total) * 100) : 0;
 
   return (
     <div>
@@ -85,7 +104,27 @@ export default function Strategies() {
           <div className="page-title">Estratégias</div>
           <div className="page-sub">{strategies.length} estratégia{strategies.length !== 1 ? 's' : ''} configurada{strategies.length !== 1 ? 's' : ''}</div>
         </div>
+        <button className="btn btn-primary" onClick={handleRun} disabled={runState.running}>
+          {runState.running ? '⏳ A executar...' : '▶ Executar Todas'}
+        </button>
       </div>
+
+      {/* BARRA DE PROGRESSO GLOBAL */}
+      {runState.running && (
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span className="muted">
+              {runState.strategy && <><strong style={{ color: 'var(--text)' }}>{runState.strategy}</strong> · </>}
+              {runState.current}/{runState.total} símbolos
+            </span>
+            <span className="mono muted">{runPct}%</span>
+          </div>
+          <div className="progress-bar"><div className="progress-fill" style={{ width: `${runPct}%` }} /></div>
+          {runState.log?.[0] && (
+            <div className="run-log-line muted">{runState.log[0]}</div>
+          )}
+        </div>
+      )}
 
       <div className="strategies-list">
         {strategies.map(s => {
@@ -123,7 +162,11 @@ export default function Strategies() {
               <div className="strategy-meta-row">
                 <span className="meta-item">
                   <span className="meta-label">Par</span>
-                  <span className="meta-value mono">{s.symbol}</span>
+                  <span className="meta-value mono">
+                    {s.scannerPeriod
+                      ? <span className="green">TOP {s.symbolCount} · EMA{s.scannerPeriod}</span>
+                      : s.symbol?.split('/')[0]}
+                  </span>
                 </span>
                 <span className="meta-item">
                   <span className="meta-label">Timeframe</span>
@@ -151,15 +194,11 @@ export default function Strategies() {
                 </span>
               </div>
 
-              <div className="strategy-footer">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => handleRun(s.name)}
-                  disabled={running === s.name || !s.enabled}
-                >
-                  {running === s.name ? '⏳ A executar...' : '▶ Executar'}
-                </button>
-              </div>
+              {s.scannerPeriod && s.symbolCount === 0 && (
+                <div className="scanner-warning">
+                  ⚠️ Corre o Scanner EMA{s.scannerPeriod} primeiro para carregar os símbolos.
+                </div>
+              )}
             </div>
           );
         })}

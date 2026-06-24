@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const cron = require('node-cron');
 const pool = require('./db/pool');
-const { runAll, STRATEGIES } = require('./services/runner');
+const { runAll, STRATEGIES, getRunState, resolveSymbols } = require('./services/runner');
 const { startScan, getState } = require('./services/scanner');
 
 const app = express();
@@ -19,12 +19,17 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }
 // Lista todas as estratégias
 app.get('/api/strategies', (req, res) => {
   res.json(STRATEGIES.map(s => ({
-    name: s.name,
-    symbol: s.symbol,
-    timeframe: s.timeframe,
-    enabled: s.enabled,
+    name:          s.name,
+    symbol:        s.symbol,
+    scannerPeriod: s.scannerPeriod || null,
+    symbolCount:   s.scannerPeriod ? resolveSymbols(s).length : 1,
+    timeframe:     s.timeframe,
+    enabled:       s.enabled,
   })));
 });
+
+// Estado da execução em curso (para progresso na UI)
+app.get('/api/run/state', (req, res) => res.json(getRunState()));
 
 // Histórico de trades
 app.get('/api/trades', async (req, res) => {
