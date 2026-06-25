@@ -1,43 +1,41 @@
-const { Stochastic, EMA, RSI } = require('technicalindicators');
+const { Stochastic, RSI } = require('technicalindicators');
 
 const STRATEGY_NAME = 'StochMomentum';
 
 function calculateIndicators(candles) {
-  const closes = candles.map(c => c.close);
-  const highs  = candles.map(c => c.high);
-  const lows   = candles.map(c => c.low);
+  const closes  = candles.map(c => c.close);
+  const highs   = candles.map(c => c.high);
+  const lows    = candles.map(c => c.low);
   const volumes = candles.map(c => c.volume);
 
   const stoch = Stochastic.calculate({ high: highs, low: lows, close: closes, period: 14, signalPeriod: 3 });
-  const ema21 = EMA.calculate({ period: 21, values: closes });
-  const ema50 = EMA.calculate({ period: 50, values: closes });
   const rsi   = RSI.calculate({ period: 14, values: closes });
 
-  const last = stoch[stoch.length - 1];
-  const prev = stoch[stoch.length - 2];
-  const lastClose  = closes[closes.length - 1];
-  const lastEma21  = ema21[ema21.length - 1];
-  const lastEma50  = ema50[ema50.length - 1];
+  const last  = stoch[stoch.length - 1];
+  const prev  = stoch[stoch.length - 2];
   const lastRsi    = rsi[rsi.length - 1];
   const lastVolume = volumes[volumes.length - 1];
   const avgVolume  = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
 
+  const c0 = closes[closes.length - 1];
+  const c1 = closes[closes.length - 2];
+  const c2 = closes[closes.length - 3];
+
   const kCrossedAboveD = prev.k <= prev.d && last.k > last.d;
   const kCrossedBelowD = prev.k >= prev.d && last.k < last.d;
-  const oversold   = last.k < 20 && last.d < 20;
-  const overbought = last.k > 80 && last.d > 80;
-  const trendUp    = lastEma21 > lastEma50 && lastClose > lastEma21;
-  const trendDown  = lastEma21 < lastEma50 && lastClose < lastEma21;
-  const volumeConfirm = lastVolume > avgVolume * 1.1;
+  const oversold       = last.k < 20 && last.d < 20;
+  const overbought     = last.k > 80 && last.d > 80;
+  const volumeOk       = lastVolume > avgVolume * 0.7;
+  const candleUp       = c0 > c1 && c0 > c2;
+  const candleDown     = c0 < c1 && c0 < c2;
 
   return {
     k: last.k, d: last.d,
-    ema21: lastEma21, ema50: lastEma50,
     rsi: lastRsi,
+    volRatio: avgVolume > 0 ? lastVolume / avgVolume : 0,
     kCrossedAboveD, kCrossedBelowD,
     oversold, overbought,
-    trendUp, trendDown,
-    volumeConfirm, lastClose,
+    volumeOk, candleUp, candleDown,
   };
 }
 
@@ -49,32 +47,34 @@ function generateSignal(candles, currentPosition = null) {
   const ind = calculateIndicators(candles);
 
   if (!currentPosition) {
-    if (ind.oversold && ind.kCrossedAboveD && ind.trendUp) {
+    // LONG: Stoch oversold + K cruza acima D + volume + vela↑ + RSI não sobrecomprado
+    if (ind.oversold && ind.kCrossedAboveD && ind.volumeOk && ind.candleUp && ind.rsi < 55) {
       return {
         signal: 'long',
-        reason: `Stoch oversold (K=${ind.k?.toFixed(1)}) + crossover bullish em tendência de alta`,
+        reason: `Stoch oversold K=${ind.k?.toFixed(1)} cruza↑D=${ind.d?.toFixed(1)} · RSI=${ind.rsi?.toFixed(1)} · Vol=${ind.volRatio?.toFixed(1)}x · vela↑`,
         indicators: ind,
       };
     }
-    if (ind.overbought && ind.kCrossedBelowD && ind.trendDown) {
+    // SHORT: Stoch overbought + K cruza abaixo D + volume + vela↓ + RSI não sobrevendido
+    if (ind.overbought && ind.kCrossedBelowD && ind.volumeOk && ind.candleDown && ind.rsi > 45) {
       return {
         signal: 'short',
-        reason: `Stoch overbought (K=${ind.k?.toFixed(1)}) + crossover bearish em tendência de baixa`,
+        reason: `Stoch overbought K=${ind.k?.toFixed(1)} cruza↓D=${ind.d?.toFixed(1)} · RSI=${ind.rsi?.toFixed(1)} · Vol=${ind.volRatio?.toFixed(1)}x · vela↓`,
         indicators: ind,
       };
     }
   }
 
   if (currentPosition === 'long' && ind.overbought && ind.kCrossedBelowD) {
-    return { signal: 'flip_to_short', reason: `Stoch overbought + crossover descendente`, indicators: ind };
+    return { signal: 'flip_to_short', reason: `Stoch overbought + K cruza abaixo D`, indicators: ind };
   }
   if (currentPosition === 'short' && ind.oversold && ind.kCrossedAboveD) {
-    return { signal: 'flip_to_long', reason: `Stoch oversold + crossover ascendente`, indicators: ind };
+    return { signal: 'flip_to_long', reason: `Stoch oversold + K cruza acima D`, indicators: ind };
   }
 
   return {
     signal: 'hold',
-    reason: `Hold: K=${ind.k?.toFixed(1)}, D=${ind.d?.toFixed(1)}, RSI=${ind.rsi?.toFixed(1)}, Trend=${ind.trendUp ? '↑' : ind.trendDown ? '↓' : '—'}`,
+    reason: `Hold: K=${ind.k?.toFixed(1)}, D=${ind.d?.toFixed(1)}, RSI=${ind.rsi?.toFixed(1)}, Trend=—`,
     indicators: ind,
   };
 }
