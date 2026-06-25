@@ -185,20 +185,21 @@ if (fs.existsSync(buildPath)) {
 
 // ─── CRON JOBS ─────────────────────────────────────────────────
 
-// Estratégias: a cada hora ao :01
-cron.schedule('1 * * * *', async () => {
-  console.log('\n⏰ Cron: executando estratégias...');
+// De 2 em 2 horas: scanner EMA90 → estratégias (00:05, 02:05, 04:05, ...)
+cron.schedule('5 */2 * * *', async () => {
+  console.log('\n⏰ Cron 2h: a correr scanner EMA90...');
+  await startScan(90, 50);
+  console.log('⏰ Cron 2h: scanner concluído — a executar estratégias...');
   await runAll();
+  console.log('⏰ Cron 2h: ciclo completo.');
 });
 
-// Scanner diário: 00:05 UTC (após fecho das velas diárias à meia-noite)
+// Diário às 00:05 UTC: scanner EMA200 (velas diárias frescas)
 cron.schedule('5 0 * * *', async () => {
   console.log('\n📅 Cron diário: a correr scanner EMA200...');
   await startScan(200, 50);
-  console.log('📅 Cron diário: a correr scanner EMA90...');
-  await startScan(90, 50);
-  console.log('📅 Cron diário: scanners concluídos.');
-}, { timezone: 'UTC' });
+  console.log('📅 Cron diário: EMA200 concluído.');
+});
 
 // ─── START ──────────────────────────────────────────────────────
 
@@ -206,7 +207,7 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n🚀 Cripto Bot Server rodando na porta ${PORT}`);
   console.log(`📊 Estratégias ativas: ${STRATEGIES.filter(s => s.enabled).length}`);
-  console.log(`⏰ Próxima execução automática: a cada hora\n`);
+  console.log(`⏰ Ciclo automático: scanner EMA90 + estratégias de 2 em 2 horas\n`);
 
   // Executa ao arrancar
   setTimeout(runAll, 3000);

@@ -2,7 +2,7 @@ const { EMA } = require('technicalindicators');
 const bybit = require('./bybit');
 const pool  = require('../db/pool');
 
-const CACHE_TTL = 60 * 60 * 1000;
+const CACHE_TTL = 2 * 60 * 60 * 1000; // 2 horas — alinhado com o ciclo do cron
 
 const VALID_PERIODS = [200, 90];
 
