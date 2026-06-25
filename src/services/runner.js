@@ -20,7 +20,8 @@ const STRATEGIES = [
   },
   {
     name: macdRider.STRATEGY_NAME,
-    symbol: 'BTC/USDT:USDT',
+    symbol: null,
+    scannerPeriod: 90,
     timeframe: '4h',
     generateSignal: macdRider.generateSignal,
     positionSize: 10,
