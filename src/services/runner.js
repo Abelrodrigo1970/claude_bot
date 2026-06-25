@@ -38,7 +38,8 @@ const STRATEGIES = [
   },
   {
     name: stochMomentum.STRATEGY_NAME,
-    symbol: 'SOL/USDT:USDT',
+    symbol: null,
+    scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: stochMomentum.generateSignal,
     positionSize: 10,
