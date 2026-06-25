@@ -36,21 +36,20 @@ function calculateIndicators(candles) {
   const recentVols = volumes.slice(-20);
   const avgVolume  = recentVols.reduce((a, b) => a + b, 0) / recentVols.length;
   const lastVolume = volumes[volumes.length - 1];
-  const volRatio   = lastVolume / avgVolume;
-  const volumeOk   = volRatio >= 0.7; // relaxado vs 1.3x anterior
+  const volRatio   = avgVolume > 0 ? lastVolume / avgVolume : 0;
 
   // Tendência no 1h
   const trend1h = lastEma12 > lastEma30 ? 'bull' : 'bear';
 
   // Zonas RSI
-  const rsiLong  = lastRsi >= 40 && lastRsi <= 65; // momentum bullish sem sobrecompra
-  const rsiShort = lastRsi >= 35 && lastRsi <= 55; // momentum bearish neutro
-  const rsiOverbought  = lastRsi > 70;
-  const rsiOversold    = lastRsi < 30;
+  const rsiLong  = lastRsi >= 40 && lastRsi <= 68;
+  const rsiShort = lastRsi >= 32 && lastRsi <= 60;
+  const rsiOverbought = lastRsi > 72;
+  const rsiOversold   = lastRsi < 28;
 
   return {
     ema12: lastEma12, ema30: lastEma30, ema80: lastEma80,
-    rsi: lastRsi, volRatio, volumeOk,
+    rsi: lastRsi, volRatio,
     trend1h, rsiLong, rsiShort, rsiOverbought, rsiOversold,
     price: lastClose,
   };
@@ -100,8 +99,8 @@ function generateSignal(candles, currentPosition = null) {
 
   // ── ENTRADA nova sem posição ────────────────────────────────────
   if (!currentPosition) {
-    // LONG: tendência 1h bull + RSI em zona saudável + volume mínimo
-    if (ind.trend1h === 'bull' && ind.rsiLong && ind.volumeOk) {
+    // LONG: tendência 1h bull + RSI em zona saudável (sem filtro de volume — scanner garante liquidez)
+    if (ind.trend1h === 'bull' && ind.rsiLong) {
       return {
         signal: 'long',
         reason: `EMA12(${ind.ema12.toFixed(4)}) > EMA30(${ind.ema30.toFixed(4)}) · RSI=${ind.rsi.toFixed(1)} · Vol=${ind.volRatio.toFixed(1)}x`,
@@ -109,8 +108,8 @@ function generateSignal(candles, currentPosition = null) {
       };
     }
 
-    // SHORT: tendência 1h bear + RSI neutro/baixo + volume mínimo
-    if (ind.trend1h === 'bear' && ind.rsiShort && ind.volumeOk) {
+    // SHORT: tendência 1h bear + RSI neutro/baixo
+    if (ind.trend1h === 'bear' && ind.rsiShort) {
       return {
         signal: 'short',
         reason: `EMA12(${ind.ema12.toFixed(4)}) < EMA30(${ind.ema30.toFixed(4)}) · RSI=${ind.rsi.toFixed(1)} · Vol=${ind.volRatio.toFixed(1)}x`,
@@ -119,9 +118,14 @@ function generateSignal(candles, currentPosition = null) {
     }
   }
 
+  // Hold: indica porquê não entrou
+  const reason = ind.trend1h === 'bull'
+    ? `Bull mas RSI=${ind.rsi.toFixed(1)} fora da zona 40-68`
+    : `Bear mas RSI=${ind.rsi.toFixed(1)} fora da zona 32-60`;
+
   return {
     signal: 'hold',
-    reason: `Hold: EMA12=${ind.ema12.toFixed(4)} ${ind.trend1h === 'bull' ? '>' : '<'} EMA30=${ind.ema30.toFixed(4)} · RSI=${ind.rsi.toFixed(1)} · Vol=${ind.volRatio.toFixed(1)}x`,
+    reason: `Hold: EMA12=${ind.ema12.toFixed(4)} ${ind.trend1h === 'bull' ? '>' : '<'} EMA30=${ind.ema30.toFixed(4)} · ${reason}`,
     indicators: ind,
   };
 }

@@ -21,8 +21,16 @@ async function startScan(period = 200, limit = 50) {
   try {
     const markets = await bybit.exchange.loadMarkets();
 
+    const MIN_VOLUME_USDT = 500_000; // mínimo $500K de volume diário
+
     const perps = Object.values(markets)
-      .filter(m => m.linear && m.settle === 'USDT' && m.active && !m.symbol.includes('USDC'))
+      .filter(m =>
+        m.linear &&
+        m.settle === 'USDT' &&
+        m.active &&
+        !m.symbol.includes('USDC') &&
+        parseFloat(m.info.turnover24h || 0) >= MIN_VOLUME_USDT
+      )
       .sort((a, b) => parseFloat(b.info.turnover24h || 0) - parseFloat(a.info.turnover24h || 0))
       .slice(0, 250);
 
