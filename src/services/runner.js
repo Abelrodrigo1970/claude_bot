@@ -29,7 +29,8 @@ const STRATEGIES = [
   },
   {
     name: bbBreaker.STRATEGY_NAME,
-    symbol: 'ETH/USDT:USDT',
+    symbol: null,
+    scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: bbBreaker.generateSignal,
     positionSize: 10,
