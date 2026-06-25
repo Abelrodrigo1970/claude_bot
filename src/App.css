@@ -414,6 +414,15 @@ tr:hover td { background: var(--bg3); }
 .symbol-suffix { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
 .tv-icon       { font-size: 11px; color: var(--muted); }
 
+.tv-link {
+  font-size: 16px;
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+  display: inline-block;
+}
+.tv-link:hover { opacity: 1; }
+
 /* PROGRESS BAR */
 .progress-bar {
   height: 6px;

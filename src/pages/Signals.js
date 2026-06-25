@@ -55,6 +55,7 @@ export default function Signals() {
                   <th>RSI</th>
                   <th>Vol/Avg</th>
                   <th>Data</th>
+                  <th>Chart</th>
                 </tr>
               </thead>
               <tbody>
@@ -62,6 +63,8 @@ export default function Signals() {
                   const ind = s.indicators || {};
                   const volRatio = ind.volRatio != null ? parseFloat(ind.volRatio).toFixed(1)
                     : (ind.volume && ind.avgVolume ? (ind.volume / ind.avgVolume).toFixed(1) : '—');
+                  const base = s.symbol?.split('/')[0];
+                  const tvUrl = `https://www.tradingview.com/chart/?symbol=BYBIT:${base}USDT.P`;
                   return (
                     <tr key={s.id}>
                       <td>
@@ -69,7 +72,7 @@ export default function Signals() {
                         <span className={`badge badge-${signalColor(s.signal_type)}`}>{s.signal_type}</span>
                       </td>
                       <td className="muted">{s.strategy_name}</td>
-                      <td style={{ color: '#e2e8f0' }}>{s.symbol?.split('/')[0]}</td>
+                      <td style={{ color: '#e2e8f0' }}>{base}</td>
                       <td>{parseFloat(s.price).toFixed(6)}</td>
                       <td className="muted">{s.timeframe}</td>
                       <td className="muted">{ind.ema12 ? parseFloat(ind.ema12).toFixed(5) : '—'}</td>
@@ -79,6 +82,11 @@ export default function Signals() {
                       </td>
                       <td className={parseFloat(volRatio) > 1.3 ? 'yellow' : 'muted'}>{volRatio}x</td>
                       <td className="muted">{format(new Date(s.created_at), 'dd/MM HH:mm:ss')}</td>
+                      <td>
+                        <a href={tvUrl} target="_blank" rel="noopener noreferrer" className="tv-link" title="Ver no TradingView">
+                          📈
+                        </a>
+                      </td>
                     </tr>
                   );
                 })}
