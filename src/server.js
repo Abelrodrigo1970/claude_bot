@@ -185,11 +185,20 @@ if (fs.existsSync(buildPath)) {
 
 // ─── CRON JOBS ─────────────────────────────────────────────────
 
-// Corre a cada hora no fecho da vela (ex: 1h timeframe -> corre às :01)
+// Estratégias: a cada hora ao :01
 cron.schedule('1 * * * *', async () => {
   console.log('\n⏰ Cron: executando estratégias...');
   await runAll();
 });
+
+// Scanner diário: 00:05 UTC (após fecho das velas diárias à meia-noite)
+cron.schedule('5 0 * * *', async () => {
+  console.log('\n📅 Cron diário: a correr scanner EMA200...');
+  await startScan(200, 50);
+  console.log('📅 Cron diário: a correr scanner EMA90...');
+  await startScan(90, 50);
+  console.log('📅 Cron diário: scanners concluídos.');
+}, { timezone: 'UTC' });
 
 // ─── START ──────────────────────────────────────────────────────
 
