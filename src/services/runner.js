@@ -161,12 +161,16 @@ async function runStrategyOnSymbol(strategy, symbol) {
     if (isAction) {
       _counts.signals++;
       await saveSignal(strategy.name, symbol, signal, currentPrice, strategy.timeframe, indicators);
+
+      // Regista posição imediatamente (paper trading — não depende da ordem API)
+      const newSide = (signal === 'long' || signal === 'flip_to_long') ? 'long' : 'short';
+      openPositions[key] = { tradeId: null, side: newSide };
     } else {
       _counts.holds++;
     }
 
     if (signal === 'long' || signal === 'flip_to_long') {
-      if (openPositions[key]) {
+      if (openPositions[key]?.tradeId) {
         await bybit.closePosition(symbol);
         await closeTrade(openPositions[key].tradeId, currentPrice);
       }
@@ -176,7 +180,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
       openPositions[key] = { tradeId, side: 'long' };
     }
     else if (signal === 'short' || signal === 'flip_to_short') {
-      if (openPositions[key]) {
+      if (openPositions[key]?.tradeId) {
         await bybit.closePosition(symbol);
         await closeTrade(openPositions[key].tradeId, currentPrice);
       }
@@ -274,5 +278,19 @@ async function runAll() {
     console.log(sumLine);
   }
 }
+
+// Carrega posições abertas da BD ao arrancar (sobrevive a reinicios)
+async function loadOpenPositions() {
+  try {
+    const { rows } = await pool.query(`SELECT strategy_name, symbol, side, id FROM trades WHERE status='open'`);
+    rows.forEach(r => {
+      const key = `${r.strategy_name}_${r.symbol}`;
+      openPositions[key] = { tradeId: r.id, side: r.side };
+    });
+    if (rows.length) console.log(`[Runner] ${rows.length} posições abertas carregadas da BD`);
+  } catch { /* BD ainda não disponível */ }
+}
+
+setTimeout(loadOpenPositions, 5000);
 
 module.exports = { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemorySignals };
