@@ -70,44 +70,10 @@ function generateSignal(candles, currentPosition = null) {
 
   const ind = calculateIndicators(candles);
 
-  // ── INVERSÃO de posição existente ──────────────────────────────
-  if (currentPosition === 'long') {
-    if (ind.trend1h === 'bear' && ind.rsiOverbought) {
-      return {
-        signal: 'flip_to_short',
-        reason: `EMA12 cruzou abaixo EMA30 + RSI sobrecomprado (${ind.rsi.toFixed(1)})`,
-        indicators: ind,
-      };
-    }
-    if (ind.trend1h === 'bear' && ind.rsi < 45) {
-      return {
-        signal: 'flip_to_short',
-        reason: `Tendência 1h invertida para bear + RSI=${ind.rsi.toFixed(1)}`,
-        indicators: ind,
-      };
-    }
-  }
+  // ── Scanner EMA90 confirma uptrend diário → só LONG ────────────
 
-  if (currentPosition === 'short') {
-    if (ind.trend1h === 'bull' && ind.rsiOversold) {
-      return {
-        signal: 'flip_to_long',
-        reason: `EMA12 cruzou acima EMA30 + RSI sobrevendido (${ind.rsi.toFixed(1)})`,
-        indicators: ind,
-      };
-    }
-    if (ind.trend1h === 'bull' && ind.rsi > 50) {
-      return {
-        signal: 'flip_to_long',
-        reason: `Tendência 1h voltou para bull + RSI=${ind.rsi.toFixed(1)}`,
-        indicators: ind,
-      };
-    }
-  }
-
-  // ── ENTRADA nova sem posição ────────────────────────────────────
+  // ENTRADA nova sem posição
   if (!currentPosition) {
-    // LONG: EMA bull + RSI saudável + volume + última vela acima das 2 anteriores
     if (ind.trend1h === 'bull' && ind.rsiLong && ind.volumeOk && ind.candleUp) {
       return {
         signal: 'long',
@@ -115,27 +81,25 @@ function generateSignal(candles, currentPosition = null) {
         indicators: ind,
       };
     }
+  }
 
-    // SHORT: EMA bear + RSI neutro/baixo + volume + última vela abaixo das 2 anteriores
-    if (ind.trend1h === 'bear' && ind.rsiShort && ind.volumeOk && ind.candleDown) {
-      return {
-        signal: 'short',
-        reason: `EMA12(${ind.ema12.toFixed(4)}) < EMA30(${ind.ema30.toFixed(4)}) · RSI=${ind.rsi.toFixed(1)} · Vol=${ind.volRatio.toFixed(1)}x · vela↓`,
-        indicators: ind,
-      };
-    }
+  // Saída de posição long quando tendência inverte
+  if (currentPosition === 'long' && ind.trend1h === 'bear' && ind.rsi < 45) {
+    return {
+      signal: 'close_long',
+      reason: `Tendência 1h invertida para bear + RSI=${ind.rsi.toFixed(1)}`,
+      indicators: ind,
+    };
   }
 
   // Hold: indica porquê não entrou
   const missing = [];
   if (ind.trend1h === 'bull') {
-    if (!ind.rsiLong)   missing.push(`RSI=${ind.rsi.toFixed(1)} fora 40-68`);
-    if (!ind.volumeOk)  missing.push(`Vol=${ind.volRatio.toFixed(1)}x<0.7`);
-    if (!ind.candleUp)  missing.push('vela não confirma ↑');
+    if (!ind.rsiLong)  missing.push(`RSI=${ind.rsi.toFixed(1)} fora 40-68`);
+    if (!ind.volumeOk) missing.push(`Vol=${ind.volRatio.toFixed(1)}x<0.7`);
+    if (!ind.candleUp) missing.push('vela não confirma ↑');
   } else {
-    if (!ind.rsiShort)  missing.push(`RSI=${ind.rsi.toFixed(1)} fora 32-60`);
-    if (!ind.volumeOk)  missing.push(`Vol=${ind.volRatio.toFixed(1)}x<0.7`);
-    if (!ind.candleDown) missing.push('vela não confirma ↓');
+    missing.push('tendência bear — scanner EMA90 garante uptrend, aguardar recuperação');
   }
 
   return {

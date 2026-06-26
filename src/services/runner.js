@@ -138,6 +138,22 @@ async function updateStats(strategyName, symbol, isWin) {
 // Estado em memória das posições abertas: { 'TrendSurfer_BTC/USDT:USDT': { tradeId, side } }
 const openPositions = {};
 
+// Cooldown por sinal: evita re-sinalizar o mesmo crossover na mesma vela
+// key: 'StrategyName_symbol_signalType', value: timestamp do último sinal
+const signalCooldown = {};
+
+function isOnCooldown(strategyName, symbol, signalType, timeframe) {
+  const key = `${strategyName}_${symbol}_${signalType}`;
+  const last = signalCooldown[key];
+  if (!last) return false;
+  const tfMs = { '1h': 60, '4h': 240, '1d': 1440 }[timeframe] || 60;
+  return (Date.now() - last) < tfMs * 60 * 1000;
+}
+
+function setCooldown(strategyName, symbol, signalType) {
+  signalCooldown[`${strategyName}_${symbol}_${signalType}`] = Date.now();
+}
+
 // Contadores do run atual
 let _counts = { signals: 0, holds: 0, errors: 0 };
 
@@ -159,12 +175,25 @@ async function runStrategyOnSymbol(strategy, symbol) {
     console.log(`[${strategy.name}] ${logLine}`);
 
     if (isAction) {
-      _counts.signals++;
-      await saveSignal(strategy.name, symbol, signal, currentPrice, strategy.timeframe, indicators);
+      // Verifica cooldown (evita duplicados dentro da mesma vela)
+      if (isOnCooldown(strategy.name, symbol, signal, strategy.timeframe)) {
+        _counts.holds++;
+        const skip = `· [${symbol.split('/')[0]}] duplicado ignorado (${signal} em cooldown)`;
+        runState.log.unshift(skip);
+      } else {
+        _counts.signals++;
+        setCooldown(strategy.name, symbol, signal);
+        await saveSignal(strategy.name, symbol, signal, currentPrice, strategy.timeframe, indicators);
 
-      // Regista posição imediatamente (paper trading — não depende da ordem API)
-      const newSide = (signal === 'long' || signal === 'flip_to_long') ? 'long' : 'short';
-      openPositions[key] = { tradeId: null, side: newSide };
+        // Regista posição imediatamente (paper trading — não depende da ordem API)
+        if (signal === 'long' || signal === 'flip_to_long') {
+          openPositions[key] = { tradeId: null, side: 'long' };
+        } else if (signal === 'short' || signal === 'flip_to_short') {
+          openPositions[key] = { tradeId: null, side: 'short' };
+        } else if (signal === 'close_long' || signal === 'close_short') {
+          delete openPositions[key];
+        }
+      }
     } else {
       _counts.holds++;
     }

@@ -10,14 +10,38 @@ const signalColor = (type) => {
   return 'hold';
 };
 
+// Agrupa sinais por símbolo numa janela de 2h e retorna os com confluência (2+ estratégias)
+function getConfluenceSignals(signals) {
+  const windowMs = 2 * 60 * 60 * 1000;
+  const groups = {};
+  signals.forEach(s => {
+    const t = new Date(s.created_at).getTime();
+    const dir = s.signal_type.includes('long') ? 'long' : 'short';
+    const key = `${s.symbol}_${dir}`;
+    if (!groups[key]) groups[key] = [];
+    // Agrupa apenas se dentro da janela de 2h do primeiro sinal do grupo
+    const first = groups[key][0];
+    if (!first || Math.abs(t - new Date(first.created_at).getTime()) <= windowMs) {
+      if (!groups[key].find(g => g.strategy_name === s.strategy_name)) {
+        groups[key].push(s);
+      }
+    }
+  });
+  return Object.values(groups)
+    .filter(g => g.length >= 2)
+    .flat()
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
 export default function Signals() {
   const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState('all');
 
   useEffect(() => {
     const load = async () => {
       try {
-        const { data } = await axios.get('/api/signals?limit=100');
+        const { data } = await axios.get('/api/signals?limit=200');
         setSignals(data);
       } finally { setLoading(false); }
     };
@@ -26,6 +50,8 @@ export default function Signals() {
     return () => clearInterval(id);
   }, []);
 
+  const displayed = view === 'confluence' ? getConfluenceSignals(signals) : signals;
+
   return (
     <div>
       <div className="page-header">
@@ -33,13 +59,21 @@ export default function Signals() {
           <div className="page-title">Sinais</div>
           <div className="page-sub">Atualiza a cada 15s · {signals.length} sinais registados</div>
         </div>
+        <div className="scanner-tabs">
+          <button className={`scanner-tab ${view === 'all' ? 'active' : ''}`} onClick={() => setView('all')}>
+            Todos
+          </button>
+          <button className={`scanner-tab ${view === 'confluence' ? 'active' : ''}`} onClick={() => setView('confluence')}>
+            Confluência 2+
+          </button>
+        </div>
       </div>
 
       <div className="card">
         {loading ? (
           <div className="loading"><div className="spinner" /></div>
-        ) : signals.length === 0 ? (
-          <div className="empty">Nenhum sinal ainda. O bot ainda não executou.</div>
+        ) : displayed.length === 0 ? (
+          <div className="empty">{view === 'confluence' ? 'Nenhuma confluência encontrada ainda.' : 'Nenhum sinal ainda. O bot ainda não executou.'}</div>
         ) : (
           <div className="table-wrap">
             <table>
@@ -59,7 +93,7 @@ export default function Signals() {
                 </tr>
               </thead>
               <tbody>
-                {signals.map(s => {
+                {displayed.map(s => {
                   const ind = s.indicators || {};
                   const volRatio = ind.volRatio != null ? parseFloat(ind.volRatio).toFixed(1)
                     : (ind.volume && ind.avgVolume ? (ind.volume / ind.avgVolume).toFixed(1) : '—');

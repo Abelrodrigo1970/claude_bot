@@ -53,6 +53,7 @@ function generateSignal(candles, currentPosition = null) {
 
   const ind = calculateIndicators(candles);
 
+  // Scanner EMA90 confirma uptrend diário → só LONG
   if (!currentPosition) {
     if (ind.breakoutUp && ind.volumeConfirm && ind.candleUp && ind.rsi < 75) {
       return {
@@ -61,20 +62,11 @@ function generateSignal(candles, currentPosition = null) {
         indicators: ind,
       };
     }
-    if (ind.breakoutDown && ind.volumeConfirm && ind.candleDown && ind.rsi > 25) {
-      return {
-        signal: 'short',
-        reason: `Breakout BB inferior · RSI=${ind.rsi?.toFixed(1)} · Vol=${(ind.volumeConfirm ? '✓' : '✗')} · vela↓`,
-        indicators: ind,
-      };
-    }
   }
 
+  // Saída de long quando preço regressa à linha central
   if (currentPosition === 'long' && ind.lastClose < ind.middle) {
-    return { signal: 'flip_to_short', reason: `Preço regressou à linha central BB — inversão SHORT`, indicators: ind };
-  }
-  if (currentPosition === 'short' && ind.lastClose > ind.middle) {
-    return { signal: 'flip_to_long', reason: `Preço regressou à linha central BB — inversão LONG`, indicators: ind };
+    return { signal: 'close_long', reason: `Preço regressou à linha central BB`, indicators: ind };
   }
 
   return {
