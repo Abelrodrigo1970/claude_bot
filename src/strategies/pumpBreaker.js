@@ -23,10 +23,6 @@ function calculateIndicators(candles) {
   const volRatio    = avgVolume > 0 ? lastVolume / avgVolume : 0;
   const volumeOk    = volRatio >= 0.7;
 
-  // Contexto de pump: RSI esteve acima de 65 nas últimas 8 velas
-  const recentRsi = rsiArr.slice(-8);
-  const hadPump   = recentRsi.some(r => r > 65);
-
   // Cruzamento RSI abaixo da signal line
   const rsiCrossDown = prevRsi >= prevSig && lastRsi < lastSig;
 
@@ -71,7 +67,7 @@ function generateSignal(candles, currentPosition = null) {
   // Entrada SHORT
   // Condições: preço > EMA200 1h + RSI cruza abaixo signal + volume >= 0.7x
   if (!currentPosition) {
-    if (ind.aboveEma200 && ind.hadPump && ind.rsiCrossDown && ind.volumeOk) {
+    if (ind.aboveEma200 && ind.rsiCrossDown && ind.volumeOk) {
       return {
         signal: 'short',
         reason: `EMA200=${ind.ema200.toFixed(4)} · RSI(${ind.rsi.toFixed(1)}) cruzou↓ Signal(${ind.rsiSignal.toFixed(1)}) · Vol=${ind.volRatio.toFixed(1)}x`,
@@ -82,10 +78,9 @@ function generateSignal(candles, currentPosition = null) {
 
   // Hold — indica o que falta
   const missing = [];
-  if (!ind.aboveEma200) missing.push(`preço abaixo EMA200(${ind.ema200.toFixed(4)})`);
-  if (!ind.hadPump)     missing.push('sem pump recente (RSI<65 nas últimas 8 velas)');
-  if (!ind.rsiCrossDown) missing.push(`RSI(${ind.rsi.toFixed(1)}) não cruzou abaixo signal(${ind.rsiSignal.toFixed(1)})`);
-  if (!ind.volumeOk)    missing.push(`Vol=${ind.volRatio.toFixed(1)}x<0.7`);
+  if (!ind.aboveEma200)   missing.push(`preço abaixo EMA200(${ind.ema200.toFixed(4)})`);
+  if (!ind.rsiCrossDown)  missing.push(`RSI(${ind.rsi.toFixed(1)}) não cruzou abaixo signal(${ind.rsiSignal.toFixed(1)})`);
+  if (!ind.volumeOk)      missing.push(`Vol=${ind.volRatio.toFixed(1)}x<0.7`);
 
   return {
     signal: 'hold',
