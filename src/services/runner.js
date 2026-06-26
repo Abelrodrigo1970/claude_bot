@@ -5,6 +5,7 @@ const trendSurfer   = require('../strategies/trendSurfer');
 const macdRider     = require('../strategies/macdRider');
 const bbBreaker     = require('../strategies/bbBreaker');
 const stochMomentum = require('../strategies/stochMomentum');
+const pumpBreaker   = require('../strategies/pumpBreaker');
 
 // Registry de estratégias ativas
 // scannerPeriod: se definido, os símbolos vêm do scanner em vez de fixos
@@ -42,6 +43,15 @@ const STRATEGIES = [
     scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: stochMomentum.generateSignal,
+    positionSize: 10,
+    enabled: true,
+  },
+  {
+    name: pumpBreaker.STRATEGY_NAME,
+    symbol: null,
+    scannerPeriod: 90,
+    timeframe: '1h',
+    generateSignal: pumpBreaker.generateSignal,
     positionSize: 10,
     enabled: true,
   },
