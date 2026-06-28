@@ -38,7 +38,6 @@ function calculateIndicators(candles) {
     ema200: lastEma200,
     volRatio,
     volumeOk,
-    hadPump,
     rsiCrossDown,
     rsiCrossUp,
     aboveEma200,
