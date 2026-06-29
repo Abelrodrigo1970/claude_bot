@@ -74,10 +74,20 @@ async function migrate() {
         scanned_at TIMESTAMP      NOT NULL DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS stock_symbols (
+        id           SERIAL PRIMARY KEY,
+        symbol       VARCHAR(50)  NOT NULL UNIQUE,  -- formato Bybit: AAPL/USDT:USDT
+        ticker       VARCHAR(20)  NOT NULL,          -- ticker curto: AAPL
+        category     VARCHAR(20)  DEFAULT 'stock',   -- stock | etf | index | metal | commodity
+        active       BOOLEAN      DEFAULT true,
+        created_at   TIMESTAMP    DEFAULT NOW()
+      );
+
       CREATE INDEX IF NOT EXISTS idx_trades_strategy    ON trades(strategy_name);
       CREATE INDEX IF NOT EXISTS idx_trades_status      ON trades(status);
       CREATE INDEX IF NOT EXISTS idx_signals_created    ON signals(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_period_time ON scanner_results(ema_period, scanned_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_stock_symbols_active ON stock_symbols(active);
     `);
     console.log('✅ Migration completed successfully');
   } catch (err) {
