@@ -129,6 +129,19 @@ app.post('/api/scanner/start', (req, res) => {
   res.json({ ok: true });
 });
 
+// GET para cron jobs externos — corre scanner EMA90 + estratégias
+app.get('/api/cron/run', async (req, res) => {
+  res.json({ ok: true, message: 'Ciclo iniciado', time: new Date() });
+  await startScan(90, 50);
+  await runAll();
+});
+
+// GET para cron jobs externos — só scanner EMA200
+app.get('/api/cron/scan200', (req, res) => {
+  res.json({ ok: true, message: 'Scanner EMA200 iniciado', time: new Date() });
+  startScan(200, 50);
+});
+
 // Estado atual do scan (polling)
 app.get('/api/scanner', (req, res) => {
   const period = parseInt(req.query.period) || 200;
@@ -185,13 +198,13 @@ if (fs.existsSync(buildPath)) {
 
 // ─── CRON JOBS ─────────────────────────────────────────────────
 
-// De 2 em 2 horas: scanner EMA90 → estratégias (00:05, 02:05, 04:05, ...)
-cron.schedule('5 */2 * * *', async () => {
-  console.log('\n⏰ Cron 2h: a correr scanner EMA90...');
+// A cada hora: scanner EMA90 (usa cache 2h) → estratégias
+cron.schedule('5 * * * *', async () => {
+  console.log('\n⏰ Cron 1h: a correr scanner EMA90...');
   await startScan(90, 50);
-  console.log('⏰ Cron 2h: scanner concluído — a executar estratégias...');
+  console.log('⏰ Cron 1h: scanner concluído — a executar estratégias...');
   await runAll();
-  console.log('⏰ Cron 2h: ciclo completo.');
+  console.log('⏰ Cron 1h: ciclo completo.');
 });
 
 // Diário às 00:05 UTC: scanner EMA200 (velas diárias frescas)
@@ -207,7 +220,7 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n🚀 Cripto Bot Server rodando na porta ${PORT}`);
   console.log(`📊 Estratégias ativas: ${STRATEGIES.filter(s => s.enabled).length}`);
-  console.log(`⏰ Ciclo automático: scanner EMA90 + estratégias de 2 em 2 horas\n`);
+  console.log(`⏰ Ciclo automático: scanner EMA90 + estratégias a cada hora\n`);
 
   // Executa ao arrancar
   setTimeout(runAll, 3000);
