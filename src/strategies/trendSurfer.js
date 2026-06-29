@@ -74,10 +74,10 @@ function generateSignal(candles, currentPosition = null) {
 
   // ENTRADA nova sem posição
   if (!currentPosition) {
-    if (ind.trend1h === 'bull' && ind.rsiLong && ind.volumeOk && ind.candleUp) {
+    if (ind.trend1h === 'bull' && ind.rsiLong && ind.volumeOk) {
       return {
         signal: 'long',
-        reason: `EMA12(${ind.ema12.toFixed(4)}) > EMA30(${ind.ema30.toFixed(4)}) · RSI=${ind.rsi.toFixed(1)} · Vol=${ind.volRatio.toFixed(1)}x · vela↑`,
+        reason: `EMA12(${ind.ema12.toFixed(4)}) > EMA30(${ind.ema30.toFixed(4)}) · RSI=${ind.rsi.toFixed(1)} · Vol=${ind.volRatio.toFixed(1)}x`,
         indicators: ind,
       };
     }
@@ -97,7 +97,6 @@ function generateSignal(candles, currentPosition = null) {
   if (ind.trend1h === 'bull') {
     if (!ind.rsiLong)  missing.push(`RSI=${ind.rsi.toFixed(1)} fora 40-68`);
     if (!ind.volumeOk) missing.push(`Vol=${ind.volRatio.toFixed(1)}x<0.7`);
-    if (!ind.candleUp) missing.push('vela não confirma ↑');
   } else {
     missing.push('tendência bear — scanner EMA90 garante uptrend, aguardar recuperação');
   }

@@ -55,10 +55,10 @@ function generateSignal(candles, currentPosition = null) {
 
   // Scanner EMA90 confirma uptrend diário → só LONG
   if (!currentPosition) {
-    if (ind.breakoutUp && ind.volumeConfirm && ind.candleUp && ind.rsi < 75) {
+    if (ind.breakoutUp && ind.volumeConfirm && ind.rsi < 75) {
       return {
         signal: 'long',
-        reason: `Breakout BB superior · RSI=${ind.rsi?.toFixed(1)} · Vol=${(ind.volumeConfirm ? '✓' : '✗')} · vela↑`,
+        reason: `Breakout BB superior · RSI=${ind.rsi?.toFixed(1)} · Vol=${(ind.volumeConfirm ? '✓' : '✗')}`,
         indicators: ind,
       };
     }
