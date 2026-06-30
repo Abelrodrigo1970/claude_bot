@@ -6,6 +6,7 @@ const macdRider     = require('../strategies/macdRider');
 const bbBreaker     = require('../strategies/bbBreaker');
 const pumpBreaker   = require('../strategies/pumpBreaker');
 const stockRSI      = require('../strategies/stockRSI');
+const stockSMA      = require('../strategies/stockSMA');
 
 // Registry de estratégias ativas
 // market: 'crypto' | 'stock'
@@ -55,9 +56,19 @@ const STRATEGIES = [
     name: stockRSI.STRATEGY_NAME,
     market: 'stock',
     symbol: null,
-    symbolSource: 'stocks',   // usa tabela stock_symbols
+    symbolSource: 'stocks',
     timeframe: '2h',
     generateSignal: stockRSI.generateSignal,
+    positionSize: 10,
+    enabled: true,
+  },
+  {
+    name: stockSMA.STRATEGY_NAME,
+    market: 'stock',
+    symbol: null,
+    symbolSource: 'stocks',
+    timeframe: '2h',
+    generateSignal: stockSMA.generateSignal,
     positionSize: 10,
     enabled: true,
   },

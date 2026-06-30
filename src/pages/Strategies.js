@@ -32,6 +32,12 @@ const STRATEGY_META = {
     difficulty: 'Easy',
     source: 'Custom',
   },
+  StockSMA: {
+    description: 'Estratégia para Stocks & ETFs no 2h. Usa a SMA(18) do RSI(14): entra LONG ou SHORT quando a SMA inverte direção com pelo menos 0.8 pontos de diferença.',
+    tags: ['RSI-SMA', 'inversão', 'stocks', 'ETF', 'long-short', '2h'],
+    difficulty: 'Easy',
+    source: 'Custom',
+  },
 };
 
 function DifficultyBadge({ level }) {
