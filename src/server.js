@@ -21,9 +21,12 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }
 app.get('/api/strategies', (req, res) => {
   res.json(STRATEGIES.map(s => ({
     name:          s.name,
+    market:        s.market || 'crypto',
     symbol:        s.symbol,
     scannerPeriod: s.scannerPeriod || null,
-    symbolCount:   s.scannerPeriod ? resolveSymbols(s).length : 1,
+    symbolSource:  s.symbolSource || null,
+    symbolCount:   s.symbolSource === 'stocks' ? resolveSymbols(s).length
+                 : s.scannerPeriod             ? resolveSymbols(s).length : 1,
     timeframe:     s.timeframe,
     enabled:       s.enabled,
   })));

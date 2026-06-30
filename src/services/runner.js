@@ -5,13 +5,16 @@ const trendSurfer   = require('../strategies/trendSurfer');
 const macdRider     = require('../strategies/macdRider');
 const bbBreaker     = require('../strategies/bbBreaker');
 const pumpBreaker   = require('../strategies/pumpBreaker');
+const stockRSI      = require('../strategies/stockRSI');
 
 // Registry de estratégias ativas
-// scannerPeriod: se definido, os símbolos vêm do scanner em vez de fixos
+// market: 'crypto' | 'stock'
+// symbolSource: 'scanner' (padrão) | 'stocks' (tabela stock_symbols)
 const STRATEGIES = [
   {
     name: trendSurfer.STRATEGY_NAME,
-    symbol: null,          // dinâmico — vem do scanner EMA90
+    market: 'crypto',
+    symbol: null,
     scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: trendSurfer.generateSignal,
@@ -20,6 +23,7 @@ const STRATEGIES = [
   },
   {
     name: macdRider.STRATEGY_NAME,
+    market: 'crypto',
     symbol: null,
     scannerPeriod: 90,
     timeframe: '4h',
@@ -29,6 +33,7 @@ const STRATEGIES = [
   },
   {
     name: bbBreaker.STRATEGY_NAME,
+    market: 'crypto',
     symbol: null,
     scannerPeriod: 90,
     timeframe: '1h',
@@ -38,10 +43,21 @@ const STRATEGIES = [
   },
   {
     name: pumpBreaker.STRATEGY_NAME,
+    market: 'crypto',
     symbol: null,
     scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: pumpBreaker.generateSignal,
+    positionSize: 10,
+    enabled: true,
+  },
+  {
+    name: stockRSI.STRATEGY_NAME,
+    market: 'stock',
+    symbol: null,
+    symbolSource: 'stocks',   // usa tabela stock_symbols
+    timeframe: '2h',
+    generateSignal: stockRSI.generateSignal,
     positionSize: 10,
     enabled: true,
   },
@@ -135,6 +151,19 @@ async function updateStats(strategyName, symbol, isWin) {
   } catch { /* BD não configurada */ }
 }
 
+// Cache de símbolos de stocks (carregados da BD)
+let stockSymbolsCache = [];
+
+async function loadStockSymbols() {
+  try {
+    const { rows } = await pool.query(
+      `SELECT symbol FROM stock_symbols WHERE active=true ORDER BY ticker`
+    );
+    stockSymbolsCache = rows.map(r => r.symbol);
+    if (stockSymbolsCache.length) console.log(`[Runner] ${stockSymbolsCache.length} stock symbols carregados`);
+  } catch { /* BD não disponível */ }
+}
+
 // Estado em memória das posições abertas: { 'TrendSurfer_BTC/USDT:USDT': { tradeId, side } }
 const openPositions = {};
 
@@ -146,7 +175,7 @@ function isOnCooldown(strategyName, symbol, signalType, timeframe) {
   const key = `${strategyName}_${symbol}_${signalType}`;
   const last = signalCooldown[key];
   if (!last) return false;
-  const tfMs = { '1h': 60, '4h': 240, '1d': 1440 }[timeframe] || 60;
+  const tfMs = { '1h': 60, '2h': 120, '4h': 240, '1d': 1440 }[timeframe] || 60;
   return (Date.now() - last) < tfMs * 60 * 1000;
 }
 
@@ -226,8 +255,9 @@ async function runStrategyOnSymbol(strategy, symbol) {
   }
 }
 
-// Resolve símbolos para uma estratégia (fixo ou dinâmico via scanner)
+// Resolve símbolos para uma estratégia
 function resolveSymbols(strategy) {
+  if (strategy.symbolSource === 'stocks') return stockSymbolsCache;
   if (!strategy.scannerPeriod) return [strategy.symbol];
   const scan = getScannerState(strategy.scannerPeriod);
   if (scan.status !== 'done' || !scan.results?.length) return [];
@@ -321,5 +351,6 @@ async function loadOpenPositions() {
 }
 
 setTimeout(loadOpenPositions, 5000);
+setTimeout(loadStockSymbols, 6000);
 
-module.exports = { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemorySignals };
+module.exports = { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemorySignals, loadStockSymbols };

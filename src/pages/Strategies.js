@@ -3,8 +3,8 @@ import axios from 'axios';
 
 const STRATEGY_META = {
   TrendSurfer: {
-    description: 'Surfa tendências usando 4 EMAs (12/30/80/200) com confirmação de volume e RSI. Inverte posição automaticamente no topo e fundo.',
-    tags: ['trend-following', 'EMA', 'RSI', 'volume', 'flip'],
+    description: 'Surfa tendências usando EMAs (12/30/80) com confirmação de RSI e volume. Só LONG — o scanner EMA90 garante uptrend diário.',
+    tags: ['trend-following', 'EMA', 'RSI', 'volume'],
     difficulty: 'Medium',
     source: 'Custom',
   },
@@ -15,15 +15,21 @@ const STRATEGY_META = {
     source: 'Custom',
   },
   BBBreaker: {
-    description: 'Detecta breakouts das Bandas de Bollinger após períodos de baixa volatilidade (squeeze). Entra quando o preço rompe a banda com confirmação de volume.',
-    tags: ['breakout', 'bollinger-bands', 'volatility', 'volume', 'squeeze'],
+    description: 'Detecta breakouts das Bandas de Bollinger após períodos de baixa volatilidade. Entra quando o preço rompe a banda superior com volume confirmado.',
+    tags: ['breakout', 'bollinger-bands', 'volatility', 'volume'],
     difficulty: 'Medium',
     source: 'Custom',
   },
-  StochMomentum: {
-    description: 'Combina o Estocástico (14,3) com EMAs de curto e médio prazo para entrar em reversões de momento em zonas de sobrecompra/sobrevenda com tendência favorável.',
-    tags: ['momentum', 'stochastic', 'mean-reversion', 'EMA', 'scalping'],
+  PumpBreaker: {
+    description: 'Caça reversões de pump (SHORT). Entra quando o preço está acima da EMA200 no 1h e o RSI cruza abaixo da sua signal line com volume mínimo.',
+    tags: ['reversal', 'RSI-cross', 'short', 'EMA200'],
     difficulty: 'Medium',
+    source: 'Custom',
+  },
+  StockRSI: {
+    description: 'Estratégia para Stocks & ETFs no 2h. Entra LONG ou SHORT quando o RSI(14) cruza a sua signal line (EMA9) com gap mínimo de 3 pontos.',
+    tags: ['RSI-cross', 'stocks', 'ETF', 'long-short', '2h'],
+    difficulty: 'Easy',
     source: 'Custom',
   },
 };
@@ -153,83 +159,107 @@ export default function Strategies() {
         </div>
       )}
 
-      <div className="strategies-list">
-        {strategies.map(s => {
-          const meta = STRATEGY_META[s.name] || {};
-          const st = stats[s.name] || {};
-          const winRate = parseFloat(st.win_rate || 0);
-          const totalPnl = parseFloat(st.total_pnl_calc || 0);
-          const totalTrades = parseInt(st.total_trades || 0);
-          const openTrades = parseInt(st.open_trades || 0);
-
-          return (
-            <div key={s.name} className={`strategy-card ${!s.enabled ? 'disabled' : ''}`}>
-              <div className="strategy-header">
-                <div className="strategy-title-row">
-                  <div className="strategy-name">{s.name}</div>
-                  <div className="strategy-badges">
-                    {meta.difficulty && <DifficultyBadge level={meta.difficulty} />}
-                    <span className={`badge ${s.enabled ? 'badge-open' : 'badge-closed'}`}>
-                      {s.enabled ? 'Ativa' : 'Inativa'}
-                    </span>
-                    {meta.source && <span className="badge badge-hold">{meta.source}</span>}
-                  </div>
-                </div>
-                <StarRating winRate={winRate} />
-              </div>
-
-              <p className="strategy-desc">{meta.description || 'Sem descrição.'}</p>
-
-              <div className="strategy-tags">
-                {(meta.tags || []).map(tag => (
-                  <span key={tag} className="tag">#{tag}</span>
-                ))}
-              </div>
-
-              <div className="strategy-meta-row">
-                <span className="meta-item">
-                  <span className="meta-label">Par</span>
-                  <span className="meta-value mono">
-                    {s.scannerPeriod
-                      ? <span className="green">TOP {s.symbolCount} · EMA{s.scannerPeriod}</span>
-                      : s.symbol?.split('/')[0]}
-                  </span>
-                </span>
-                <span className="meta-item">
-                  <span className="meta-label">Timeframe</span>
-                  <span className="meta-value mono">{s.timeframe}</span>
-                </span>
-                <span className="meta-item">
-                  <span className="meta-label">Trades</span>
-                  <span className="meta-value mono">{totalTrades}</span>
-                </span>
-                <span className="meta-item">
-                  <span className="meta-label">Win Rate</span>
-                  <span className={`meta-value mono ${winRate >= 50 ? 'green' : winRate > 0 ? 'red' : ''}`}>
-                    {totalTrades > 0 ? `${winRate.toFixed(1)}%` : '—'}
-                  </span>
-                </span>
-                <span className="meta-item">
-                  <span className="meta-label">PnL Total</span>
-                  <span className={`meta-value mono ${totalPnl >= 0 ? 'green' : 'red'}`}>
-                    {totalTrades > 0 ? `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(4)} USDT` : '—'}
-                  </span>
-                </span>
-                <span className="meta-item">
-                  <span className="meta-label">Abertas</span>
-                  <span className="meta-value mono blue">{openTrades}</span>
-                </span>
-              </div>
-
-              {s.scannerPeriod && s.symbolCount === 0 && (
-                <div className="scanner-warning">
-                  ⚠️ Corre o Scanner EMA{s.scannerPeriod} primeiro para carregar os símbolos.
-                </div>
-              )}
+      {['crypto', 'stock'].map(market => {
+        const group = strategies.filter(s => (s.market || 'crypto') === market);
+        if (!group.length) return null;
+        return (
+          <div key={market}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0 12px' }}>
+              <span style={{ fontSize: 18 }}>{market === 'crypto' ? '🪙' : '📈'}</span>
+              <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text)' }}>
+                {market === 'crypto' ? 'Cripto' : 'Stocks & ETFs'}
+              </span>
+              <span className="muted" style={{ fontSize: 12 }}>
+                {group.length} estratégia{group.length !== 1 ? 's' : ''}
+              </span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
             </div>
-          );
-        })}
-      </div>
+
+            <div className="strategies-list">
+              {group.map(s => {
+                const meta = STRATEGY_META[s.name] || {};
+                const st = stats[s.name] || {};
+                const winRate    = parseFloat(st.win_rate    || 0);
+                const totalPnl   = parseFloat(st.total_pnl_calc || 0);
+                const totalTrades = parseInt(st.total_trades || 0);
+                const openTrades  = parseInt(st.open_trades  || 0);
+
+                return (
+                  <div key={s.name} className={`strategy-card ${!s.enabled ? 'disabled' : ''}`}>
+                    <div className="strategy-header">
+                      <div className="strategy-title-row">
+                        <div className="strategy-name">{s.name}</div>
+                        <div className="strategy-badges">
+                          {meta.difficulty && <DifficultyBadge level={meta.difficulty} />}
+                          <span className={`badge ${s.enabled ? 'badge-open' : 'badge-closed'}`}>
+                            {s.enabled ? 'Ativa' : 'Inativa'}
+                          </span>
+                          {meta.source && <span className="badge badge-hold">{meta.source}</span>}
+                        </div>
+                      </div>
+                      <StarRating winRate={winRate} />
+                    </div>
+
+                    <p className="strategy-desc">{meta.description || 'Sem descrição.'}</p>
+
+                    <div className="strategy-tags">
+                      {(meta.tags || []).map(tag => (
+                        <span key={tag} className="tag">#{tag}</span>
+                      ))}
+                    </div>
+
+                    <div className="strategy-meta-row">
+                      <span className="meta-item">
+                        <span className="meta-label">Símbolos</span>
+                        <span className="meta-value mono">
+                          {s.symbolSource === 'stocks'
+                            ? <span className="blue">{s.symbolCount} stocks/ETFs</span>
+                            : s.scannerPeriod
+                              ? <span className="green">TOP {s.symbolCount} · EMA{s.scannerPeriod}</span>
+                              : s.symbol?.split('/')[0]}
+                        </span>
+                      </span>
+                      <span className="meta-item">
+                        <span className="meta-label">Timeframe</span>
+                        <span className="meta-value mono">{s.timeframe}</span>
+                      </span>
+                      <span className="meta-item">
+                        <span className="meta-label">Trades</span>
+                        <span className="meta-value mono">{totalTrades}</span>
+                      </span>
+                      <span className="meta-item">
+                        <span className="meta-label">Win Rate</span>
+                        <span className={`meta-value mono ${winRate >= 50 ? 'green' : winRate > 0 ? 'red' : ''}`}>
+                          {totalTrades > 0 ? `${winRate.toFixed(1)}%` : '—'}
+                        </span>
+                      </span>
+                      <span className="meta-item">
+                        <span className="meta-label">PnL Total</span>
+                        <span className={`meta-value mono ${totalPnl >= 0 ? 'green' : 'red'}`}>
+                          {totalTrades > 0 ? `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(4)} USDT` : '—'}
+                        </span>
+                      </span>
+                      <span className="meta-item">
+                        <span className="meta-label">Abertas</span>
+                        <span className="meta-value mono blue">{openTrades}</span>
+                      </span>
+                    </div>
+
+                    {s.symbolSource === 'stocks' && s.symbolCount === 0 && (
+                      <div className="scanner-warning">⚠️ Stock symbols não carregados ainda.</div>
+                    )}
+                    {s.scannerPeriod && s.symbolCount === 0 && (
+                      <div className="scanner-warning">
+                        ⚠️ Corre o Scanner EMA{s.scannerPeriod} primeiro para carregar os símbolos.
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
