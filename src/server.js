@@ -120,6 +120,42 @@ app.post('/api/run', async (req, res) => {
   }
 });
 
+// ─── STOCKS ────────────────────────────────────────────────────
+
+app.get('/api/stocks', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, symbol, ticker, category, active FROM stock_symbols WHERE active=true ORDER BY category, ticker`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/stocks/prices', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`SELECT symbol, ticker FROM stock_symbols WHERE active=true`);
+    const symbols = rows.map(r => r.symbol);
+    const { exchange } = require('./services/bybit');
+    const tickers = await exchange.fetchTickers(symbols);
+    const result = {};
+    for (const [sym, data] of Object.entries(tickers)) {
+      const ticker = sym.split('/')[0];
+      result[ticker] = {
+        price:     data.last,
+        change24h: data.percentage,
+        volume24h: data.quoteVolume,
+        high24h:   data.high,
+        low24h:    data.low,
+      };
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── SCANNER ───────────────────────────────────────────────────
 
 // Inicia scan (fire-and-forget) — ?period=200 ou ?period=90

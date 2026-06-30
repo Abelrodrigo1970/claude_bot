@@ -4,6 +4,7 @@ import Trades from './pages/Trades';
 import Signals from './pages/Signals';
 import Strategies from './pages/Strategies';
 import Scanner from './pages/Scanner';
+import Stocks from './pages/Stocks';
 import './App.css';
 
 const PAGES = [
@@ -12,6 +13,7 @@ const PAGES = [
   { id: 'scanner',     label: '🔍 Scanner' },
   { id: 'trades',      label: '📋 Trades' },
   { id: 'signals',     label: '📡 Sinais' },
+  { id: 'stocks',      label: '📈 Stocks' },
 ];
 
 function App() {
@@ -42,6 +44,7 @@ function App() {
         {page === 'scanner'    && <Scanner />}
         {page === 'trades'     && <Trades />}
         {page === 'signals'    && <Signals />}
+        {page === 'stocks'     && <Stocks />}
       </main>
     </div>
   );
