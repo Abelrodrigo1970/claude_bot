@@ -133,6 +133,31 @@ app.get('/api/stocks', async (req, res) => {
   }
 });
 
+app.get('/api/stocks/monthly', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`SELECT symbol, ticker FROM stock_symbols WHERE active=true`);
+    const { getCandles } = require('./services/bybit');
+    const result = {};
+    const chunks = [];
+    for (let i = 0; i < rows.length; i += 5) chunks.push(rows.slice(i, i + 5));
+    for (const chunk of chunks) {
+      await Promise.all(chunk.map(async ({ symbol, ticker }) => {
+        try {
+          const candles = await getCandles(symbol, '1d', 31);
+          if (candles.length >= 2) {
+            const current  = candles[candles.length - 1].close;
+            const monthAgo = candles[0].close;
+            result[ticker] = ((current - monthAgo) / monthAgo) * 100;
+          }
+        } catch { result[ticker] = null; }
+      }));
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/stocks/prices', async (req, res) => {
   try {
     const { rows } = await pool.query(`SELECT symbol, ticker FROM stock_symbols WHERE active=true`);

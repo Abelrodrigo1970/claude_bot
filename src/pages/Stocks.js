@@ -1,21 +1,22 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 
 const CATEGORY_LABELS = { stock: 'Stock', etf: 'ETF', index: 'Índice', metal: 'Metal', commodity: 'Commodity' };
 
-function pct(v) {
+function Pct({ v }) {
   if (v == null) return <span className="muted">—</span>;
   const n = parseFloat(v);
   const cls = n > 0 ? 'green' : n < 0 ? 'red' : 'muted';
   return <span className={cls}>{n > 0 ? '+' : ''}{n.toFixed(2)}%</span>;
 }
 
-function fmt(v, decimals = 4) {
+function fmt(v) {
   if (v == null) return '—';
   const n = parseFloat(v);
   if (n >= 1000) return n.toFixed(2);
   if (n >= 10)   return n.toFixed(3);
-  return n.toFixed(decimals);
+  if (n >= 1)    return n.toFixed(4);
+  return n.toFixed(5);
 }
 
 function fmtVol(v) {
@@ -27,14 +28,29 @@ function fmtVol(v) {
   return n.toFixed(0);
 }
 
+const COLUMNS = [
+  { key: 'ticker',    label: 'Ticker',      sortVal: s => s.ticker },
+  { key: 'category',  label: 'Categoria',   sortVal: s => s.category },
+  { key: 'price',     label: 'Preço',       sortVal: s => s.price ?? -Infinity },
+  { key: 'change24h', label: '24h %',       sortVal: s => s.change24h ?? -Infinity },
+  { key: 'monthly',   label: '30d %',       sortVal: s => s.monthly ?? -Infinity },
+  { key: 'high24h',   label: '24h High',    sortVal: s => s.high24h ?? -Infinity },
+  { key: 'low24h',    label: '24h Low',     sortVal: s => s.low24h ?? -Infinity },
+  { key: 'volume24h', label: 'Volume 24h',  sortVal: s => s.volume24h ?? -Infinity },
+];
+
 export default function Stocks() {
-  const [stocks, setStocks]       = useState([]);
-  const [prices, setPrices]       = useState({});
-  const [loading, setLoading]     = useState(true);
+  const [stocks,       setStocks]       = useState([]);
+  const [prices,       setPrices]       = useState({});
+  const [monthly,      setMonthly]      = useState({});
+  const [loading,      setLoading]      = useState(true);
   const [priceLoading, setPriceLoading] = useState(false);
-  const [filter, setFilter]       = useState('all');
-  const [search, setSearch]       = useState('');
-  const [lastUpdate, setLastUpdate] = useState(null);
+  const [monthLoading, setMonthLoading] = useState(false);
+  const [filter,       setFilter]       = useState('all');
+  const [search,       setSearch]       = useState('');
+  const [lastUpdate,   setLastUpdate]   = useState(null);
+  const [sortField,    setSortField]    = useState('ticker');
+  const [sortDir,      setSortDir]      = useState('asc');
 
   useEffect(() => {
     axios.get('/api/stocks')
@@ -52,22 +68,71 @@ export default function Stocks() {
     finally { setPriceLoading(false); }
   }, []);
 
+  const fetchMonthly = useCallback(async () => {
+    setMonthLoading(true);
+    try {
+      const { data } = await axios.get('/api/stocks/monthly');
+      setMonthly(data);
+    } catch {}
+    finally { setMonthLoading(false); }
+  }, []);
+
   useEffect(() => {
     fetchPrices();
+    fetchMonthly();
     const id = setInterval(fetchPrices, 30000);
     return () => clearInterval(id);
-  }, [fetchPrices]);
+  }, [fetchPrices, fetchMonthly]);
 
-  const categories = ['all', ...new Set(stocks.map(s => s.category))].sort();
+  function handleSort(key) {
+    if (sortField === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(key); setSortDir('asc'); }
+  }
 
-  const displayed = stocks.filter(s => {
-    if (filter !== 'all' && s.category !== filter) return false;
-    if (search && !s.ticker.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  function SortIcon({ col }) {
+    if (sortField !== col) return <span style={{ opacity: 0.25, marginLeft: 4 }}>↕</span>;
+    return <span style={{ marginLeft: 4, color: 'var(--blue)' }}>{sortDir === 'asc' ? '↑' : '↓'}</span>;
+  }
 
-  const tvUrl = (ticker) =>
-    `https://www.tradingview.com/chart/?symbol=BYBIT:${ticker}USDT.P`;
+  const categories = useMemo(
+    () => ['all', ...new Set(stocks.map(s => s.category))].sort(),
+    [stocks]
+  );
+
+  // Merge stocks + prices + monthly into flat rows
+  const rows = useMemo(() => stocks.map(s => {
+    const p = prices[s.ticker] || {};
+    return {
+      ...s,
+      price:     p.price     ?? null,
+      change24h: p.change24h ?? null,
+      high24h:   p.high24h   ?? null,
+      low24h:    p.low24h    ?? null,
+      volume24h: p.volume24h ?? null,
+      monthly:   monthly[s.ticker] ?? null,
+    };
+  }), [stocks, prices, monthly]);
+
+  const displayed = useMemo(() => {
+    const col = COLUMNS.find(c => c.key === sortField);
+    return rows
+      .filter(s => {
+        if (filter !== 'all' && s.category !== filter) return false;
+        if (search && !s.ticker.toLowerCase().includes(search.toLowerCase())) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const va = col ? col.sortVal(a) : a.ticker;
+        const vb = col ? col.sortVal(b) : b.ticker;
+        if (va < vb) return sortDir === 'asc' ? -1 : 1;
+        if (va > vb) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+  }, [rows, filter, search, sortField, sortDir]);
+
+  const tvUrl = ticker => `https://www.tradingview.com/chart/?symbol=BYBIT:${ticker}USDT.P`;
+
+  const thStyle = { cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' };
 
   return (
     <div>
@@ -75,13 +140,18 @@ export default function Stocks() {
         <div>
           <div className="page-title">Stocks & ETFs</div>
           <div className="page-sub">
-            {stocks.length} ativos · {lastUpdate ? `atualizado ${lastUpdate.toLocaleTimeString('pt-PT')}` : 'a carregar preços...'}
-            {priceLoading && <span className="muted"> · ...</span>}
+            {stocks.length} ativos · {lastUpdate ? `preços ${lastUpdate.toLocaleTimeString('pt-PT')}` : 'a carregar...'}
+            {(priceLoading || monthLoading) && <span className="muted"> · a atualizar...</span>}
           </div>
         </div>
-        <button className="btn-outline" onClick={fetchPrices} disabled={priceLoading}>
-          {priceLoading ? '⟳' : '↻'} Refresh
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-outline" onClick={fetchMonthly} disabled={monthLoading} title="Recalcular 30d %">
+            {monthLoading ? '⟳' : '↻'} 30d
+          </button>
+          <button className="btn-outline" onClick={fetchPrices} disabled={priceLoading} title="Atualizar preços">
+            {priceLoading ? '⟳' : '↻'} Preços
+          </button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -113,6 +183,7 @@ export default function Stocks() {
             fontSize: 13, outline: 'none', width: 160,
           }}
         />
+        <span className="muted" style={{ fontSize: 12 }}>{displayed.length} resultados</span>
       </div>
 
       <div className="card">
@@ -123,50 +194,46 @@ export default function Stocks() {
             <table>
               <thead>
                 <tr>
-                  <th>Ticker</th>
-                  <th>Categoria</th>
-                  <th>Preço (USDT)</th>
-                  <th>24h %</th>
-                  <th>24h High</th>
-                  <th>24h Low</th>
-                  <th>Volume 24h</th>
+                  {COLUMNS.map(col => (
+                    <th key={col.key} style={thStyle} onClick={() => handleSort(col.key)}>
+                      {col.label}<SortIcon col={col.key} />
+                    </th>
+                  ))}
                   <th>Chart</th>
                 </tr>
               </thead>
               <tbody>
-                {displayed.map(s => {
-                  const p = prices[s.ticker];
-                  return (
-                    <tr key={s.id}>
-                      <td style={{ color: 'var(--text)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
-                        {s.ticker}
-                      </td>
-                      <td>
-                        <span className="badge badge-hold" style={{ fontSize: 11 }}>
-                          {CATEGORY_LABELS[s.category] || s.category}
-                        </span>
-                      </td>
-                      <td style={{ fontFamily: 'var(--font-mono)' }}>
-                        {p ? fmt(p.price) : <span className="muted">—</span>}
-                      </td>
-                      <td>{pct(p?.change24h)}</td>
-                      <td className="muted">{p ? fmt(p.high24h) : '—'}</td>
-                      <td className="muted">{p ? fmt(p.low24h) : '—'}</td>
-                      <td className="muted">{p ? fmtVol(p.volume24h) : '—'}</td>
-                      <td>
-                        <a
-                          href={tvUrl(s.ticker)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="tv-link"
-                          title={`Ver ${s.ticker} no TradingView`}
-                        >
-                          📈
-                        </a>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {displayed.map(s => (
+                  <tr key={s.id}>
+                    <td style={{ color: 'var(--text)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                      {s.ticker}
+                    </td>
+                    <td>
+                      <span className="badge badge-hold" style={{ fontSize: 11 }}>
+                        {CATEGORY_LABELS[s.category] || s.category}
+                      </span>
+                    </td>
+                    <td style={{ fontFamily: 'var(--font-mono)' }}>
+                      {s.price != null ? fmt(s.price) : <span className="muted">—</span>}
+                    </td>
+                    <td><Pct v={s.change24h} /></td>
+                    <td><Pct v={s.monthly} /></td>
+                    <td className="muted">{s.high24h != null ? fmt(s.high24h) : '—'}</td>
+                    <td className="muted">{s.low24h  != null ? fmt(s.low24h)  : '—'}</td>
+                    <td className="muted">{fmtVol(s.volume24h)}</td>
+                    <td>
+                      <a
+                        href={tvUrl(s.ticker)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="tv-link"
+                        title={`Ver ${s.ticker} no TradingView`}
+                      >
+                        📈
+                      </a>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
