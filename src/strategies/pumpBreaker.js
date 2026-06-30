@@ -29,13 +29,15 @@ function calculateIndicators(candles) {
   // Cruzamento RSI acima da signal line (saída)
   const rsiCrossUp = prevRsi <= prevSig && lastRsi > lastSig;
 
-  // Preço acima da EMA200 no 1h
-  const aboveEma200 = lastClose > lastEma200;
+  // Preço pelo menos 20% acima da EMA200 no 1h
+  const pctAboveEma200 = lastEma200 > 0 ? ((lastClose - lastEma200) / lastEma200) * 100 : 0;
+  const aboveEma200    = pctAboveEma200 >= 20;
 
   return {
     rsi: lastRsi,
     rsiSignal: lastSig,
     ema200: lastEma200,
+    pctAboveEma200,
     volRatio,
     volumeOk,
     rsiCrossDown,
@@ -69,7 +71,7 @@ function generateSignal(candles, currentPosition = null) {
     if (ind.aboveEma200 && ind.rsiCrossDown && ind.volumeOk) {
       return {
         signal: 'short',
-        reason: `EMA200=${ind.ema200.toFixed(4)} · RSI(${ind.rsi.toFixed(1)}) cruzou↓ Signal(${ind.rsiSignal.toFixed(1)}) · Vol=${ind.volRatio.toFixed(1)}x`,
+        reason: `+${ind.pctAboveEma200.toFixed(1)}% acima EMA200 · RSI(${ind.rsi.toFixed(1)}) cruzou↓ Signal(${ind.rsiSignal.toFixed(1)}) · Vol=${ind.volRatio.toFixed(1)}x`,
         indicators: ind,
       };
     }
@@ -77,7 +79,7 @@ function generateSignal(candles, currentPosition = null) {
 
   // Hold — indica o que falta
   const missing = [];
-  if (!ind.aboveEma200)   missing.push(`preço abaixo EMA200(${ind.ema200.toFixed(4)})`);
+  if (!ind.aboveEma200)   missing.push(`preço apenas +${ind.pctAboveEma200.toFixed(1)}% acima EMA200 (mín 20%)`);
   if (!ind.rsiCrossDown)  missing.push(`RSI(${ind.rsi.toFixed(1)}) não cruzou abaixo signal(${ind.rsiSignal.toFixed(1)})`);
   if (!ind.volumeOk)      missing.push(`Vol=${ind.volRatio.toFixed(1)}x<0.7`);
 
