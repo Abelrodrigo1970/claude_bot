@@ -1,4 +1,4 @@
-const pool = require('../db/pool');
+﻿const pool = require('../db/pool');
 const bybit = require('./bybit');
 const { getState: getScannerState, startScan } = require('./scanner');
 const trendSurfer   = require('../strategies/trendSurfer');
@@ -67,6 +67,7 @@ const STRATEGIES = [
     market: 'stock',
     symbol: null,
     symbolSource: 'stocks',
+    symbolExclude: ['COIN', 'MSTR', 'HOOD'],
     timeframe: '2h',
     generateSignal: stockSMA.generateSignal,
     positionSize: 10,
@@ -277,10 +278,13 @@ function resolveSymbols(strategy) {
 
 async function runStrategy(strategy) {
   if (!strategy.enabled) return;
-  const symbols = resolveSymbols(strategy);
+  let symbols = resolveSymbols(strategy);
   if (!symbols.length) {
     console.log(`[${strategy.name}] Sem símbolos — corre o Scanner EMA${strategy.scannerPeriod} primeiro.`);
     return;
+  }
+  if (strategy.symbolExclude?.length) {
+    symbols = symbols.filter(s => !strategy.symbolExclude.includes(s.split('/')[0]));
   }
   for (const symbol of symbols) {
     await runStrategyOnSymbol(strategy, symbol);

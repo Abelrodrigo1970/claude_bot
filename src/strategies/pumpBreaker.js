@@ -6,9 +6,9 @@ function calculateIndicators(candles) {
   const closes  = candles.map(c => c.close);
   const volumes = candles.map(c => c.volume);
 
-  const ema200   = EMA.calculate({ period: 200, values: closes });
-  const rsiArr   = RSI.calculate({ period: 14, values: closes });
-  const rsiSignal = EMA.calculate({ period: 9, values: rsiArr }); // signal line do RSI
+  const ema200    = EMA.calculate({ period: 200, values: closes });
+  const rsiArr    = RSI.calculate({ period: 14, values: closes });
+  const rsiSignal = EMA.calculate({ period: 9, values: rsiArr });
 
   const lastEma200  = ema200[ema200.length - 1];
   const lastClose   = closes[closes.length - 1];
@@ -23,18 +23,19 @@ function calculateIndicators(candles) {
   const volRatio    = avgVolume > 0 ? lastVolume / avgVolume : 0;
   const volumeOk    = volRatio >= 0.7;
 
-  // Cruzamento RSI abaixo da signal line
   const rsiCrossDown = prevRsi >= prevSig && lastRsi < lastSig;
+  const rsiCrossUp   = prevRsi <= prevSig && lastRsi > lastSig;
 
-  // Cruzamento RSI acima da signal line (saída)
-  const rsiCrossUp = prevRsi <= prevSig && lastRsi > lastSig;
-
-  // Preço pelo menos 20% acima da EMA200 no 1h
   const pctAboveEma200 = lastEma200 > 0 ? ((lastClose - lastEma200) / lastEma200) * 100 : 0;
   const aboveEma200    = pctAboveEma200 >= 20;
 
+  // RSI devia estar em sobrecompra antes do cruzamento (prevRsi >= 60)
+  // Evita entradas com RSI ja muito baixo (ex: DYDX RSI=44.8, DBR RSI=40.2)
+  const rsiOverboughtBeforeCross = prevRsi >= 60;
+
   return {
     rsi: lastRsi,
+    prevRsi,
     rsiSignal: lastSig,
     ema200: lastEma200,
     pctAboveEma200,
@@ -43,45 +44,47 @@ function calculateIndicators(candles) {
     rsiCrossDown,
     rsiCrossUp,
     aboveEma200,
+    rsiOverboughtBeforeCross,
     price: lastClose,
   };
 }
 
 function generateSignal(candles, currentPosition = null) {
   if (candles.length < 225) {
-    return { signal: 'none', reason: 'Candles insuficientes (mínimo 225)', indicators: {} };
+    return { signal: 'none', reason: 'Candles insuficientes (minimo 225)', indicators: {} };
   }
 
   const ind = calculateIndicators(candles);
 
-  // Saída de posição short
+  // Saida de posicao short
   if (currentPosition === 'short') {
     if (ind.rsiCrossUp || ind.rsi < 30) {
       return {
         signal: 'close_short',
-        reason: `Saída short: RSI=${ind.rsi.toFixed(1)} cruzou acima signal ou oversold`,
+        reason: `Saida short: RSI=${ind.rsi.toFixed(1)} cruzou acima signal ou oversold`,
         indicators: ind,
       };
     }
   }
 
   // Entrada SHORT
-  // Condições: preço > EMA200 1h + RSI cruza abaixo signal + volume >= 0.7x
+  // Condicoes: preco >20% EMA200 + RSI cruza abaixo signal + RSI estava em sobrecompra (>=60) + volume >= 0.7x
   if (!currentPosition) {
-    if (ind.aboveEma200 && ind.rsiCrossDown && ind.volumeOk) {
+    if (ind.aboveEma200 && ind.rsiCrossDown && ind.rsiOverboughtBeforeCross && ind.volumeOk) {
       return {
         signal: 'short',
-        reason: `+${ind.pctAboveEma200.toFixed(1)}% acima EMA200 · RSI(${ind.rsi.toFixed(1)}) cruzou↓ Signal(${ind.rsiSignal.toFixed(1)}) · Vol=${ind.volRatio.toFixed(1)}x`,
+        reason: `+${ind.pctAboveEma200.toFixed(1)}% acima EMA200 · RSI(${ind.rsi.toFixed(1)}) cruzou abaixo Signal(${ind.rsiSignal.toFixed(1)}) · prevRSI=${ind.prevRsi.toFixed(1)} · Vol=${ind.volRatio.toFixed(1)}x`,
         indicators: ind,
       };
     }
   }
 
-  // Hold — indica o que falta
+  // Hold - indica o que falta
   const missing = [];
-  if (!ind.aboveEma200)   missing.push(`preço apenas +${ind.pctAboveEma200.toFixed(1)}% acima EMA200 (mín 20%)`);
-  if (!ind.rsiCrossDown)  missing.push(`RSI(${ind.rsi.toFixed(1)}) não cruzou abaixo signal(${ind.rsiSignal.toFixed(1)})`);
-  if (!ind.volumeOk)      missing.push(`Vol=${ind.volRatio.toFixed(1)}x<0.7`);
+  if (!ind.aboveEma200)                missing.push(`preco apenas +${ind.pctAboveEma200.toFixed(1)}% acima EMA200 (min 20%)`);
+  if (!ind.rsiCrossDown)               missing.push(`RSI(${ind.rsi.toFixed(1)}) nao cruzou abaixo signal(${ind.rsiSignal.toFixed(1)})`);
+  if (!ind.rsiOverboughtBeforeCross)   missing.push(`prevRSI=${ind.prevRsi.toFixed(1)}<60 (nao estava em sobrecompra)`);
+  if (!ind.volumeOk)                   missing.push(`Vol=${ind.volRatio.toFixed(1)}x<0.7`);
 
   return {
     signal: 'hold',

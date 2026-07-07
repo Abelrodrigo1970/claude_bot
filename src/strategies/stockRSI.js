@@ -2,7 +2,7 @@ const { RSI, EMA } = require('technicalindicators');
 
 const STRATEGY_NAME = 'StockRSI';
 const MIN_GAP    = 3;    // pontos mínimos entre RSI e signal line após cruzamento
-const MIN_VOL    = 0.5;  // volume mínimo vs média (filtro de liquidez)
+const MIN_VOL    = 0.7;  // volume mínimo vs média (filtro de liquidez)
 const RSI_SHORT_MIN = 60; // RSI mínimo para entrar SHORT (sobrecompra real)
 const RSI_LONG_MAX  = 45; // RSI máximo para entrar LONG (sobrevenda real)
 
