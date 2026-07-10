@@ -228,6 +228,174 @@ function ScannerPanel({ period }) {
   );
 }
 
+function GainersResultsTable({ results }) {
+  return (
+    <div className="card" style={{ padding: 0 }}>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Par</th>
+              <th>Preço</th>
+              <th>Var 24h</th>
+              <th>Volume 24h</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((r, i) => (
+              <tr key={r.symbol}>
+                <td className="muted">{i + 1}</td>
+                <td>
+                  <a
+                    className="symbol-link"
+                    href={`https://www.tradingview.com/chart/?symbol=BYBIT:${r.symbol.split('/')[0]}USDT.P`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Ver no TradingView"
+                  >
+                    <span className="symbol-name">{r.symbol.split('/')[0]}</span>
+                    <span className="symbol-suffix">/USDT</span>
+                    <span className="tv-icon">↗</span>
+                  </a>
+                </td>
+                <td className="mono">{fmt(r.price, 4)}</td>
+                <td className={`mono ${r.change24h >= 0 ? 'green' : 'red'}`}>
+                  {r.change24h >= 0 ? '+' : ''}{fmt(r.change24h)}%
+                </td>
+                <td className="mono muted">{fmtVol(r.volume)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function GainersHistoryPanel() {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [openIdx, setOpenIdx]   = useState(0);
+
+  useEffect(() => {
+    axios.get(`/api/scanner/gainers/history?sessions=10`)
+      .then(r => setSessions(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="loading"><div className="spinner" /></div>;
+  if (!sessions.length) return (
+    <div className="card"><div className="empty">Nenhum histórico ainda. Corre o scanner para começar a guardar.</div></div>
+  );
+
+  return (
+    <div>
+      {sessions.map((session, idx) => (
+        <div key={session.scanned_at} className="card" style={{ marginBottom: 12 }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+            onClick={() => setOpenIdx(openIdx === idx ? -1 : idx)}
+          >
+            <div>
+              <span style={{ fontWeight: 600, color: '#e2e8f0' }}>
+                {format(new Date(session.scanned_at), 'dd/MM/yyyy HH:mm')}
+              </span>
+              <span className="muted" style={{ marginLeft: 12, fontSize: 12 }}>
+                {session.results.length} pares
+              </span>
+            </div>
+            <span className="muted">{openIdx === idx ? '▲' : '▼'}</span>
+          </div>
+          {openIdx === idx && (
+            <div style={{ marginTop: 16 }}>
+              <GainersResultsTable results={session.results} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GainersPanel() {
+  const [view, setView]   = useState('scan');
+  const [state, setState] = useState({ status: 'idle', progress: 0, total: 0, results: [], scannedAt: null });
+  const pollRef = useRef(null);
+
+  const stopPolling = () => { clearInterval(pollRef.current); pollRef.current = null; };
+
+  const fetchState = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`/api/scanner/gainers`);
+      setState(data);
+      if (data.status !== 'scanning') stopPolling();
+    } catch { stopPolling(); }
+  }, []);
+
+  const startScan = async () => {
+    await axios.post(`/api/scanner/gainers/start?limit=6`);
+    setState(s => ({ ...s, status: 'scanning', progress: 0, results: [] }));
+    setView('scan');
+    stopPolling();
+    pollRef.current = setInterval(fetchState, 2000);
+  };
+
+  useEffect(() => {
+    fetchState();
+    return () => stopPolling();
+  }, [fetchState]);
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <div className="page-sub">
+            Top 6 maiores subidas nas últimas 24h · Top 250 por volume · atualiza a cada 2h
+            {state.scannedAt && (
+              <span className="scan-time"> · Scan: {new Date(state.scannedAt).toLocaleTimeString('pt-PT')}</span>
+            )}
+          </div>
+          <div className="scanner-tabs" style={{ marginTop: 10 }}>
+            <button className={`scanner-tab ${view === 'scan' ? 'active' : ''}`} onClick={() => setView('scan')}>
+              Atual
+            </button>
+            <button className={`scanner-tab ${view === 'history' ? 'active' : ''}`} onClick={() => setView('history')}>
+              Histórico
+            </button>
+          </div>
+        </div>
+        <button className="btn btn-primary" onClick={startScan} disabled={state.status === 'scanning'}>
+          {state.status === 'scanning' ? '⏳ A escanear...' : state.status === 'done' ? '🔄 Atualizar' : '🔍 Iniciar Scanner'}
+        </button>
+      </div>
+
+      {view === 'history' ? (
+        <GainersHistoryPanel />
+      ) : (
+        <>
+          {state.status === 'idle' && (
+            <div className="card">
+              <div className="empty">
+                Clica em <strong>Iniciar Scanner</strong> para ver as 6 moedas que mais subiram nas últimas 24h.
+              </div>
+            </div>
+          )}
+
+          {state.results?.length > 0 && (
+            <GainersResultsTable results={state.results} />
+          )}
+
+          {state.status === 'error' && (
+            <div className="card"><div className="empty red">Erro: {state.error}</div></div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Scanner() {
   const [tab, setTab] = useState(200);
 
@@ -247,9 +415,15 @@ export default function Scanner() {
             EMA {p}
           </button>
         ))}
+        <button
+          className={`scanner-tab ${tab === 'gainers24h' ? 'active' : ''}`}
+          onClick={() => setTab('gainers24h')}
+        >
+          Top 6 (24h)
+        </button>
       </div>
 
-      <ScannerPanel key={tab} period={tab} />
+      {tab === 'gainers24h' ? <GainersPanel key="gainers24h" /> : <ScannerPanel key={tab} period={tab} />}
     </div>
   );
 }

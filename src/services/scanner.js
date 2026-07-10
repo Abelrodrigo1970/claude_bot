@@ -108,4 +108,92 @@ function getState(period = 200) {
   return states[period] || states[200];
 }
 
-module.exports = { startScan, getState };
+// ─── SCANNER TOP GANHOS 24H ────────────────────────────────────
+// Ranking simples por variação de preço nas últimas 24h (não usa EMA).
+// Usa fetchTickers em lote — muito mais leve que os scanners EMA (1 pedido vs. ~250).
+
+let gainersState = { status: 'idle', progress: 0, total: 0, results: [], scannedAt: null, error: null };
+
+async function startScanGainers(limit = 6) {
+  if (gainersState.status === 'scanning') return;
+  if (gainersState.status === 'done' && gainersState.scannedAt && Date.now() - gainersState.scannedAt < CACHE_TTL) return;
+
+  gainersState = { ...gainersState, status: 'scanning', progress: 0, total: 0, results: [], error: null };
+
+  try {
+    const markets = await bybit.exchange.loadMarkets();
+
+    const perps = Object.values(markets)
+      .filter(m =>
+        m.linear &&
+        m.type === 'swap' && // exclui futuros datados — fetchTickers em lote exige o mesmo tipo
+        m.settle === 'USDT' &&
+        m.active &&
+        !m.symbol.includes('USDC')
+      )
+      .sort((a, b) => parseFloat(b.info.turnover24h || 0) - parseFloat(a.info.turnover24h || 0))
+      .slice(0, 250);
+
+    gainersState.total = perps.length;
+    console.log(`[Scanner Top24h] ${perps.length} pares elegíveis`);
+
+    const symbols = perps.map(m => m.symbol);
+    const tickers = await bybit.exchange.fetchTickers(symbols);
+    gainersState.progress = perps.length;
+
+    const results = perps
+      .map(m => {
+        const t = tickers[m.symbol];
+        if (!t || t.percentage == null || t.last == null) return null;
+        return {
+          symbol:    m.symbol,
+          price:     t.last,
+          change24h: t.percentage,
+          volume:    t.quoteVolume ?? (parseFloat(m.info.turnover24h) || 0),
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.change24h - a.change24h);
+
+    const top = results.slice(0, limit);
+    const scannedAt = new Date();
+
+    gainersState.results   = top;
+    gainersState.scannedAt = scannedAt.getTime();
+    gainersState.status    = 'done';
+
+    // Guarda no histórico da BD (silencioso se BD não estiver configurada)
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (let i = 0; i < top.length; i++) {
+          const r = top[i];
+          await client.query(
+            `INSERT INTO scanner_gainers (rank, symbol, price, change_24h, volume, scanned_at)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [i + 1, r.symbol, r.price, r.change24h, r.volume, scannedAt]
+          );
+        }
+        await client.query('COMMIT');
+        console.log(`[Scanner Top24h] ${top.length} resultados guardados na BD`);
+      } catch (dbErr) {
+        await client.query('ROLLBACK');
+        console.warn('[Scanner Top24h] Erro ao guardar no BD:', dbErr.message);
+      } finally {
+        client.release();
+      }
+    } catch {
+      // BD não configurada — continua sem guardar
+    }
+  } catch (err) {
+    gainersState.status = 'error';
+    gainersState.error  = err.message;
+  }
+}
+
+function getGainersState() {
+  return gainersState;
+}
+
+module.exports = { startScan, getState, startScanGainers, getGainersState };
