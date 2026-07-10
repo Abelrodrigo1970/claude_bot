@@ -123,6 +123,9 @@ async function startScanGainers(limit = 6) {
   try {
     const markets = await bybit.exchange.loadMarkets();
 
+    // Nota: m.info.turnover24h não existe nos dados de loadMarkets() (só no ticker),
+    // por isso não há como pré-filtrar por volume aqui sem primeiro pedir os tickers.
+    // A Bybit também não filtra por volume no ecrã "TOP" — ordena todos os perpétuos por % 24h.
     const perps = Object.values(markets)
       .filter(m =>
         m.linear &&
@@ -130,9 +133,7 @@ async function startScanGainers(limit = 6) {
         m.settle === 'USDT' &&
         m.active &&
         !m.symbol.includes('USDC')
-      )
-      .sort((a, b) => parseFloat(b.info.turnover24h || 0) - parseFloat(a.info.turnover24h || 0))
-      .slice(0, 250);
+      );
 
     gainersState.total = perps.length;
     console.log(`[Scanner Top24h] ${perps.length} pares elegíveis`);
@@ -149,7 +150,7 @@ async function startScanGainers(limit = 6) {
           symbol:    m.symbol,
           price:     t.last,
           change24h: t.percentage,
-          volume:    t.quoteVolume ?? (parseFloat(m.info.turnover24h) || 0),
+          volume:    t.quoteVolume ?? 0,
         };
       })
       .filter(Boolean)
