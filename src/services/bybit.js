@@ -37,9 +37,10 @@ async function getPosition(symbol) {
  * @param {string} symbol
  * @param {'buy'|'sell'} side
  * @param {number} amount - in contracts
+ * @param {object} [params] - extra ccxt params, ex: { stopLoss: '1.2345' } para anexar SL na abertura
  */
-async function placeMarketOrder(symbol, side, amount) {
-  return await exchange.createOrder(symbol, 'market', side, amount);
+async function placeMarketOrder(symbol, side, amount, params = {}) {
+  return await exchange.createOrder(symbol, 'market', side, amount, undefined, params);
 }
 
 /**

@@ -1,12 +1,14 @@
 ﻿const pool = require('../db/pool');
 const bybit = require('./bybit');
-const { getState: getScannerState, startScan } = require('./scanner');
-const trendSurfer   = require('../strategies/trendSurfer');
-const macdRider     = require('../strategies/macdRider');
-const bbBreaker     = require('../strategies/bbBreaker');
-const pumpBreaker   = require('../strategies/pumpBreaker');
-const stockRSI      = require('../strategies/stockRSI');
-const stockSMA      = require('../strategies/stockSMA');
+const { getState: getScannerState, startScan, getGainersState, startScanGainers } = require('./scanner');
+const trendSurfer         = require('../strategies/trendSurfer');
+const macdRider           = require('../strategies/macdRider');
+const bbBreaker           = require('../strategies/bbBreaker');
+const pumpBreaker         = require('../strategies/pumpBreaker');
+const stockRSI            = require('../strategies/stockRSI');
+const stockSMA            = require('../strategies/stockSMA');
+const candleBreakoutLong  = require('../strategies/candleBreakoutLong');
+const candleBreakoutShort = require('../strategies/candleBreakoutShort');
 
 // Registry de estratégias ativas
 // market: 'crypto' | 'stock'
@@ -71,6 +73,28 @@ const STRATEGIES = [
     timeframe: '2h',
     generateSignal: stockSMA.generateSignal,
     positionSize: 10,
+    enabled: true,
+  },
+  {
+    name: candleBreakoutLong.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'gainers24h',
+    timeframe: '15m',
+    generateSignal: candleBreakoutLong.generateSignal,
+    positionSize: 10,
+    stopLossPct: 0.05,
+    enabled: true,
+  },
+  {
+    name: candleBreakoutShort.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'gainers24h',
+    timeframe: '15m',
+    generateSignal: candleBreakoutShort.generateSignal,
+    positionSize: 10,
+    stopLossPct: 0.05,
     enabled: true,
   },
 ];
@@ -187,7 +211,7 @@ function isOnCooldown(strategyName, symbol, signalType, timeframe) {
   const key = `${strategyName}_${symbol}_${signalType}`;
   const last = signalCooldown[key];
   if (!last) return false;
-  const tfMs = { '1h': 60, '2h': 120, '4h': 240, '1d': 1440 }[timeframe] || 60;
+  const tfMs = { '15m': 15, '1h': 60, '2h': 120, '4h': 240, '1d': 1440 }[timeframe] || 60;
   return (Date.now() - last) < tfMs * 60 * 1000;
 }
 
@@ -226,13 +250,11 @@ async function runStrategyOnSymbol(strategy, symbol) {
         setCooldown(strategy.name, symbol, signal);
         await saveSignal(strategy.name, symbol, signal, currentPrice, strategy.timeframe, indicators);
 
-        // Regista posição imediatamente (paper trading — não depende da ordem API)
+        // Regista posição imediatamente (feedback rápido na UI — o bloco abaixo trata da ordem real)
         if (signal === 'long' || signal === 'flip_to_long') {
           openPositions[key] = { tradeId: null, side: 'long' };
         } else if (signal === 'short' || signal === 'flip_to_short') {
           openPositions[key] = { tradeId: null, side: 'short' };
-        } else if (signal === 'close_long' || signal === 'close_short') {
-          delete openPositions[key];
         }
       }
     } else {
@@ -245,8 +267,11 @@ async function runStrategyOnSymbol(strategy, symbol) {
         await closeTrade(openPositions[key].tradeId, currentPrice);
       }
       const qty = (strategy.positionSize / currentPrice).toFixed(4);
-      await bybit.placeMarketOrder(symbol, 'buy', parseFloat(qty));
-      const tradeId = await openTrade(strategy.name, symbol, 'long', currentPrice, qty, { reason });
+      const orderParams = strategy.stopLossPct
+        ? { stopLoss: (currentPrice * (1 - strategy.stopLossPct)).toFixed(8) }
+        : {};
+      await bybit.placeMarketOrder(symbol, 'buy', parseFloat(qty), orderParams);
+      const tradeId = await openTrade(strategy.name, symbol, 'long', currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
       openPositions[key] = { tradeId, side: 'long' };
     }
     else if (signal === 'short' || signal === 'flip_to_short') {
@@ -255,9 +280,19 @@ async function runStrategyOnSymbol(strategy, symbol) {
         await closeTrade(openPositions[key].tradeId, currentPrice);
       }
       const qty = (strategy.positionSize / currentPrice).toFixed(4);
-      await bybit.placeMarketOrder(symbol, 'sell', parseFloat(qty));
-      const tradeId = await openTrade(strategy.name, symbol, 'short', currentPrice, qty, { reason });
+      const orderParams = strategy.stopLossPct
+        ? { stopLoss: (currentPrice * (1 + strategy.stopLossPct)).toFixed(8) }
+        : {};
+      await bybit.placeMarketOrder(symbol, 'sell', parseFloat(qty), orderParams);
+      const tradeId = await openTrade(strategy.name, symbol, 'short', currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
       openPositions[key] = { tradeId, side: 'short' };
+    }
+    else if (signal === 'close_long' || signal === 'close_short') {
+      if (openPositions[key]?.tradeId) {
+        await bybit.closePosition(symbol);
+        await closeTrade(openPositions[key].tradeId, currentPrice);
+      }
+      delete openPositions[key];
     }
   } catch (err) {
     _counts.errors++;
@@ -270,17 +305,39 @@ async function runStrategyOnSymbol(strategy, symbol) {
 // Resolve símbolos para uma estratégia
 function resolveSymbols(strategy) {
   if (strategy.symbolSource === 'stocks') return stockSymbolsCache;
+  if (strategy.symbolSource === 'gainers24h') {
+    const scan = getGainersState();
+    if (scan.status !== 'done' || !scan.results?.length) return [];
+    return scan.results.map(r => r.symbol);
+  }
   if (!strategy.scannerPeriod) return [strategy.symbol];
   const scan = getScannerState(strategy.scannerPeriod);
   if (scan.status !== 'done' || !scan.results?.length) return [];
   return scan.results.map(r => r.symbol);
 }
 
+// Corre o scanner certo para uma estratégia, se ainda não tiver símbolos disponíveis
+async function ensureSymbols(strategy) {
+  if (resolveSymbols(strategy).length > 0) return;
+  if (strategy.scannerPeriod) {
+    await startScan(strategy.scannerPeriod, 50);
+  } else if (strategy.symbolSource === 'gainers24h') {
+    await startScanGainers(6);
+  }
+}
+
+function scannerLabel(strategy) {
+  if (strategy.scannerPeriod) return `Scanner EMA${strategy.scannerPeriod}`;
+  if (strategy.symbolSource === 'gainers24h') return 'Scanner Top 24h';
+  return 'Scanner';
+}
+
 async function runStrategy(strategy) {
   if (!strategy.enabled) return;
+  await ensureSymbols(strategy);
   let symbols = resolveSymbols(strategy);
   if (!symbols.length) {
-    console.log(`[${strategy.name}] Sem símbolos — corre o Scanner EMA${strategy.scannerPeriod} primeiro.`);
+    console.log(`[${strategy.name}] Sem símbolos — corre o ${scannerLabel(strategy)} primeiro.`);
     return;
   }
   if (strategy.symbolExclude?.length) {
@@ -300,15 +357,16 @@ async function runAll() {
   try {
     // Pré-passo: correr scanner automático para estratégias dinâmicas sem símbolos
     for (const strategy of STRATEGIES) {
-      if (!strategy.enabled || !strategy.scannerPeriod) continue;
+      if (!strategy.enabled || (!strategy.scannerPeriod && strategy.symbolSource !== 'gainers24h')) continue;
       if (resolveSymbols(strategy).length === 0) {
-        const msg = `🔍 Scanner EMA${strategy.scannerPeriod} não tem dados — a correr automaticamente (pode demorar ~1min)...`;
+        const label = scannerLabel(strategy);
+        const msg = `🔍 ${label} não tem dados — a correr automaticamente...`;
         runState.log.unshift(msg);
-        runState.phase = `scanner_ema${strategy.scannerPeriod}`;
+        runState.phase = `scanner_${strategy.scannerPeriod || 'gainers24h'}`;
         console.log(`[Runner] ${msg}`);
-        await startScan(strategy.scannerPeriod, 50);
+        await ensureSymbols(strategy);
         const n = resolveSymbols(strategy).length;
-        const doneMsg = `✅ Scanner EMA${strategy.scannerPeriod} concluído — ${n} símbolos carregados`;
+        const doneMsg = `✅ ${label} concluído — ${n} símbolos carregados`;
         runState.log.unshift(doneMsg);
         console.log(`[Runner] ${doneMsg}`);
       }

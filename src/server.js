@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 const pool = require('./db/pool');
-const { runAll, STRATEGIES, getRunState, resolveSymbols, getMemorySignals } = require('./services/runner');
+const { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemorySignals } = require('./services/runner');
 const { startScan, getState, startScanGainers, getGainersState } = require('./services/scanner');
 
 const app = express();
@@ -25,8 +25,7 @@ app.get('/api/strategies', (req, res) => {
     symbol:        s.symbol,
     scannerPeriod: s.scannerPeriod || null,
     symbolSource:  s.symbolSource || null,
-    symbolCount:   s.symbolSource === 'stocks' ? resolveSymbols(s).length
-                 : s.scannerPeriod             ? resolveSymbols(s).length : 1,
+    symbolCount:   (s.symbolSource || s.scannerPeriod) ? resolveSymbols(s).length : 1,
     timeframe:     s.timeframe,
     enabled:       s.enabled,
   })));
@@ -332,6 +331,15 @@ cron.schedule('15 */2 * * *', async () => {
   console.log('\n📈 Cron 2h: a correr scanner Top 6 (24h)...');
   await startScanGainers(6);
   console.log('📈 Cron 2h: scanner Top 6 (24h) concluído.');
+});
+
+// A cada 15 min: estratégias de 15m (CandleBreakoutLong/Short sobre o Top 6 24h)
+cron.schedule('*/15 * * * *', async () => {
+  const fastStrategies = STRATEGIES.filter(s => s.enabled && s.timeframe === '15m');
+  if (!fastStrategies.length) return;
+  console.log('\n⏱️  Cron 15m: a correr estratégias rápidas...');
+  for (const s of fastStrategies) await runStrategy(s);
+  console.log('⏱️  Cron 15m: concluído.');
 });
 
 // ─── START ──────────────────────────────────────────────────────
