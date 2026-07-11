@@ -83,7 +83,7 @@ const STRATEGIES = [
     timeframe: '15m',
     generateSignal: candleBreakoutLong.generateSignal,
     positionSize: 10,
-    stopLossPct: 0.05,
+    stopLossPct: 0.20,
     enabled: true,
   },
   {
@@ -94,7 +94,7 @@ const STRATEGIES = [
     timeframe: '15m',
     generateSignal: candleBreakoutShort.generateSignal,
     positionSize: 10,
-    stopLossPct: 0.05,
+    stopLossPct: 0.20,
     enabled: true,
   },
 ];
