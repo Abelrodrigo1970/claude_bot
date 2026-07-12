@@ -302,18 +302,37 @@ async function runStrategyOnSymbol(strategy, symbol) {
   }
 }
 
+// Símbolos com posição aberta numa estratégia (chave: "NomeEstrategia_simbolo")
+function symbolsWithOpenPositions(strategyName) {
+  const prefix = `${strategyName}_`;
+  return Object.keys(openPositions)
+    .filter(k => k.startsWith(prefix))
+    .map(k => k.slice(prefix.length));
+}
+
 // Resolve símbolos para uma estratégia
 function resolveSymbols(strategy) {
-  if (strategy.symbolSource === 'stocks') return stockSymbolsCache;
-  if (strategy.symbolSource === 'gainers24h') {
+  let symbols;
+  if (strategy.symbolSource === 'stocks') {
+    symbols = stockSymbolsCache;
+  } else if (strategy.symbolSource === 'gainers24h') {
     const scan = getGainersState();
-    if (scan.status !== 'done' || !scan.results?.length) return [];
-    return scan.results.map(r => r.symbol);
+    symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
+  } else if (!strategy.scannerPeriod) {
+    symbols = [strategy.symbol];
+  } else {
+    const scan = getScannerState(strategy.scannerPeriod);
+    symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
   }
-  if (!strategy.scannerPeriod) return [strategy.symbol];
-  const scan = getScannerState(strategy.scannerPeriod);
-  if (scan.status !== 'done' || !scan.results?.length) return [];
-  return scan.results.map(r => r.symbol);
+
+  // Garante que um símbolo com posição aberta continua a ser avaliado mesmo que
+  // tenha saído da lista do scanner — evita posições "órfãs" que nunca mais
+  // recebem sinal de saída (ver estudo de ranking das estratégias).
+  const openSymbols = symbolsWithOpenPositions(strategy.name);
+  if (openSymbols.length) {
+    symbols = [...new Set([...symbols, ...openSymbols])];
+  }
+  return symbols;
 }
 
 // Corre o scanner certo para uma estratégia, se ainda não tiver símbolos disponíveis
