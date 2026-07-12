@@ -396,6 +396,197 @@ function GainersPanel() {
   );
 }
 
+function EmaTrendResultsTable({ results }) {
+  return (
+    <div className="card" style={{ padding: 0 }}>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Par</th>
+              <th>Preço</th>
+              <th>EMA21 (1d)</th>
+              <th>EMA50 (1d)</th>
+              <th>EMA21 (1h)</th>
+              <th>EMA50 (1h)</th>
+              <th>Força média</th>
+              <th>Var 24h</th>
+              <th>Volume 24h</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((r, i) => (
+              <tr key={r.symbol}>
+                <td className="muted">{i + 1}</td>
+                <td>
+                  <a
+                    className="symbol-link"
+                    href={`https://www.tradingview.com/chart/?symbol=BYBIT:${r.symbol.split('/')[0]}USDT.P`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Ver no TradingView"
+                  >
+                    <span className="symbol-name">{r.symbol.split('/')[0]}</span>
+                    <span className="symbol-suffix">/USDT</span>
+                    <span className="tv-icon">↗</span>
+                  </a>
+                </td>
+                <td className="mono">{fmt(r.price, 4)}</td>
+                <td className="mono muted">{fmt(r.ema21_1d, 4)}</td>
+                <td className="mono muted">{fmt(r.ema50_1d, 4)}</td>
+                <td className="mono muted">{fmt(r.ema21_1h, 4)}</td>
+                <td className="mono muted">{fmt(r.ema50_1h, 4)}</td>
+                <td className="mono green">+{fmt(r.pctAbove ?? r.pct_above)}%</td>
+                <td className={`mono ${(r.change24h ?? r.change_24h) >= 0 ? 'green' : 'red'}`}>
+                  {(r.change24h ?? r.change_24h) == null ? '—' : `${(r.change24h ?? r.change_24h) >= 0 ? '+' : ''}${fmt(r.change24h ?? r.change_24h)}%`}
+                </td>
+                <td className="mono muted">{fmtVol(r.volume)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function EmaTrendHistoryPanel() {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [openIdx, setOpenIdx]   = useState(0);
+
+  useEffect(() => {
+    axios.get(`/api/scanner/ematrend/history?sessions=10`)
+      .then(r => setSessions(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="loading"><div className="spinner" /></div>;
+  if (!sessions.length) return (
+    <div className="card"><div className="empty">Nenhum histórico ainda. Corre o scanner para começar a guardar.</div></div>
+  );
+
+  return (
+    <div>
+      {sessions.map((session, idx) => (
+        <div key={session.scanned_at} className="card" style={{ marginBottom: 12 }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+            onClick={() => setOpenIdx(openIdx === idx ? -1 : idx)}
+          >
+            <div>
+              <span style={{ fontWeight: 600, color: '#e2e8f0' }}>
+                {format(new Date(session.scanned_at), 'dd/MM/yyyy HH:mm')}
+              </span>
+              <span className="muted" style={{ marginLeft: 12, fontSize: 12 }}>
+                {session.results.length} pares
+              </span>
+            </div>
+            <span className="muted">{openIdx === idx ? '▲' : '▼'}</span>
+          </div>
+          {openIdx === idx && (
+            <div style={{ marginTop: 16 }}>
+              <EmaTrendResultsTable results={session.results} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmaTrendPanel() {
+  const [view, setView]   = useState('scan');
+  const [state, setState] = useState({ status: 'idle', progress: 0, total: 0, results: [], scannedAt: null });
+  const pollRef = useRef(null);
+
+  const stopPolling = () => { clearInterval(pollRef.current); pollRef.current = null; };
+
+  const fetchState = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`/api/scanner/ematrend`);
+      setState(data);
+      if (data.status !== 'scanning') stopPolling();
+    } catch { stopPolling(); }
+  }, []);
+
+  const startScan = async () => {
+    await axios.post(`/api/scanner/ematrend/start?limit=50`);
+    setState(s => ({ ...s, status: 'scanning', progress: 0, results: [] }));
+    setView('scan');
+    stopPolling();
+    pollRef.current = setInterval(fetchState, 2000);
+  };
+
+  useEffect(() => {
+    fetchState();
+    return () => stopPolling();
+  }, [fetchState]);
+
+  const pct = state.total > 0 ? Math.round((state.progress / state.total) * 100) : 0;
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <div className="page-sub">
+            Preço acima da EMA21 e EMA50, no diário E no 1h · Top 250 por volume
+            {state.scannedAt && (
+              <span className="scan-time"> · Scan: {new Date(state.scannedAt).toLocaleTimeString('pt-PT')}</span>
+            )}
+          </div>
+          <div className="scanner-tabs" style={{ marginTop: 10 }}>
+            <button className={`scanner-tab ${view === 'scan' ? 'active' : ''}`} onClick={() => setView('scan')}>
+              Atual
+            </button>
+            <button className={`scanner-tab ${view === 'history' ? 'active' : ''}`} onClick={() => setView('history')}>
+              Histórico
+            </button>
+          </div>
+        </div>
+        <button className="btn btn-primary" onClick={startScan} disabled={state.status === 'scanning'}>
+          {state.status === 'scanning' ? '⏳ A escanear...' : state.status === 'done' ? '🔄 Atualizar' : '🔍 Iniciar Scanner'}
+        </button>
+      </div>
+
+      {view === 'history' ? (
+        <EmaTrendHistoryPanel />
+      ) : (
+        <>
+          {state.status === 'scanning' && (
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span className="muted">A analisar pares (diário + 1h)...</span>
+                <span className="mono muted">{state.progress}/{state.total} ({pct}%)</span>
+              </div>
+              <div className="progress-bar"><div className="progress-fill" style={{ width: `${pct}%` }} /></div>
+            </div>
+          )}
+
+          {state.status === 'idle' && (
+            <div className="card">
+              <div className="empty">
+                Clica em <strong>Iniciar Scanner</strong> para encontrar pares com preço acima da EMA21 e EMA50,
+                simultaneamente no diário e no 1h.
+              </div>
+            </div>
+          )}
+
+          {state.results?.length > 0 && (
+            <EmaTrendResultsTable results={state.results} />
+          )}
+
+          {state.status === 'error' && (
+            <div className="card"><div className="empty red">Erro: {state.error}</div></div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Scanner() {
   const [tab, setTab] = useState(200);
 
@@ -421,9 +612,17 @@ export default function Scanner() {
         >
           Top 6 (24h)
         </button>
+        <button
+          className={`scanner-tab ${tab === 'ematrend' ? 'active' : ''}`}
+          onClick={() => setTab('ematrend')}
+        >
+          EMA Trend (21/50)
+        </button>
       </div>
 
-      {tab === 'gainers24h' ? <GainersPanel key="gainers24h" /> : <ScannerPanel key={tab} period={tab} />}
+      {tab === 'gainers24h' ? <GainersPanel key="gainers24h" />
+        : tab === 'ematrend' ? <EmaTrendPanel key="ematrend" />
+        : <ScannerPanel key={tab} period={tab} />}
     </div>
   );
 }

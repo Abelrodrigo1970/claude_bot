@@ -197,4 +197,133 @@ function getGainersState() {
   return gainersState;
 }
 
-module.exports = { startScan, getState, startScanGainers, getGainersState };
+// ─── SCANNER EMA TREND (21/50, diário + 1h) ────────────────────
+// Só entram os pares em que o preço está acima da EMA21 E da EMA50,
+// tanto no diário como no 1h — 4 condições simultâneas.
+
+let emaTrendState = { status: 'idle', progress: 0, total: 0, results: [], scannedAt: null, error: null };
+
+async function startScanEmaTrend(limit = 50) {
+  if (emaTrendState.status === 'scanning') return;
+  if (emaTrendState.status === 'done' && emaTrendState.scannedAt && Date.now() - emaTrendState.scannedAt < CACHE_TTL) return;
+
+  emaTrendState = { ...emaTrendState, status: 'scanning', progress: 0, total: 0, results: [], error: null };
+
+  try {
+    const markets = await bybit.exchange.loadMarkets();
+
+    const perps = Object.values(markets).filter(m =>
+      m.linear &&
+      m.type === 'swap' &&
+      m.settle === 'USDT' &&
+      m.active &&
+      !m.symbol.includes('USDC')
+    );
+
+    // Ordena pelos pares com mais volume real (via ticker, loadMarkets não tem turnover24h)
+    let ranked = perps;
+    try {
+      const tickers = await bybit.exchange.fetchTickers(perps.map(m => m.symbol));
+      ranked = perps
+        .map(m => ({ market: m, volume: tickers[m.symbol]?.quoteVolume || 0, change24h: tickers[m.symbol]?.percentage ?? null }))
+        .sort((a, b) => b.volume - a.volume)
+        .slice(0, 250);
+    } catch {
+      ranked = perps.slice(0, 250).map(m => ({ market: m, volume: 0, change24h: null }));
+    }
+
+    console.log(`[Scanner EMATrend] ${ranked.length} pares elegíveis (top volume)`);
+    emaTrendState.total = ranked.length;
+
+    const needed = 50 + 10;
+    const results = [];
+
+    for (let i = 0; i < ranked.length; i++) {
+      emaTrendState.progress = i + 1;
+      const { market, volume, change24h } = ranked[i];
+
+      try {
+        const [daily, hourly] = await Promise.all([
+          bybit.getCandles(market.symbol, '1d', needed + 5),
+          bybit.getCandles(market.symbol, '1h', needed + 5),
+        ]);
+        if (daily.length < needed || hourly.length < needed) continue;
+
+        const closesD = daily.map(c => c.close);
+        const closesH = hourly.map(c => c.close);
+
+        const ema21D = EMA.calculate({ period: 21, values: closesD }).at(-1);
+        const ema50D = EMA.calculate({ period: 50, values: closesD }).at(-1);
+        const ema21H = EMA.calculate({ period: 21, values: closesH }).at(-1);
+        const ema50H = EMA.calculate({ period: 50, values: closesH }).at(-1);
+
+        const price = closesH[closesH.length - 1];
+
+        const passes = price > ema21D && price > ema50D && price > ema21H && price > ema50H;
+        if (!passes) continue;
+
+        const pctAbove = ((price - ema21D) / ema21D + (price - ema50D) / ema50D +
+                           (price - ema21H) / ema21H + (price - ema50H) / ema50H) / 4 * 100;
+
+        results.push({
+          symbol: market.symbol,
+          price,
+          ema21_1d: ema21D,
+          ema50_1d: ema50D,
+          ema21_1h: ema21H,
+          ema50_1h: ema50H,
+          pctAbove,
+          change24h,
+          volume,
+        });
+      } catch {
+        // par sem dados suficientes, ignorar
+      }
+    }
+
+    results.sort((a, b) => b.pctAbove - a.pctAbove);
+    const top = results.slice(0, limit);
+    const scannedAt = new Date();
+
+    emaTrendState.results   = top;
+    emaTrendState.scannedAt = scannedAt.getTime();
+    emaTrendState.status    = 'done';
+
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (let i = 0; i < top.length; i++) {
+          const r = top[i];
+          await client.query(
+            `INSERT INTO scanner_ema_trend (rank, symbol, price, ema21_1d, ema50_1d, ema21_1h, ema50_1h, pct_above, change_24h, volume, scanned_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+            [i + 1, r.symbol, r.price, r.ema21_1d, r.ema50_1d, r.ema21_1h, r.ema50_1h, r.pctAbove, r.change24h, r.volume, scannedAt]
+          );
+        }
+        await client.query('COMMIT');
+        console.log(`[Scanner EMATrend] ${top.length} resultados guardados na BD`);
+      } catch (dbErr) {
+        await client.query('ROLLBACK');
+        console.warn('[Scanner EMATrend] Erro ao guardar no BD:', dbErr.message);
+      } finally {
+        client.release();
+      }
+    } catch {
+      // BD não configurada — continua sem guardar
+    }
+  } catch (err) {
+    emaTrendState.status = 'error';
+    emaTrendState.error  = err.message;
+  }
+}
+
+function getEmaTrendState() {
+  return emaTrendState;
+}
+
+module.exports = {
+  startScan, getState,
+  startScanGainers, getGainersState,
+  startScanEmaTrend, getEmaTrendState,
+};
