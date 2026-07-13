@@ -9,6 +9,7 @@ const stockRSI            = require('../strategies/stockRSI');
 const stockSMA            = require('../strategies/stockSMA');
 const candleBreakoutLong  = require('../strategies/candleBreakoutLong');
 const candleBreakoutShort = require('../strategies/candleBreakoutShort');
+const ema90TopFade        = require('../strategies/ema90TopFade');
 
 // Registry de estratégias ativas
 // market: 'crypto' | 'stock'
@@ -95,6 +96,18 @@ const STRATEGIES = [
     generateSignal: candleBreakoutShort.generateSignal,
     positionSize: 10,
     stopLossPct: 0.20,
+    enabled: true,
+  },
+  {
+    name: ema90TopFade.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    scannerPeriod: 90,
+    timeframe: '1h',
+    generateSignal: ema90TopFade.generateSignal,
+    positionSize: 10,
+    // Sem SL de propósito — no estudo, qualquer SL fixo (5% a 20%) piorou o
+    // resultado desta estratégia (PF 3.98 sem SL vs. ≤0.79 com qualquer SL testado).
     enabled: true,
   },
 ];
@@ -230,7 +243,16 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const currentPrice = ticker.last;
     const currentPos   = openPositions[key]?.side || null;
 
-    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos);
+    // Rank atual do símbolo no scanner (1-indexed) — usado por estratégias que
+    // dependem da posição no ranking, não das velas (ex: EMA90TopFade).
+    let rank = null;
+    if (strategy.scannerPeriod) {
+      const scan = getScannerState(strategy.scannerPeriod);
+      const idx = scan.results?.findIndex(r => r.symbol === symbol) ?? -1;
+      rank = idx >= 0 ? idx + 1 : null;
+    }
+
+    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, { rank });
 
     const isAction = signal !== 'hold' && signal !== 'none';
     const icon = isAction ? '🔔' : '·';
