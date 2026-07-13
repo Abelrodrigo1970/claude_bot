@@ -54,7 +54,9 @@ export default function Signals() {
   useEffect(() => {
     const load = async () => {
       try {
-        const { data } = await axios.get('/api/signals?limit=500');
+        // limite alto de propósito — os filtros (datas, estratégia) correm no cliente
+        // sobre este conjunto, por isso precisa de cobrir o histórico todo, não só os mais recentes
+        const { data } = await axios.get('/api/signals?limit=5000');
         setSignals(data);
       } finally { setLoading(false); }
     };
