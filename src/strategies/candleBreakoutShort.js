@@ -37,7 +37,7 @@ function generateSignal(candles, currentPosition = null) {
     return { signal: 'close_short', reason: 'Vela atual inverteu acima das últimas 3', indicators: ind };
   }
 
-  return { signal: 'hold', reason: 'Short aberto — a aguardar reversão ou stop-loss (5%)', indicators: ind };
+  return { signal: 'hold', reason: 'Short aberto — a aguardar reversão ou stop-loss (20%)', indicators: ind };
 }
 
 module.exports = { STRATEGY_NAME, generateSignal, calculateIndicators };
