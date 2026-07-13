@@ -13,8 +13,17 @@ function calculateIndicators(candles) {
   return { c0, c1, c2, c3, breakoutUp, breakoutDown };
 }
 
+// Sessão europeia (08h-14h UTC) bloqueada para novas entradas — no estudo de
+// horários (13/07), foi consistentemente a pior janela tanto no Long (PF 0.33)
+// como no Short (PF 0.38), enquanto a sessão asiática (00h-08h UTC) teve PF 1.20.
+// Não bloqueia saídas — uma posição já aberta continua a poder fechar a qualquer hora.
+function isBlockedHour(candles) {
+  const hourUTC = candles[candles.length - 1].time.getUTCHours();
+  return hourUTC >= 8 && hourUTC < 14;
+}
+
 // SHORT quando a vela atual fecha abaixo das últimas 3 (inverso da CandleBreakoutLong).
-// Fecha se a vela inverter para cima ou pelo stop-loss de 5% anexado à ordem na Bybit.
+// Fecha se a vela inverter para cima ou pelo stop-loss de 20% anexado à ordem na Bybit.
 function generateSignal(candles, currentPosition = null) {
   if (candles.length < 5) {
     return { signal: 'none', reason: 'Candles insuficientes (mínimo 5)', indicators: {} };
@@ -23,6 +32,9 @@ function generateSignal(candles, currentPosition = null) {
   const ind = calculateIndicators(candles);
 
   if (!currentPosition) {
+    if (ind.breakoutDown && isBlockedHour(candles)) {
+      return { signal: 'hold', reason: 'Breakdown válido, mas sessão europeia (08h-14h UTC) bloqueada por estudo de horários', indicators: ind };
+    }
     if (ind.breakoutDown) {
       return {
         signal: 'short',
@@ -40,4 +52,4 @@ function generateSignal(candles, currentPosition = null) {
   return { signal: 'hold', reason: 'Short aberto — a aguardar reversão ou stop-loss (20%)', indicators: ind };
 }
 
-module.exports = { STRATEGY_NAME, generateSignal, calculateIndicators };
+module.exports = { STRATEGY_NAME, generateSignal, calculateIndicators, isBlockedHour };
