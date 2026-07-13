@@ -272,55 +272,61 @@ async function runStrategyOnSymbol(strategy, symbol) {
         setCooldown(strategy.name, symbol, signal);
         await saveSignal(strategy.name, symbol, signal, currentPrice, strategy.timeframe, indicators);
 
-        // Regista posição imediatamente (feedback rápido na UI — o bloco abaixo trata da ordem real)
         if (signal === 'long' || signal === 'flip_to_long') {
-          openPositions[key] = { tradeId: null, side: 'long' };
+          await openPosition(strategy, symbol, key, 'long', currentPrice, reason);
         } else if (signal === 'short' || signal === 'flip_to_short') {
-          openPositions[key] = { tradeId: null, side: 'short' };
+          await openPosition(strategy, symbol, key, 'short', currentPrice, reason);
+        } else if (signal === 'close_long' || signal === 'close_short') {
+          await closePositionFully(strategy, symbol, key, currentPrice);
         }
       }
     } else {
       _counts.holds++;
-    }
-
-    if (signal === 'long' || signal === 'flip_to_long') {
-      if (openPositions[key]?.tradeId) {
-        await bybit.closePosition(symbol);
-        await closeTrade(openPositions[key].tradeId, currentPrice);
-      }
-      const qty = (strategy.positionSize / currentPrice).toFixed(4);
-      const orderParams = strategy.stopLossPct
-        ? { stopLoss: (currentPrice * (1 - strategy.stopLossPct)).toFixed(8) }
-        : {};
-      await bybit.placeMarketOrder(symbol, 'buy', parseFloat(qty), orderParams);
-      const tradeId = await openTrade(strategy.name, symbol, 'long', currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
-      openPositions[key] = { tradeId, side: 'long' };
-    }
-    else if (signal === 'short' || signal === 'flip_to_short') {
-      if (openPositions[key]?.tradeId) {
-        await bybit.closePosition(symbol);
-        await closeTrade(openPositions[key].tradeId, currentPrice);
-      }
-      const qty = (strategy.positionSize / currentPrice).toFixed(4);
-      const orderParams = strategy.stopLossPct
-        ? { stopLoss: (currentPrice * (1 + strategy.stopLossPct)).toFixed(8) }
-        : {};
-      await bybit.placeMarketOrder(symbol, 'sell', parseFloat(qty), orderParams);
-      const tradeId = await openTrade(strategy.name, symbol, 'short', currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
-      openPositions[key] = { tradeId, side: 'short' };
-    }
-    else if (signal === 'close_long' || signal === 'close_short') {
-      if (openPositions[key]?.tradeId) {
-        await bybit.closePosition(symbol);
-        await closeTrade(openPositions[key].tradeId, currentPrice);
-      }
-      delete openPositions[key];
     }
   } catch (err) {
     _counts.errors++;
     const errLine = `❌ [${symbol.split('/')[0]}] Erro: ${err.message}`;
     runState.log.unshift(errLine);
     console.error(`[${strategy.name}] ${errLine}`);
+  }
+}
+
+// Grava a posição na BD e em memória assim que o sinal dispara — não espera
+// pela ordem real na exchange. Sem isto, um restart do servidor perde o
+// estado (só vive em memória) e reabre posições que já tinham sido "abertas"
+// antes, disparando sinais de entrada duplicados (ver EMA90TopFade 13/07).
+async function openPosition(strategy, symbol, key, side, currentPrice, reason) {
+  if (openPositions[key]?.tradeId) {
+    await tryClosePositionOnExchange(strategy, symbol);
+    await closeTrade(openPositions[key].tradeId, currentPrice);
+  }
+  const qty = (strategy.positionSize / currentPrice).toFixed(4);
+  const tradeId = await openTrade(strategy.name, symbol, side, currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
+  openPositions[key] = { tradeId, side };
+
+  const orderParams = strategy.stopLossPct
+    ? { stopLoss: (currentPrice * (side === 'long' ? 1 - strategy.stopLossPct : 1 + strategy.stopLossPct)).toFixed(8) }
+    : {};
+  try {
+    await bybit.placeMarketOrder(symbol, side === 'long' ? 'buy' : 'sell', parseFloat(qty), orderParams);
+  } catch (err) {
+    console.warn(`[${strategy.name}] Ordem real falhou para ${symbol} (posição já ficou registada na BD, sem execução na Bybit): ${err.message}`);
+  }
+}
+
+async function closePositionFully(strategy, symbol, key, currentPrice) {
+  if (openPositions[key]?.tradeId) {
+    await tryClosePositionOnExchange(strategy, symbol);
+    await closeTrade(openPositions[key].tradeId, currentPrice);
+  }
+  delete openPositions[key];
+}
+
+async function tryClosePositionOnExchange(strategy, symbol) {
+  try {
+    await bybit.closePosition(symbol);
+  } catch (err) {
+    console.warn(`[${strategy.name}] Fecho real falhou para ${symbol} (BD atualizada na mesma): ${err.message}`);
   }
 }
 
