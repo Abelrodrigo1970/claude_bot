@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 const pool = require('./db/pool');
-const { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemorySignals } = require('./services/runner');
+const { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemorySignals, setStrategyEnabled } = require('./services/runner');
 const {
   startScan, getState,
   startScanGainers, getGainersState,
@@ -33,6 +33,18 @@ app.get('/api/strategies', (req, res) => {
     timeframe:     s.timeframe,
     enabled:       s.enabled,
   })));
+});
+
+// Liga/desliga uma estratégia (persistido — sobrevive a reinicios/deploys)
+app.post('/api/strategies/:name/toggle', async (req, res) => {
+  try {
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled deve ser boolean' });
+    const strategy = await setStrategyEnabled(req.params.name, enabled);
+    res.json({ name: strategy.name, enabled: strategy.enabled });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // Estado da execução em curso (para progresso na UI)

@@ -471,7 +471,47 @@ async function loadOpenPositions() {
   } catch { /* BD ainda não disponível */ }
 }
 
+// Liga/desliga estratégias (persistido em BD — sobrevive a reinicios/deploys).
+// A tabela é criada aqui em vez de só no migrate.js para não depender de
+// correr a migration manualmente depois do deploy.
+async function loadStrategySettings() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS strategy_settings (
+        strategy_name VARCHAR(100) PRIMARY KEY,
+        enabled       BOOLEAN      NOT NULL DEFAULT true,
+        updated_at    TIMESTAMP    DEFAULT NOW()
+      )
+    `);
+    const { rows } = await pool.query('SELECT strategy_name, enabled FROM strategy_settings');
+    rows.forEach(r => {
+      const strategy = STRATEGIES.find(s => s.name === r.strategy_name);
+      if (strategy) strategy.enabled = r.enabled;
+    });
+    if (rows.length) console.log(`[Runner] ${rows.length} estados de estratégia carregados da BD`);
+  } catch { /* BD ainda não disponível */ }
+}
+
+async function setStrategyEnabled(strategyName, enabled) {
+  const strategy = STRATEGIES.find(s => s.name === strategyName);
+  if (!strategy) throw new Error(`Estratégia desconhecida: ${strategyName}`);
+  strategy.enabled = enabled;
+  try {
+    await pool.query(
+      `INSERT INTO strategy_settings (strategy_name, enabled, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (strategy_name) DO UPDATE SET enabled = $2, updated_at = NOW()`,
+      [strategyName, enabled]
+    );
+  } catch (err) {
+    // Sem BD, o toggle continua a valer em memória (não persiste a reinicios)
+    console.warn(`[Runner] Não consegui persistir enabled=${enabled} para ${strategyName}: ${err.message}`);
+  }
+  return strategy;
+}
+
 setTimeout(loadOpenPositions, 5000);
 setTimeout(loadStockSymbols, 6000);
+setTimeout(loadStrategySettings, 5000);
 
-module.exports = { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemorySignals, loadStockSymbols };
+module.exports = { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemorySignals, loadStockSymbols, setStrategyEnabled };

@@ -95,6 +95,17 @@ export default function Strategies() {
 
   useEffect(() => { load(); }, [load]);
 
+  const handleToggle = async (name, currentlyEnabled) => {
+    const nextEnabled = !currentlyEnabled;
+    setStrategies(prev => prev.map(s => (s.name === name ? { ...s, enabled: nextEnabled } : s)));
+    try {
+      await axios.post(`/api/strategies/${name}/toggle`, { enabled: nextEnabled });
+    } catch (e) {
+      console.error('Erro ao ligar/desligar estratégia:', e);
+      setStrategies(prev => prev.map(s => (s.name === name ? { ...s, enabled: currentlyEnabled } : s)));
+    }
+  };
+
   const handleRun = async () => {
     if (runState.running) return;
     axios.post('/api/run'); // fire-and-forget
@@ -197,9 +208,15 @@ export default function Strategies() {
                         <div className="strategy-name">{s.name}</div>
                         <div className="strategy-badges">
                           {meta.difficulty && <DifficultyBadge level={meta.difficulty} />}
-                          <span className={`badge ${s.enabled ? 'badge-open' : 'badge-closed'}`}>
+                          <button
+                            type="button"
+                            className={`badge-toggle ${s.enabled ? 'badge-open' : 'badge-closed'}`}
+                            onClick={() => handleToggle(s.name, s.enabled)}
+                            title={s.enabled ? 'Clica para parar esta estratégia' : 'Clica para retomar esta estratégia'}
+                          >
+                            <span className="badge-toggle-dot" />
                             {s.enabled ? 'Ativa' : 'Inativa'}
-                          </span>
+                          </button>
                           {meta.source && <span className="badge badge-hold">{meta.source}</span>}
                         </div>
                       </div>

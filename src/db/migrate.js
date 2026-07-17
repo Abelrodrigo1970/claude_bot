@@ -99,6 +99,12 @@ async function migrate() {
         scanned_at TIMESTAMP      NOT NULL DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS strategy_settings (
+        strategy_name VARCHAR(100) PRIMARY KEY,
+        enabled       BOOLEAN      NOT NULL DEFAULT true,
+        updated_at    TIMESTAMP    DEFAULT NOW()
+      );
+
       CREATE TABLE IF NOT EXISTS stock_symbols (
         id           SERIAL PRIMARY KEY,
         symbol       VARCHAR(50)  NOT NULL UNIQUE,  -- formato Bybit: AAPL/USDT:USDT

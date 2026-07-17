@@ -132,6 +132,28 @@ body {
 .badge-flip { background: rgba(167,139,250,0.15); color: var(--purple); }
 .badge-hold { background: rgba(100,116,139,0.1); color: var(--muted); }
 
+.badge-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px 2px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+.badge-toggle:hover { opacity: 0.85; border-color: currentColor; }
+.badge-toggle-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 /* TABLE */
 .table-wrap { overflow-x: auto; }
 
