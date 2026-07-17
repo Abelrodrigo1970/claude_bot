@@ -74,6 +74,7 @@ const STRATEGIES = [
     timeframe: '2h',
     generateSignal: stockSMA.generateSignal,
     positionSize: 10,
+    stopLossPct: 0.05,
     enabled: true,
   },
   {
