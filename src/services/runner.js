@@ -73,7 +73,7 @@ const STRATEGIES = [
     symbolExclude: ['COIN', 'MSTR', 'HOOD'],
     timeframe: '2h',
     generateSignal: stockSMA.generateSignal,
-    positionSize: 10,
+    positionSize: 50,
     stopLossPct: 0.05,
     enabled: true,
   },
