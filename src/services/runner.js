@@ -82,6 +82,7 @@ const STRATEGIES = [
     market: 'crypto',
     symbol: null,
     symbolSource: 'gainers24h',
+    topN: 3, // só os 3 maiores gainers do Top 6 (o resto do universo é ainda mais fino/ilíquido)
     timeframe: '15m',
     generateSignal: candleBreakoutLong.generateSignal,
     positionSize: 10,
@@ -354,6 +355,8 @@ function resolveSymbols(strategy) {
   } else if (strategy.symbolSource === 'gainers24h') {
     const scan = getGainersState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
+    // results já vem ordenado por change24h desc — topN restringe ao ranking de topo
+    if (strategy.topN) symbols = symbols.slice(0, strategy.topN);
   } else if (!strategy.scannerPeriod) {
     symbols = [strategy.symbol];
   } else {
