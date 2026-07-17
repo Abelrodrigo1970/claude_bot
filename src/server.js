@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 const pool = require('./db/pool');
+const bybit = require('./services/bybit');
 const { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemorySignals, setStrategyEnabled } = require('./services/runner');
 const {
   startScan, getState,
@@ -123,6 +124,31 @@ app.get('/api/pnl/daily', async (req, res) => {
       ORDER BY date ASC
     `);
     res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// TEMPORÁRIO — teste manual de ligação à Bybit (ordem real). Remover depois
+// de confirmar que as API keys da sub-conta estão a funcionar.
+app.post('/api/manual-order', async (req, res) => {
+  try {
+    const { symbol, side, amountUsdt } = req.body;
+    if (!symbol || !['buy', 'sell'].includes(side) || !amountUsdt) {
+      return res.status(400).json({ error: 'symbol, side (buy|sell) e amountUsdt são obrigatórios' });
+    }
+    const ticker = await bybit.getTicker(symbol);
+    const qty = parseFloat((amountUsdt / ticker.last).toFixed(4));
+    const order = await bybit.placeMarketOrder(symbol, side, qty);
+
+    const tradeSide = side === 'buy' ? 'long' : 'short';
+    const { rows } = await pool.query(
+      `INSERT INTO trades (strategy_name, symbol, side, entry_price, quantity, status, metadata)
+       VALUES ('Manual', $1, $2, $3, $4, 'open', $5) RETURNING id`,
+      [symbol, tradeSide, ticker.last, qty, { reason: 'Ordem manual de teste' }]
+    );
+
+    res.json({ ok: true, symbol, side, qty, price: ticker.last, tradeId: rows[0]?.id, orderId: order?.id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
