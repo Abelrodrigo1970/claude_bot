@@ -202,7 +202,7 @@ export default function Strategies() {
                 const openTrades  = parseInt(st.open_trades  || 0);
 
                 return (
-                  <div key={s.name} className={`strategy-card ${!s.enabled ? 'disabled' : ''}`}>
+                  <div key={s.name} className="strategy-card">
                     <div className="strategy-header">
                       <div className="strategy-title-row">
                         <div className="strategy-name">{s.name}</div>
@@ -212,10 +212,12 @@ export default function Strategies() {
                             type="button"
                             className={`badge-toggle ${s.enabled ? 'badge-open' : 'badge-closed'}`}
                             onClick={() => handleToggle(s.name, s.enabled)}
-                            title={s.enabled ? 'Clica para parar esta estratégia' : 'Clica para retomar esta estratégia'}
+                            title={s.enabled
+                              ? 'Bybit ligado — clica para desligar as ordens reais (continua a gerar sinais e trades de estudo)'
+                              : 'Só estudo — clica para ligar as ordens reais na Bybit'}
                           >
                             <span className="badge-toggle-dot" />
-                            {s.enabled ? 'Ativa' : 'Inativa'}
+                            {s.enabled ? 'Bybit ON' : 'Só estudo'}
                           </button>
                           {meta.source && <span className="badge badge-hold">{meta.source}</span>}
                         </div>

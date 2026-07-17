@@ -296,6 +296,10 @@ async function runStrategyOnSymbol(strategy, symbol) {
 // pela ordem real na exchange. Sem isto, um restart do servidor perde o
 // estado (só vive em memória) e reabre posições que já tinham sido "abertas"
 // antes, disparando sinais de entrada duplicados (ver EMA90TopFade 13/07).
+//
+// strategy.enabled controla só a ordem REAL na Bybit — os sinais e o
+// registo de trades "de papel" na BD (para stats/estudo) acontecem sempre,
+// esteja a estratégia ligada à Bybit ou não.
 async function openPosition(strategy, symbol, key, side, currentPrice, reason) {
   if (openPositions[key]?.tradeId) {
     await tryClosePositionOnExchange(strategy, symbol);
@@ -304,6 +308,8 @@ async function openPosition(strategy, symbol, key, side, currentPrice, reason) {
   const qty = (strategy.positionSize / currentPrice).toFixed(4);
   const tradeId = await openTrade(strategy.name, symbol, side, currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
   openPositions[key] = { tradeId, side };
+
+  if (!strategy.enabled) return; // Bybit desligado — fica só na simulação/estudo
 
   const orderParams = strategy.stopLossPct
     ? { stopLoss: (currentPrice * (side === 'long' ? 1 - strategy.stopLossPct : 1 + strategy.stopLossPct)).toFixed(8) }
@@ -324,6 +330,7 @@ async function closePositionFully(strategy, symbol, key, currentPrice) {
 }
 
 async function tryClosePositionOnExchange(strategy, symbol) {
+  if (!strategy.enabled) return; // Bybit desligado — nada para fechar na exchange
   try {
     await bybit.closePosition(symbol);
   } catch (err) {
@@ -380,8 +387,10 @@ function scannerLabel(strategy) {
   return 'Scanner';
 }
 
+// Corre sempre, mesmo com strategy.enabled=false (Bybit desligado) — sinais e
+// trades "de papel" continuam a ser gerados/registados para estudo. Ver
+// openPosition/tryClosePositionOnExchange para onde o enabled é respeitado.
 async function runStrategy(strategy) {
-  if (!strategy.enabled) return;
   await ensureSymbols(strategy);
   let symbols = resolveSymbols(strategy);
   if (!symbols.length) {
@@ -404,8 +413,9 @@ async function runAll() {
   let totalAnalyzed = 0;
   try {
     // Pré-passo: correr scanner automático para estratégias dinâmicas sem símbolos
+    // (corre para todas, mesmo com Bybit desligado — sinais/estudo continuam)
     for (const strategy of STRATEGIES) {
-      if (!strategy.enabled || (!strategy.scannerPeriod && strategy.symbolSource !== 'gainers24h')) continue;
+      if (!strategy.scannerPeriod && strategy.symbolSource !== 'gainers24h') continue;
       if (resolveSymbols(strategy).length === 0) {
         const label = scannerLabel(strategy);
         const msg = `🔍 ${label} não tem dados — a correr automaticamente...`;
@@ -423,7 +433,6 @@ async function runAll() {
     runState.phase = 'running';
 
     for (const strategy of STRATEGIES) {
-      if (!strategy.enabled) continue;
       const symbols = resolveSymbols(strategy);
 
       if (!symbols.length) {

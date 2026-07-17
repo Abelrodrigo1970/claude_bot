@@ -407,7 +407,7 @@ cron.schedule('15 */2 * * *', async () => {
 
 // A cada 15 min: estratégias de 15m (CandleBreakoutLong/Short sobre o Top 6 24h)
 cron.schedule('*/15 * * * *', async () => {
-  const fastStrategies = STRATEGIES.filter(s => s.enabled && s.timeframe === '15m');
+  const fastStrategies = STRATEGIES.filter(s => s.timeframe === '15m');
   if (!fastStrategies.length) return;
   console.log('\n⏱️  Cron 15m: a correr estratégias rápidas...');
   for (const s of fastStrategies) await runStrategy(s);
@@ -419,7 +419,7 @@ cron.schedule('*/15 * * * *', async () => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n🚀 Cripto Bot Server rodando na porta ${PORT}`);
-  console.log(`📊 Estratégias ativas: ${STRATEGIES.filter(s => s.enabled).length}`);
+  console.log(`📊 Estratégias com trading real na Bybit: ${STRATEGIES.filter(s => s.enabled).length}/${STRATEGIES.length}`);
   console.log(`⏰ Ciclo automático: scanner EMA90 + estratégias a cada hora\n`);
 
   // Executa ao arrancar

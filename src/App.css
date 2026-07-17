@@ -252,7 +252,6 @@ tr:hover td { background: var(--bg3); }
 }
 
 .strategy-card:hover { border-color: var(--green); }
-.strategy-card.disabled { opacity: 0.5; }
 
 .strategy-header {
   display: flex;
