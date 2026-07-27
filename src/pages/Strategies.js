@@ -38,6 +38,12 @@ const STRATEGY_META = {
     difficulty: 'Easy',
     source: 'Custom',
   },
+  StochMomentum: {
+    description: 'Cruzamento do Stochastic (%K/%D) em zona extrema, confirmado por RSI, volume e direção da vela. LONG em oversold + cruzamento para cima, SHORT em overbought + cruzamento para baixo.',
+    tags: ['stochastic', 'RSI', 'momentum', 'long-short'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
 };
 
 function DifficultyBadge({ level }) {

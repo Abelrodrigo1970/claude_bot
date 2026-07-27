@@ -10,6 +10,7 @@ const stockSMA            = require('../strategies/stockSMA');
 const candleBreakoutLong  = require('../strategies/candleBreakoutLong');
 const candleBreakoutShort = require('../strategies/candleBreakoutShort');
 const ema90TopFade        = require('../strategies/ema90TopFade');
+const stochMomentum       = require('../strategies/stochMomentum');
 
 // Registry de estratégias ativas
 // market: 'crypto' | 'stock'
@@ -111,6 +112,18 @@ const STRATEGIES = [
     // Sem SL de propósito — no estudo, qualquer SL fixo (5% a 20%) piorou o
     // resultado desta estratégia (PF 3.98 sem SL vs. ≤0.79 com qualquer SL testado).
     enabled: true,
+  },
+  {
+    name: stochMomentum.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    scannerPeriod: 90,
+    timeframe: '1h',
+    generateSignal: stochMomentum.generateSignal,
+    positionSize: 10,
+    // Nunca tinha corrido antes (não estava registada) — arranca só em estudo
+    // até haver dados de desempenho reais antes de ligar ordens na Bybit.
+    enabled: false,
   },
 ];
 
