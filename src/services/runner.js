@@ -11,6 +11,7 @@ const candleBreakoutLong  = require('../strategies/candleBreakoutLong');
 const candleBreakoutShort = require('../strategies/candleBreakoutShort');
 const ema90TopFade        = require('../strategies/ema90TopFade');
 const stochMomentum       = require('../strategies/stochMomentum');
+const cloEmaFlip          = require('../strategies/cloEmaFlip');
 
 // Registry de estratégias ativas
 // market: 'crypto' | 'stock'
@@ -146,6 +147,18 @@ const STRATEGIES = [
     positionSize: 10,
     // Nunca tinha corrido antes (não estava registada) — arranca só em estudo
     // até haver dados de desempenho reais antes de ligar ordens na Bybit.
+    enabled: false,
+  },
+  {
+    name: cloEmaFlip.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: 'CLO/USDT:USDT',
+    timeframe: '1h',
+    generateSignal: cloEmaFlip.generateSignal,
+    positionSize: 10,
+    // Sem SL — não foi pedido. Está sempre posicionada (long ou short), a
+    // inverter quando a EMA12 cruza 1% para o outro lado da EMA80. Nunca
+    // corrida nem testada antes — arranca só em estudo.
     enabled: false,
   },
 ];

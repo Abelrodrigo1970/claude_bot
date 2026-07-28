@@ -50,6 +50,12 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
+  CLOEmaFlip: {
+    description: 'Só CLO/USDT, no 1h. Sempre posicionada: LONG quando a EMA12 está 1%+ acima da EMA80, SHORT quando está 1%+ abaixo — inverte diretamente quando o spread cruza para o outro lado.',
+    tags: ['EMA-spread', 'single-symbol', 'always-in', '1h'],
+    difficulty: 'Easy',
+    source: 'Custom',
+  },
 };
 
 function DifficultyBadge({ level }) {
