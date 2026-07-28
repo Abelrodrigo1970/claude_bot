@@ -109,8 +109,13 @@ const STRATEGIES = [
     timeframe: '1h',
     generateSignal: ema90TopFade.generateSignal,
     positionSize: 10,
-    // Sem SL de propósito — no estudo, qualquer SL fixo (5% a 20%) piorou o
-    // resultado desta estratégia (PF 3.98 sem SL vs. ≤0.79 com qualquer SL testado).
+    stopLossPct: 0.26,
+    // Backtest intracandle (139 trades fechados, 27/07) confirma que qualquer SL
+    // piora o resultado agregado — a 26% ainda corta 5 trades que atingem essa
+    // excursão contra a posição, 3 dos quais teriam recuperado para +8.7%/+11.3%/+18.7%
+    // (total simulado +394% vs. +556% sem SL). Ligado mesmo assim agora que a
+    // estratégia está com ordens reais — o SL aqui é para limitar a perda máxima
+    // por posição, não para melhorar o retorno esperado.
     enabled: true,
   },
   {
