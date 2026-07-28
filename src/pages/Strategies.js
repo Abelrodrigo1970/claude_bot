@@ -44,6 +44,12 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
+  GainerRSIFade: {
+    description: 'Lógica da StockRSI (RSI14 x EMA9(RSI), gap mínimo de 3 pontos) aplicada ao universo do Top 6 ganhos 24h em 15m. Na prática, quase só SHORT — vende o cruzamento de RSI vindo de sobrecompra nos maiores gainers do dia.',
+    tags: ['RSI-cross', 'gainers24h', 'fade', '15m'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
 };
 
 function DifficultyBadge({ level }) {

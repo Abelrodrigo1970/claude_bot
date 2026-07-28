@@ -102,6 +102,24 @@ const STRATEGIES = [
     enabled: true,
   },
   {
+    name: 'GainerRSIFade',
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'gainers24h',
+    timeframe: '15m',
+    // Reaproveita a lógica exata da StockRSI (RSI14 x EMA9(RSI), gap>=3, RSI
+    // extremo) sobre o universo do Top 6 ganhos 24h. Backtest sobre 125
+    // símbolos/18 dias: 86 trades, WR 40.7%, +1.07%/trade — quase só SHORT
+    // (83/86), estável nas duas metades cronológicas do período. Sem SL hits
+    // no backtest, mas mantém 20% como rede de segurança (igual ao CandleBreakout).
+    generateSignal: stockRSI.generateSignal,
+    positionSize: 10,
+    stopLossPct: 0.20,
+    // Nunca correu de facto sobre este universo (só em backtest) — arranca em
+    // estudo até acumular trades reais antes de ligar ordens na Bybit.
+    enabled: false,
+  },
+  {
     name: ema90TopFade.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
