@@ -3,7 +3,7 @@ const { EMA } = require('technicalindicators');
 const STRATEGY_NAME = 'CLOEmaFlip';
 const EMA_FAST = 12;
 const EMA_SLOW = 80;
-const THRESHOLD_PCT = 1; // % de distância entre as EMAs para disparar entrada/inversão
+const THRESHOLD_PCT = 0.5; // % de distância entre as EMAs para disparar entrada/inversão
 
 function calculateIndicators(candles) {
   const closes = candles.map(c => c.close);
@@ -25,9 +25,9 @@ function calculateIndicators(candles) {
   };
 }
 
-// Sempre posicionada: LONG quando EMA12 está >=1% acima da EMA80, SHORT quando
-// está >=1% abaixo. Entre -1% e +1% é zona neutra — não abre nem fecha, só
-// mantém o que já estiver aberto até o spread decidir claramente um lado.
+// Sempre posicionada: LONG quando EMA12 está >=THRESHOLD_PCT acima da EMA80,
+// SHORT quando está >=THRESHOLD_PCT abaixo. Dentro da zona neutra não abre
+// nem fecha, só mantém o que já estiver aberto até o spread decidir um lado.
 function generateSignal(candles, currentPosition = null) {
   if (candles.length < EMA_SLOW + 5) {
     return { signal: 'none', reason: `Candles insuficientes (mínimo ${EMA_SLOW + 5})`, indicators: {} };
