@@ -6,7 +6,6 @@ const trendSurfer         = require('../strategies/trendSurfer');
 // GainerRSIFade reaproveita a sua generateSignal (ver mais abaixo).
 const stockRSI            = require('../strategies/stockRSI');
 const stockSMA            = require('../strategies/stockSMA');
-const candleBreakoutLong  = require('../strategies/candleBreakoutLong');
 const candleBreakoutShort = require('../strategies/candleBreakoutShort');
 const ema90TopFade        = require('../strategies/ema90TopFade');
 const stochMomentum       = require('../strategies/stochMomentum');
@@ -39,18 +38,6 @@ const STRATEGIES = [
     enabled: true,
   },
   {
-    name: candleBreakoutLong.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    symbolSource: 'gainers24h',
-    topN: 3, // só os 3 maiores gainers do Top 6 (o resto do universo é ainda mais fino/ilíquido)
-    timeframe: '15m',
-    generateSignal: candleBreakoutLong.generateSignal,
-    positionSize: 10,
-    stopLossPct: 0.20,
-    enabled: true,
-  },
-  {
     name: candleBreakoutShort.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
@@ -59,6 +46,10 @@ const STRATEGIES = [
     generateSignal: candleBreakoutShort.generateSignal,
     positionSize: 10,
     stopLossPct: 0.07,
+    // CandleBreakoutLong foi removida do registry, mas fica o nome aqui à mesma
+    // (string, não import) — se ainda houver alguma posição antiga dela em
+    // aberto na BD para este símbolo, o Short fecha-a antes de entrar.
+    closesPositionsOf: ['CandleBreakoutLong'],
     enabled: true,
   },
   {
@@ -381,6 +372,24 @@ async function openPosition(strategy, symbol, key, side, currentPrice, reason) {
     await tryClosePositionOnExchange(strategy, symbol);
     await closeTrade(openPositions[key].tradeId, currentPrice);
   }
+
+  // Fecha primeiro posições de outras estratégias configuradas em
+  // closesPositionsOf, no mesmo símbolo — evita ficar comprado e vendido ao
+  // mesmo tempo via duas estratégias diferentes (ex: CandleBreakoutShort
+  // fecha uma posição aberta da CandleBreakoutLong antes de entrar).
+  if (strategy.closesPositionsOf?.length) {
+    for (const otherName of strategy.closesPositionsOf) {
+      const otherKey = `${otherName}_${symbol}`;
+      if (!openPositions[otherKey]?.tradeId) continue;
+      const otherStrategy = STRATEGIES.find(s => s.name === otherName);
+      if (!otherStrategy) continue;
+      const logLine = `⚠️ [${symbol.split('/')[0]}] ${strategy.name} fecha posição aberta da ${otherName} antes de entrar`;
+      runState.log.unshift(logLine);
+      console.log(`[${strategy.name}] ${logLine}`);
+      await closePositionFully(otherStrategy, symbol, otherKey, currentPrice);
+    }
+  }
+
   const qty = (strategy.positionSize / currentPrice).toFixed(4);
   const tradeId = await openTrade(strategy.name, symbol, side, currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
   openPositions[key] = { tradeId, side, entryPrice: currentPrice, qty: parseFloat(qty), tpTaken: false };
