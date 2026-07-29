@@ -17,11 +17,14 @@ async function migrate() {
         quantity DECIMAL(20,8) NOT NULL,
         pnl DECIMAL(20,8),
         pnl_pct DECIMAL(10,4),
+        fee DECIMAL(20,8) DEFAULT 0,
         status VARCHAR(20) DEFAULT 'open',   -- 'open' | 'closed' | 'cancelled'
         opened_at TIMESTAMP DEFAULT NOW(),
         closed_at TIMESTAMP,
         metadata JSONB DEFAULT '{}'
       );
+
+      ALTER TABLE trades ADD COLUMN IF NOT EXISTS fee DECIMAL(20,8) DEFAULT 0;
 
       CREATE TABLE IF NOT EXISTS signals (
         id SERIAL PRIMARY KEY,

@@ -11,6 +11,10 @@ const ema90TopFade        = require('../strategies/ema90TopFade');
 const stochMomentum       = require('../strategies/stochMomentum');
 const cloEmaFlip          = require('../strategies/cloEmaFlip');
 
+// Taxa taker da Bybit (USDT perpetuals, ordens market) — aplicada dos dois
+// lados (entrada+saída) para que o PnL registado fique líquido de comissão.
+const TAKER_FEE_RATE = 0.00055;
+
 // Registry de estratégias ativas
 // market: 'crypto' | 'stock'
 // symbolSource: 'scanner' (padrão) | 'stocks' (tabela stock_symbols)
@@ -189,15 +193,19 @@ async function closeTrade(tradeId, exitPrice) {
     const { rows } = await pool.query('SELECT * FROM trades WHERE id = $1', [tradeId]);
     if (!rows.length) return;
     const trade = rows[0];
-    const pnl = trade.side === 'long'
-      ? (exitPrice - trade.entry_price) * trade.quantity
-      : (trade.entry_price - exitPrice) * trade.quantity;
+    const entryPrice = parseFloat(trade.entry_price);
+    const qty = parseFloat(trade.quantity);
+    const grossPnl = trade.side === 'long'
+      ? (exitPrice - entryPrice) * qty
+      : (entryPrice - exitPrice) * qty;
+    const fee = (entryPrice * qty + exitPrice * qty) * TAKER_FEE_RATE;
+    const pnl = grossPnl - fee;
     const pnlPct = trade.side === 'long'
-      ? ((exitPrice - trade.entry_price) / trade.entry_price) * 100
-      : ((trade.entry_price - exitPrice) / trade.entry_price) * 100;
+      ? ((exitPrice - entryPrice) / entryPrice) * 100
+      : ((entryPrice - exitPrice) / entryPrice) * 100;
     await pool.query(
-      `UPDATE trades SET exit_price=$1, pnl=$2, pnl_pct=$3, status='closed', closed_at=NOW() WHERE id=$4`,
-      [exitPrice, pnl, pnlPct, tradeId]
+      `UPDATE trades SET exit_price=$1, pnl=$2, pnl_pct=$3, fee=$4, status='closed', closed_at=NOW() WHERE id=$5`,
+      [exitPrice, pnl, pnlPct, fee, tradeId]
     );
     await updateStats(trade.strategy_name, trade.symbol, pnl > 0);
   } catch { /* BD não configurada */ }
@@ -214,18 +222,21 @@ async function partialCloseTrade(tradeId, exitPrice, closeFraction) {
     const fullQty = parseFloat(trade.quantity);
     const closeQty = fullQty * closeFraction;
     const remainingQty = fullQty - closeQty;
+    const entryPrice = parseFloat(trade.entry_price);
 
-    const pnl = trade.side === 'long'
-      ? (exitPrice - trade.entry_price) * closeQty
-      : (trade.entry_price - exitPrice) * closeQty;
+    const grossPnl = trade.side === 'long'
+      ? (exitPrice - entryPrice) * closeQty
+      : (entryPrice - exitPrice) * closeQty;
+    const fee = (entryPrice * closeQty + exitPrice * closeQty) * TAKER_FEE_RATE;
+    const pnl = grossPnl - fee;
     const pnlPct = trade.side === 'long'
-      ? ((exitPrice - trade.entry_price) / trade.entry_price) * 100
-      : ((trade.entry_price - exitPrice) / trade.entry_price) * 100;
+      ? ((exitPrice - entryPrice) / entryPrice) * 100
+      : ((entryPrice - exitPrice) / entryPrice) * 100;
 
     await pool.query(
-      `INSERT INTO trades (strategy_name, symbol, side, entry_price, exit_price, quantity, pnl, pnl_pct, status, metadata, opened_at, closed_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'closed',$9,$10,NOW())`,
-      [trade.strategy_name, trade.symbol, trade.side, trade.entry_price, exitPrice, closeQty, pnl, pnlPct,
+      `INSERT INTO trades (strategy_name, symbol, side, entry_price, exit_price, quantity, pnl, pnl_pct, fee, status, metadata, opened_at, closed_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'closed',$10,$11,NOW())`,
+      [trade.strategy_name, trade.symbol, trade.side, trade.entry_price, exitPrice, closeQty, pnl, pnlPct, fee,
        JSON.stringify({ reason: 'take-profit parcial', parentTradeId: tradeId }), trade.opened_at]
     );
     await pool.query(`UPDATE trades SET quantity = $1 WHERE id = $2`, [remainingQty, tradeId]);
@@ -547,6 +558,14 @@ async function runAll() {
     runState.phase = 'running';
 
     for (const strategy of STRATEGIES) {
+      // Estratégias de 15m já são corridas pelo cron dedicado a cada 15 min.
+      // Avaliá-las aqui também (runAll corre a cada hora, no arranque e no botão
+      // "Executar Agora") apanha-as fora de ciclo, a meio de uma vela de 15m
+      // ainda a formar-se — foi isso que causou o whipsaw entra/sai da
+      // CandleBreakoutShort em KAITO (29/07, ~18h-19h): sinais a 5min de
+      // distância em vez dos 15min esperados.
+      if (strategy.timeframe === '15m') continue;
+
       const symbols = resolveSymbols(strategy);
 
       if (!symbols.length) {

@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { format } from 'date-fns';
 
 export default function Dashboard() {
+  const [strategies, setStrategies] = useState([]);
   const [stats, setStats] = useState([]);
   const [pnl, setPnl] = useState([]);
   const [trades, setTrades] = useState([]);
@@ -16,10 +17,11 @@ export default function Dashboard() {
       try { setter((await fn()).data); } catch { /* BD pode não estar configurada ainda */ }
     };
     await Promise.all([
+      safe(() => axios.get('/api/strategies'),      setStrategies),
       safe(() => axios.get('/api/stats'),            setStats),
       safe(() => axios.get('/api/pnl/daily'),        setPnl),
-      safe(() => axios.get('/api/trades?limit=5'),   setTrades),
-      safe(() => axios.get('/api/signals?limit=5'),  setSignals),
+      safe(() => axios.get('/api/trades?limit=50'),  setTrades),
+      safe(() => axios.get('/api/signals?limit=50'), setSignals),
     ]);
     setLoading(false);
   }, []);
@@ -32,14 +34,22 @@ export default function Dashboard() {
     finally { setRunning(false); }
   };
 
-  const totalPnl = stats.reduce((acc, s) => acc + parseFloat(s.total_pnl_calc || 0), 0);
-  const totalTrades = stats.reduce((acc, s) => acc + parseInt(s.total_trades || 0), 0);
-  const openTrades = stats.reduce((acc, s) => acc + parseInt(s.open_trades || 0), 0);
-  const avgWinRate = stats.length ? stats.reduce((a, s) => a + parseFloat(s.win_rate || 0), 0) / stats.length : 0;
+  // O dashboard reflete só as estratégias ligadas à Bybit (enabled=true) —
+  // as "só estudo" continuam a gerar trades de papel, mas não entram aqui.
+  const activeNames = new Set(strategies.filter(s => s.enabled).map(s => s.name));
+  const activeStats = stats.filter(s => activeNames.has(s.strategy_name));
+  const activePnl = pnl.filter(d => activeNames.has(d.strategy_name));
+  const activeTrades = trades.filter(t => activeNames.has(t.strategy_name)).slice(0, 5);
+  const activeSignals = signals.filter(s => activeNames.has(s.strategy_name)).slice(0, 5);
+
+  const totalPnl = activeStats.reduce((acc, s) => acc + parseFloat(s.total_pnl_calc || 0), 0);
+  const totalTrades = activeStats.reduce((acc, s) => acc + parseInt(s.total_trades || 0), 0);
+  const openTrades = activeStats.reduce((acc, s) => acc + parseInt(s.open_trades || 0), 0);
+  const avgWinRate = activeStats.length ? activeStats.reduce((a, s) => a + parseFloat(s.win_rate || 0), 0) / activeStats.length : 0;
 
   // Acumula PnL para o gráfico
   let cumulative = 0;
-  const chartData = pnl.map(d => {
+  const chartData = activePnl.map(d => {
     cumulative += parseFloat(d.daily_pnl || 0);
     return { date: d.date, pnl: parseFloat(d.daily_pnl || 0), cumulative: parseFloat(cumulative.toFixed(4)) };
   });
@@ -88,7 +98,7 @@ export default function Dashboard() {
         </div>
         <div className="card">
           <div className="card-title">Estratégias Ativas</div>
-          <div className="stat-value green">{stats.length}</div>
+          <div className="stat-value green">{activeNames.size}</div>
           <div className="stat-label">A monitorizar 24/7</div>
         </div>
       </div>
@@ -125,7 +135,7 @@ export default function Dashboard() {
         {/* ÚLTIMOS TRADES */}
         <div className="card">
           <div className="card-title">Últimos Trades</div>
-          {trades.length === 0 ? (
+          {activeTrades.length === 0 ? (
             <div className="empty">Sem trades ainda</div>
           ) : (
             <div className="table-wrap">
@@ -134,7 +144,7 @@ export default function Dashboard() {
                   <tr><th>Par</th><th>Side</th><th>Entrada</th><th>PnL</th><th>Status</th></tr>
                 </thead>
                 <tbody>
-                  {trades.map(t => (
+                  {activeTrades.map(t => (
                     <tr key={t.id}>
                       <td>{t.symbol.split('/')[0]}</td>
                       <td><span className={`badge badge-${t.side}`}>{t.side}</span></td>
@@ -154,7 +164,7 @@ export default function Dashboard() {
         {/* ÚLTIMOS SINAIS */}
         <div className="card">
           <div className="card-title">Últimos Sinais</div>
-          {signals.length === 0 ? (
+          {activeSignals.length === 0 ? (
             <div className="empty">Sem sinais ainda</div>
           ) : (
             <div className="table-wrap">
@@ -163,7 +173,7 @@ export default function Dashboard() {
                   <tr><th>Estratégia</th><th>Sinal</th><th>Preço</th><th>Hora</th></tr>
                 </thead>
                 <tbody>
-                  {signals.map(s => (
+                  {activeSignals.map(s => (
                     <tr key={s.id}>
                       <td className="muted">{s.strategy_name}</td>
                       <td>
