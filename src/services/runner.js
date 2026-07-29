@@ -58,7 +58,7 @@ const STRATEGIES = [
     timeframe: '15m',
     generateSignal: candleBreakoutShort.generateSignal,
     positionSize: 10,
-    stopLossPct: 0.20,
+    stopLossPct: 0.07,
     enabled: true,
   },
   {
