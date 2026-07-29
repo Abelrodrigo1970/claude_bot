@@ -17,13 +17,20 @@ function calculateIndicators(candles) {
   const sma0 = smaArr[smaArr.length - 1];
   const sma1 = smaArr[smaArr.length - 2];
 
+  const rising = sma0 > sma1;
+
   return {
     rsi: lastRsi,
     prevRsi,
     sma: sma0,
     prevSma: sma1,
-    rising: sma0 > sma1,
-    entrySignal: prevRsi > RSI_ENTRY_THRESHOLD,
+    rising,
+    // Simétrico à saída (que fecha quando a SMA vira para cima): só entra se
+    // o RSI bruto disparou acima do limiar E a SMA(RSI) ainda estiver a cair
+    // — evita entrar short num pico de RSI que ocorre já dentro de uma
+    // reversão de momentum (era isso que causava fechos quase imediatos,
+    // ex: SOXS 29/07 21:15→21:30 e 21:45→22:00).
+    entrySignal: prevRsi > RSI_ENTRY_THRESHOLD && !rising,
   };
 }
 
@@ -57,9 +64,12 @@ function generateSignal(candles, currentPosition = null) {
     if (ind.entrySignal) {
       return {
         signal: 'short',
-        reason: `RSI do candle anterior (${ind.prevRsi.toFixed(1)}) acima de ${RSI_ENTRY_THRESHOLD}`,
+        reason: `RSI do candle anterior (${ind.prevRsi.toFixed(1)}) acima de ${RSI_ENTRY_THRESHOLD}, SMA(${SMA_PERIOD}) do RSI ainda a cair`,
         indicators: ind,
       };
+    }
+    if (ind.prevRsi > RSI_ENTRY_THRESHOLD && ind.rising) {
+      return { signal: 'hold', reason: `RSI anterior (${ind.prevRsi.toFixed(1)}) acima de ${RSI_ENTRY_THRESHOLD}, mas SMA(${SMA_PERIOD}) do RSI já virou para cima`, indicators: ind };
     }
     return { signal: 'hold', reason: `RSI anterior (${ind.prevRsi.toFixed(1)}) não passou de ${RSI_ENTRY_THRESHOLD}`, indicators: ind };
   }
