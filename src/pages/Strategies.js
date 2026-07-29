@@ -56,6 +56,12 @@ const STRATEGY_META = {
     difficulty: 'Easy',
     source: 'Custom',
   },
+  StockEmaFlipTP: {
+    description: 'Mesma lógica da CLOEmaFlip (EMA12 x EMA80, limiar 0,5%) aplicada a stocks/ETFs no 1h. Em SHORT, fecha 50% da posição assim que o lucro atinge 18% — a outra metade fica até ao próximo flip.',
+    tags: ['EMA-spread', 'stocks', 'take-profit-parcial', '1h'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
 };
 
 function DifficultyBadge({ level }) {

@@ -161,6 +161,24 @@ const STRATEGIES = [
     // corrida nem testada antes — arranca só em estudo.
     enabled: false,
   },
+  {
+    name: 'StockEmaFlipTP',
+    market: 'stock',
+    symbol: null,
+    symbolSource: 'stocks',
+    timeframe: '1h',
+    // Mesma lógica da CLOEmaFlip (EMA12 x EMA80, limiar 0.5%), aplicada ao
+    // universo de stocks/ETFs em vez de um único símbolo.
+    generateSignal: cloEmaFlip.generateSignal,
+    positionSize: 10,
+    // Take-profit parcial: só em SHORT ("na venda"), fecha 50% da posição
+    // quando o lucro atinge 18% — a outra metade continua até ao flip normal.
+    takeProfitPct: 0.18,
+    takeProfitCloseFraction: 0.5,
+    takeProfitSide: 'short',
+    // Nunca corrida nem testada — arranca só em estudo.
+    enabled: false,
+  },
 ];
 
 // Sinais em memória (fallback quando BD não está configurada)
@@ -235,6 +253,41 @@ async function closeTrade(tradeId, exitPrice) {
   } catch { /* BD não configurada */ }
 }
 
+// Fecha só uma fração de um trade aberto: regista o lote fechado como um
+// trade "filho" independente (mesma entrada, fecho agora) e reduz a
+// quantidade do trade original, que continua aberto para o resto da posição.
+async function partialCloseTrade(tradeId, exitPrice, closeFraction) {
+  try {
+    const { rows } = await pool.query('SELECT * FROM trades WHERE id = $1', [tradeId]);
+    if (!rows.length) return null;
+    const trade = rows[0];
+    const fullQty = parseFloat(trade.quantity);
+    const closeQty = fullQty * closeFraction;
+    const remainingQty = fullQty - closeQty;
+
+    const pnl = trade.side === 'long'
+      ? (exitPrice - trade.entry_price) * closeQty
+      : (trade.entry_price - exitPrice) * closeQty;
+    const pnlPct = trade.side === 'long'
+      ? ((exitPrice - trade.entry_price) / trade.entry_price) * 100
+      : ((trade.entry_price - exitPrice) / trade.entry_price) * 100;
+
+    await pool.query(
+      `INSERT INTO trades (strategy_name, symbol, side, entry_price, exit_price, quantity, pnl, pnl_pct, status, metadata, opened_at, closed_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'closed',$9,$10,NOW())`,
+      [trade.strategy_name, trade.symbol, trade.side, trade.entry_price, exitPrice, closeQty, pnl, pnlPct,
+       JSON.stringify({ reason: 'take-profit parcial', parentTradeId: tradeId }), trade.opened_at]
+    );
+    await pool.query(`UPDATE trades SET quantity = $1 WHERE id = $2`, [remainingQty, tradeId]);
+    await updateStats(trade.strategy_name, trade.symbol, pnl > 0);
+
+    return { closeQty, remainingQty, pnl, pnlPct };
+  } catch (err) {
+    console.warn(`[TP parcial] Falha ao registar fecho parcial do trade ${tradeId}: ${err.message}`);
+    return null;
+  }
+}
+
 async function updateStats(strategyName, symbol, isWin) {
   try {
     await pool.query(
@@ -293,6 +346,20 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const ticker  = await bybit.getTicker(symbol);
     const currentPrice = ticker.last;
     const currentPos   = openPositions[key]?.side || null;
+
+    // Take-profit parcial (opt-in por estratégia) — verificado antes do sinal
+    // da estratégia, é gestão de posição e não depende da lógica de entrada/saída.
+    if (strategy.takeProfitPct && currentPos === strategy.takeProfitSide) {
+      const pos = openPositions[key];
+      if (pos && !pos.tpTaken && pos.entryPrice) {
+        const pnlPct = pos.side === 'long'
+          ? (currentPrice - pos.entryPrice) / pos.entryPrice
+          : (pos.entryPrice - currentPrice) / pos.entryPrice;
+        if (pnlPct >= strategy.takeProfitPct) {
+          await partialTakeProfit(strategy, symbol, key, currentPrice);
+        }
+      }
+    }
 
     // Rank atual do símbolo no scanner (1-indexed) — usado por estratégias que
     // dependem da posição no ranking, não das velas (ex: EMA90TopFade).
@@ -357,7 +424,7 @@ async function openPosition(strategy, symbol, key, side, currentPrice, reason) {
   }
   const qty = (strategy.positionSize / currentPrice).toFixed(4);
   const tradeId = await openTrade(strategy.name, symbol, side, currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
-  openPositions[key] = { tradeId, side };
+  openPositions[key] = { tradeId, side, entryPrice: currentPrice, qty: parseFloat(qty), tpTaken: false };
 
   if (!strategy.enabled) return; // Bybit desligado — fica só na simulação/estudo
 
@@ -368,6 +435,33 @@ async function openPosition(strategy, symbol, key, side, currentPrice, reason) {
     await bybit.placeMarketOrder(symbol, side === 'long' ? 'buy' : 'sell', parseFloat(qty), orderParams);
   } catch (err) {
     console.warn(`[${strategy.name}] Ordem real falhou para ${symbol} (posição já ficou registada na BD, sem execução na Bybit): ${err.message}`);
+  }
+}
+
+// Take-profit parcial (opt-in por estratégia via strategy.takeProfitPct) —
+// gestão de posição, independente do sinal da estratégia nessa vela.
+async function partialTakeProfit(strategy, symbol, key, currentPrice) {
+  const pos = openPositions[key];
+  if (!pos || pos.tpTaken || !pos.tradeId || !pos.qty) return;
+
+  const result = await partialCloseTrade(pos.tradeId, currentPrice, strategy.takeProfitCloseFraction);
+  if (!result) return;
+
+  pos.qty = result.remainingQty;
+  pos.tpTaken = true;
+
+  const pct = (strategy.takeProfitCloseFraction * 100).toFixed(0);
+  const logLine = `🎯 [${symbol.split('/')[0]}] Take-profit parcial (${pct}%) — lucro ${result.pnlPct.toFixed(1)}%`;
+  runState.log.unshift(logLine);
+  console.log(`[${strategy.name}] ${logLine}`);
+
+  if (!strategy.enabled) return; // Bybit desligado — fica só no estudo
+
+  try {
+    const closeSide = pos.side === 'long' ? 'sell' : 'buy';
+    await bybit.placeMarketOrder(symbol, closeSide, result.closeQty, { reduceOnly: true });
+  } catch (err) {
+    console.warn(`[${strategy.name}] Ordem de TP parcial falhou para ${symbol} (BD já atualizada): ${err.message}`);
   }
 }
 
@@ -523,10 +617,21 @@ async function runAll() {
 // Carrega posições abertas da BD ao arrancar (sobrevive a reinicios)
 async function loadOpenPositions() {
   try {
-    const { rows } = await pool.query(`SELECT strategy_name, symbol, side, id FROM trades WHERE status='open'`);
+    const { rows } = await pool.query(`SELECT strategy_name, symbol, side, id, entry_price, quantity FROM trades WHERE status='open'`);
     rows.forEach(r => {
       const key = `${r.strategy_name}_${r.symbol}`;
-      openPositions[key] = { tradeId: r.id, side: r.side };
+      const entryPrice = parseFloat(r.entry_price);
+      const qty = parseFloat(r.quantity);
+      const strategy = STRATEGIES.find(s => s.name === r.strategy_name);
+      // Heurística para restaurar tpTaken após um restart: se a quantidade
+      // guardada é visivelmente menor que a posição cheia esperada, é porque
+      // já houve um take-profit parcial (não há flag persistida para isto).
+      let tpTaken = false;
+      if (strategy?.takeProfitPct && strategy.positionSize && entryPrice > 0) {
+        const expectedFullQty = strategy.positionSize / entryPrice;
+        tpTaken = qty < expectedFullQty * 0.99;
+      }
+      openPositions[key] = { tradeId: r.id, side: r.side, entryPrice, qty, tpTaken };
     });
     if (rows.length) console.log(`[Runner] ${rows.length} posições abertas carregadas da BD`);
   } catch { /* BD ainda não disponível */ }
