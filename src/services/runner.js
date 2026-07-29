@@ -10,6 +10,7 @@ const candleBreakoutShort = require('../strategies/candleBreakoutShort');
 const ema90TopFade        = require('../strategies/ema90TopFade');
 const stochMomentum       = require('../strategies/stochMomentum');
 const cloEmaFlip          = require('../strategies/cloEmaFlip');
+const stoch50             = require('../strategies/stoch50');
 
 // Taxa taker da Bybit (USDT perpetuals, ordens market) — aplicada dos dois
 // lados (entrada+saída) para que o PnL registado fique líquido de comissão.
@@ -131,6 +132,18 @@ const STRATEGIES = [
     takeProfitCloseFraction: 0.5,
     takeProfitSide: 'short',
     // Nunca corrida nem testada — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: stoch50.STRATEGY_NAME,
+    market: 'stock',
+    symbol: null,
+    symbolSource: 'stocks',
+    timeframe: '1h',
+    generateSignal: stoch50.generateSignal,
+    positionSize: 10,
+    // Stochastic K(50)/suavização 9/%D 9 — cruzamento de %K sobre %D, filtrado
+    // por %D>20. Nunca corrida nem testada — arranca só em estudo.
     enabled: false,
   },
 ];

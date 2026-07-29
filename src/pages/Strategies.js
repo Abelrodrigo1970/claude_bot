@@ -38,6 +38,12 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
+  Stoch50: {
+    description: 'Stocks & ETFs no 1h. Stochastic lento (%K 50, suavização 9, %D 9): compra quando %K cruza acima de %D, vende quando cruza abaixo — só se %D estiver acima de 20.',
+    tags: ['stochastic', 'K50', 'cruzamento', 'stocks', '1h'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
 };
 
 function DifficultyBadge({ level }) {
