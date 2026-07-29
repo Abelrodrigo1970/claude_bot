@@ -2,9 +2,8 @@
 const bybit = require('./bybit');
 const { getState: getScannerState, startScan, getGainersState, startScanGainers } = require('./scanner');
 const trendSurfer         = require('../strategies/trendSurfer');
-const macdRider           = require('../strategies/macdRider');
-const bbBreaker           = require('../strategies/bbBreaker');
-const pumpBreaker         = require('../strategies/pumpBreaker');
+// StockRSI já não corre como estratégia própria — o módulo fica porque a
+// GainerRSIFade reaproveita a sua generateSignal (ver mais abaixo).
 const stockRSI            = require('../strategies/stockRSI');
 const stockSMA            = require('../strategies/stockSMA');
 const candleBreakoutLong  = require('../strategies/candleBreakoutLong');
@@ -24,46 +23,6 @@ const STRATEGIES = [
     scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: trendSurfer.generateSignal,
-    positionSize: 10,
-    enabled: true,
-  },
-  {
-    name: macdRider.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    scannerPeriod: 90,
-    timeframe: '4h',
-    generateSignal: macdRider.generateSignal,
-    positionSize: 10,
-    enabled: true,
-  },
-  {
-    name: bbBreaker.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    scannerPeriod: 90,
-    timeframe: '1h',
-    generateSignal: bbBreaker.generateSignal,
-    positionSize: 10,
-    enabled: true,
-  },
-  {
-    name: pumpBreaker.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    scannerPeriod: 90,
-    timeframe: '1h',
-    generateSignal: pumpBreaker.generateSignal,
-    positionSize: 10,
-    enabled: true,
-  },
-  {
-    name: stockRSI.STRATEGY_NAME,
-    market: 'stock',
-    symbol: null,
-    symbolSource: 'stocks',
-    timeframe: '2h',
-    generateSignal: stockRSI.generateSignal,
     positionSize: 10,
     enabled: true,
   },

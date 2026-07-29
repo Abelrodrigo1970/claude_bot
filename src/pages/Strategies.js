@@ -8,30 +8,6 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
-  MACDRider: {
-    description: 'Entra em tendências usando o cruzamento da linha MACD com a linha de sinal, filtrado pela EMA200 para garantir alinhamento com a tendência macro.',
-    tags: ['trend-following', 'MACD', 'EMA200', 'crossover'],
-    difficulty: 'Easy',
-    source: 'Custom',
-  },
-  BBBreaker: {
-    description: 'Detecta breakouts das Bandas de Bollinger após períodos de baixa volatilidade. Entra quando o preço rompe a banda superior com volume confirmado.',
-    tags: ['breakout', 'bollinger-bands', 'volatility', 'volume'],
-    difficulty: 'Medium',
-    source: 'Custom',
-  },
-  PumpBreaker: {
-    description: 'Caça reversões de pump (SHORT). Entra quando o preço está acima da EMA200 no 1h e o RSI cruza abaixo da sua signal line com volume mínimo.',
-    tags: ['reversal', 'RSI-cross', 'short', 'EMA200'],
-    difficulty: 'Medium',
-    source: 'Custom',
-  },
-  StockRSI: {
-    description: 'Estratégia para Stocks & ETFs no 2h. Entra LONG ou SHORT quando o RSI(14) cruza a sua signal line (EMA9) com gap mínimo de 3 pontos.',
-    tags: ['RSI-cross', 'stocks', 'ETF', 'long-short', '2h'],
-    difficulty: 'Easy',
-    source: 'Custom',
-  },
   StockSMA: {
     description: 'Estratégia para Stocks & ETFs no 2h. Usa a SMA(18) do RSI(14): entra LONG ou SHORT quando a SMA inverte direção com pelo menos 0.8 pontos de diferença.',
     tags: ['RSI-SMA', 'inversão', 'stocks', 'ETF', 'long-short', '2h'],
