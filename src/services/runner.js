@@ -6,7 +6,8 @@ const trendSurfer         = require('../strategies/trendSurfer');
 // GainerRSIFade reaproveita a sua generateSignal (ver mais abaixo).
 const stockRSI            = require('../strategies/stockRSI');
 const stockSMA            = require('../strategies/stockSMA');
-const candleBreakoutShort = require('../strategies/candleBreakoutShort');
+const top6Short           = require('../strategies/top6Short');
+const top6Long            = require('../strategies/top6Long');
 const ema90TopFade        = require('../strategies/ema90TopFade');
 const stochMomentum       = require('../strategies/stochMomentum');
 const cloEmaFlip          = require('../strategies/cloEmaFlip');
@@ -43,19 +44,30 @@ const STRATEGIES = [
     enabled: true,
   },
   {
-    name: candleBreakoutShort.STRATEGY_NAME,
+    name: top6Short.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
     symbolSource: 'gainers24h',
     timeframe: '15m',
-    generateSignal: candleBreakoutShort.generateSignal,
+    generateSignal: top6Short.generateSignal,
     positionSize: 10,
     stopLossPct: 0.07,
-    // CandleBreakoutLong foi removida do registry, mas fica o nome aqui à mesma
-    // (string, não import) — se ainda houver alguma posição antiga dela em
-    // aberto na BD para este símbolo, o Short fecha-a antes de entrar.
-    closesPositionsOf: ['CandleBreakoutLong'],
-    enabled: true,
+    // Substitui a CandleBreakoutShort (RSI+SMA) por um cruzamento simples
+    // preço x SMA(15) — nunca corrida nem testada, arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: top6Long.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'gainers24h',
+    timeframe: '15m',
+    generateSignal: top6Long.generateSignal,
+    positionSize: 10,
+    stopLossPct: 0.07,
+    // Entra long ao entrar no Top 6 de ganhos 24h, inverte por SMA(15) —
+    // nunca corrida nem testada, arranca só em estudo.
+    enabled: false,
   },
   {
     name: 'GainerRSIFade',
@@ -336,10 +348,14 @@ async function runStrategyOnSymbol(strategy, symbol) {
     }
 
     // Rank atual do símbolo no scanner (1-indexed) — usado por estratégias que
-    // dependem da posição no ranking, não das velas (ex: EMA90TopFade).
+    // dependem da posição no ranking, não das velas (ex: EMA90TopFade, Top6LONG).
     let rank = null;
     if (strategy.scannerPeriod) {
       const scan = getScannerState(strategy.scannerPeriod);
+      const idx = scan.results?.findIndex(r => r.symbol === symbol) ?? -1;
+      rank = idx >= 0 ? idx + 1 : null;
+    } else if (strategy.symbolSource === 'gainers24h') {
+      const scan = getGainersState();
       const idx = scan.results?.findIndex(r => r.symbol === symbol) ?? -1;
       rank = idx >= 0 ? idx + 1 : null;
     }
