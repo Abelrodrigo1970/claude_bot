@@ -39,7 +39,7 @@ const STRATEGY_META = {
     source: 'Custom',
   },
   CLOEmaFlip: {
-    description: 'Só CLO/USDT, no 1h. Sempre posicionada: LONG quando a EMA12 está 0,5%+ acima da EMA80, SHORT quando está 0,5%+ abaixo — inverte diretamente quando o spread cruza para o outro lado.',
+    description: 'Só CL/USDT, no 1h. Sempre posicionada: LONG quando a EMA12 está 0,5%+ acima da EMA80, SHORT quando está 0,5%+ abaixo — inverte diretamente quando o spread cruza para o outro lado.',
     tags: ['EMA-spread', 'single-symbol', 'always-in', '1h'],
     difficulty: 'Easy',
     source: 'Custom',

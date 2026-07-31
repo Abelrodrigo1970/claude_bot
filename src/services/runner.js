@@ -119,13 +119,14 @@ const STRATEGIES = [
   {
     name: cloEmaFlip.STRATEGY_NAME,
     market: 'crypto',
-    symbol: 'CLO/USDT:USDT',
+    symbol: 'CL/USDT:USDT',
     timeframe: '1h',
     generateSignal: cloEmaFlip.generateSignal,
     positionSize: 10,
     // Sem SL — não foi pedido. Está sempre posicionada (long ou short), a
-    // inverter quando a EMA12 cruza 1% para o outro lado da EMA80. Nunca
-    // corrida nem testada antes — arranca só em estudo.
+    // inverter quando a EMA12 cruza 1% para o outro lado da EMA80. Símbolo
+    // corrigido de CLO/USDT para CL/USDT (30/07) — estava a negociar o ativo
+    // errado. Desligada até confirmar o comportamento no ativo certo.
     enabled: false,
   },
   {
