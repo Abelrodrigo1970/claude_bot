@@ -57,8 +57,8 @@ const STRATEGY_META = {
     source: 'Custom',
   },
   EMA200Top5: {
-    description: 'LONG no Top 5 do ranking EMA200 — fecha tudo a cada scan novo e reabre o Top 5 atual. TP parcial 50% a +25%, SL a -25%. Backtest (25/06-01/08): WR 50.9%, PF 1.41, +34.71 com TP/SL.',
-    tags: ['EMA200', 'ranking', 'take-profit-parcial', 'stop-loss', 'long', '1h'],
+    description: 'LONG no Top 5 do ranking EMA200 — fecha tudo a cada scan novo e reabre o Top 5 atual. TP parcial 50% a +25%, SL a -25%. Sem entradas novas ao Domingo/Segunda (piores dias no estudo). Backtest (25/06-01/08): PF 1.41, +34.71 com TP/SL.',
+    tags: ['EMA200', 'ranking', 'take-profit-parcial', 'stop-loss', 'filtro-dia', 'long', '1h'],
     difficulty: 'Easy',
     source: 'Custom',
   },
