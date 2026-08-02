@@ -12,6 +12,7 @@ const ema90TopFade        = require('../strategies/ema90TopFade');
 const stochMomentum       = require('../strategies/stochMomentum');
 const cloEmaFlip          = require('../strategies/cloEmaFlip');
 const stoch50             = require('../strategies/stoch50');
+const ema200Top5          = require('../strategies/ema200Top5');
 
 // Taxa taker da Bybit (USDT perpetuals, ordens market) — aplicada dos dois
 // lados (entrada+saída) para que o PnL registado fique líquido de comissão.
@@ -28,7 +29,7 @@ const STRATEGIES = [
     scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: trendSurfer.generateSignal,
-    positionSize: 10,
+    positionSize: 100,
     enabled: true,
   },
   {
@@ -39,7 +40,7 @@ const STRATEGIES = [
     symbolExclude: ['COIN', 'MSTR', 'HOOD'],
     timeframe: '2h',
     generateSignal: stockSMA.generateSignal,
-    positionSize: 50,
+    positionSize: 100,
     stopLossPct: 0.05,
     enabled: true,
   },
@@ -50,7 +51,7 @@ const STRATEGIES = [
     symbolSource: 'gainers24h',
     timeframe: '15m',
     generateSignal: top6Short.generateSignal,
-    positionSize: 10,
+    positionSize: 100,
     stopLossPct: 0.07,
     // Substitui a CandleBreakoutShort (RSI+SMA) por um cruzamento simples
     // preço x SMA(15) — nunca corrida nem testada, arranca só em estudo.
@@ -63,7 +64,7 @@ const STRATEGIES = [
     symbolSource: 'gainers24h',
     timeframe: '15m',
     generateSignal: top6Long.generateSignal,
-    positionSize: 10,
+    positionSize: 100,
     stopLossPct: 0.07,
     // Entra long ao entrar no Top 6 de ganhos 24h, inverte por SMA(15) —
     // nunca corrida nem testada, arranca só em estudo.
@@ -81,7 +82,7 @@ const STRATEGIES = [
     // (83/86), estável nas duas metades cronológicas do período. Sem SL hits
     // no backtest, mas mantém 20% como rede de segurança (igual ao CandleBreakout).
     generateSignal: stockRSI.generateSignal,
-    positionSize: 10,
+    positionSize: 100,
     stopLossPct: 0.20,
     // Nunca correu de facto sobre este universo (só em backtest) — arranca em
     // estudo até acumular trades reais antes de ligar ordens na Bybit.
@@ -94,7 +95,7 @@ const STRATEGIES = [
     scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: ema90TopFade.generateSignal,
-    positionSize: 10,
+    positionSize: 100,
     stopLossPct: 0.26,
     // Backtest intracandle (139 trades fechados, 27/07) confirma que qualquer SL
     // piora o resultado agregado — a 26% ainda corta 5 trades que atingem essa
@@ -111,7 +112,7 @@ const STRATEGIES = [
     scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: stochMomentum.generateSignal,
-    positionSize: 10,
+    positionSize: 100,
     // Nunca tinha corrido antes (não estava registada) — arranca só em estudo
     // até haver dados de desempenho reais antes de ligar ordens na Bybit.
     enabled: false,
@@ -122,7 +123,7 @@ const STRATEGIES = [
     symbol: 'CL/USDT:USDT',
     timeframe: '1h',
     generateSignal: cloEmaFlip.generateSignal,
-    positionSize: 10,
+    positionSize: 100,
     // Sem SL — não foi pedido. Está sempre posicionada (long ou short), a
     // inverter quando a EMA12 cruza 1% para o outro lado da EMA80. Símbolo
     // corrigido de CLO/USDT para CL/USDT (30/07) — estava a negociar o ativo
@@ -138,7 +139,7 @@ const STRATEGIES = [
     // Mesma lógica da CLOEmaFlip (EMA12 x EMA80, limiar 0.5%), aplicada ao
     // universo de stocks/ETFs em vez de um único símbolo.
     generateSignal: cloEmaFlip.generateSignal,
-    positionSize: 10,
+    positionSize: 100,
     // Take-profit parcial: só em SHORT ("na venda"), fecha 50% da posição
     // quando o lucro atinge 18% — a outra metade continua até ao flip normal.
     takeProfitPct: 0.18,
@@ -154,9 +155,28 @@ const STRATEGIES = [
     symbolSource: 'stocks',
     timeframe: '1h',
     generateSignal: stoch50.generateSignal,
-    positionSize: 10,
+    positionSize: 100,
     // Stochastic K(50)/suavização 9/%D 9 — cruzamento de %K sobre %D, filtrado
     // por %D>20. Nunca corrida nem testada — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: ema200Top5.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    scannerPeriod: 200,
+    timeframe: '1h',
+    generateSignal: ema200Top5.generateSignal,
+    positionSize: 100,
+    // Estudo com histórico completo (25/06-01/08, 44 sessões): LONG no Top 5
+    // EMA200, fecha tudo a cada scan novo e reabre — baseline WR 50.9%/PF
+    // 1.30/+29.94. Com TP parcial 50% a +25% e SL a -25%: PF 1.41/+34.71 e
+    // drawdown -7.74 (vs -13.39 sem proteção) — melhor combinação testada.
+    takeProfitPct: 0.25,
+    takeProfitCloseFraction: 0.5,
+    takeProfitSide: 'long',
+    stopLossPct: 0.25,
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
 ];
@@ -348,20 +368,50 @@ async function runStrategyOnSymbol(strategy, symbol) {
       }
     }
 
-    // Rank atual do símbolo no scanner (1-indexed) — usado por estratégias que
-    // dependem da posição no ranking, não das velas (ex: EMA90TopFade, Top6LONG).
+    // Stop-loss "de papel" — a ordem real na Bybit já tem o SL anexado (ver
+    // openPosition), mas isso só protege quando a estratégia está ligada. Em
+    // modo estudo (enabled=false) essa ordem não existe, por isso replicamos
+    // aqui o mesmo limite para os trades de papel respeitarem o SL também.
+    if (strategy.stopLossPct && currentPos) {
+      const pos = openPositions[key];
+      if (pos && pos.entryPrice) {
+        const lossPct = pos.side === 'long'
+          ? (pos.entryPrice - currentPrice) / pos.entryPrice
+          : (currentPrice - pos.entryPrice) / pos.entryPrice;
+        if (lossPct >= strategy.stopLossPct) {
+          const logLine = `🛑 [${symbol.split('/')[0]}] Stop-loss (${(strategy.stopLossPct * 100).toFixed(0)}%) atingido — fecha a $${currentPrice}`;
+          runState.log.unshift(logLine);
+          if (runState.log.length > 200) runState.log.pop();
+          console.log(`[${strategy.name}] ${logLine}`);
+          await closePositionFully(strategy, symbol, key, currentPrice);
+          return;
+        }
+      }
+    }
+
+    // Rank e sessão de scan atuais (1-indexed) — usados por estratégias que
+    // dependem da posição no ranking, não das velas (ex: EMA90TopFade,
+    // Top6LONG, EMA200Top5). scannedAt identifica a sessão de scan em curso —
+    // permite a estratégias como a EMA200Top5 saber quando uma sessão nova
+    // começou, para fechar tudo e reabrir o ranking atual.
     let rank = null;
+    let scannedAt = null;
     if (strategy.scannerPeriod) {
       const scan = getScannerState(strategy.scannerPeriod);
       const idx = scan.results?.findIndex(r => r.symbol === symbol) ?? -1;
       rank = idx >= 0 ? idx + 1 : null;
+      scannedAt = scan.scannedAt ?? null;
     } else if (strategy.symbolSource === 'gainers24h') {
       const scan = getGainersState();
       const idx = scan.results?.findIndex(r => r.symbol === symbol) ?? -1;
       rank = idx >= 0 ? idx + 1 : null;
+      scannedAt = scan.scannedAt ?? null;
     }
 
-    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, { rank });
+    const posForSession = openPositions[key];
+    const newScanSession = !!(posForSession && posForSession.scanTs != null && scannedAt != null && scannedAt !== posForSession.scanTs);
+
+    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, { rank, scannedAt, newScanSession });
 
     const isAction = signal !== 'hold' && signal !== 'none';
     const icon = isAction ? '🔔' : '·';
@@ -382,9 +432,9 @@ async function runStrategyOnSymbol(strategy, symbol) {
         await saveSignal(strategy.name, symbol, signal, currentPrice, strategy.timeframe, indicators);
 
         if (signal === 'long' || signal === 'flip_to_long') {
-          await openPosition(strategy, symbol, key, 'long', currentPrice, reason);
+          await openPosition(strategy, symbol, key, 'long', currentPrice, reason, scannedAt);
         } else if (signal === 'short' || signal === 'flip_to_short') {
-          await openPosition(strategy, symbol, key, 'short', currentPrice, reason);
+          await openPosition(strategy, symbol, key, 'short', currentPrice, reason, scannedAt);
         } else if (signal === 'close_long' || signal === 'close_short') {
           await closePositionFully(strategy, symbol, key, currentPrice);
         }
@@ -408,7 +458,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
 // strategy.enabled controla só a ordem REAL na Bybit — os sinais e o
 // registo de trades "de papel" na BD (para stats/estudo) acontecem sempre,
 // esteja a estratégia ligada à Bybit ou não.
-async function openPosition(strategy, symbol, key, side, currentPrice, reason) {
+async function openPosition(strategy, symbol, key, side, currentPrice, reason, scanTs = null) {
   if (openPositions[key]?.tradeId) {
     await tryClosePositionOnExchange(strategy, symbol);
     await closeTrade(openPositions[key].tradeId, currentPrice);
@@ -433,7 +483,7 @@ async function openPosition(strategy, symbol, key, side, currentPrice, reason) {
 
   const qty = (strategy.positionSize / currentPrice).toFixed(4);
   const tradeId = await openTrade(strategy.name, symbol, side, currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
-  openPositions[key] = { tradeId, side, entryPrice: currentPrice, qty: parseFloat(qty), tpTaken: false };
+  openPositions[key] = { tradeId, side, entryPrice: currentPrice, qty: parseFloat(qty), tpTaken: false, scanTs };
 
   if (!strategy.enabled) return; // Bybit desligado — fica só na simulação/estudo
 
