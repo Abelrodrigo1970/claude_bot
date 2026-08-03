@@ -3,14 +3,14 @@ import axios from 'axios';
 
 const STRATEGY_META = {
   Top6SHORT: {
-    description: 'Top 6 de ganhos 24h no 15m. Entra SHORT quando o fecho está abaixo da SMA(15), inverte para LONG quando cruza de volta para cima — e vice-versa. SL 7%.',
-    tags: ['SMA15', 'cruzamento', 'gainers24h', 'long-short', '15m'],
+    description: 'Top 6 de ganhos 24h no 15m. Entra SHORT quando o fecho está abaixo da SMA(21), inverte para LONG quando cruza de volta para cima — e vice-versa. SL 7%.',
+    tags: ['SMA21', 'cruzamento', 'gainers24h', 'long-short', '15m'],
     difficulty: 'Easy',
     source: 'Custom',
   },
   Top6LONG: {
-    description: 'Top 6 de ganhos 24h no 15m. Entra LONG assim que o símbolo entra no Top 6; depois disso inverte por SMA(15) — abaixo vira SHORT, acima volta a LONG. SL 7%.',
-    tags: ['SMA15', 'gainers24h', 'ranking', 'long-short', '15m'],
+    description: 'Top 6 de ganhos 24h no 15m. Entra LONG assim que o símbolo entra no Top 6; depois disso inverte por SMA(21) — abaixo vira SHORT, acima volta a LONG. SL 7%.',
+    tags: ['SMA21', 'gainers24h', 'ranking', 'long-short', '15m'],
     difficulty: 'Easy',
     source: 'Custom',
   },

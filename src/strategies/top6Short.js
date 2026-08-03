@@ -1,7 +1,7 @@
 const { SMA } = require('technicalindicators');
 
 const STRATEGY_NAME = 'Top6SHORT';
-const SMA_PERIOD = 15;
+const SMA_PERIOD = 21;
 const THRESHOLD_PCT = 0.5; // % de distância mínima ao preço da SMA para disparar entrada/inversão
 
 function calculateIndicators(candles) {
@@ -20,9 +20,9 @@ function calculateIndicators(candles) {
 }
 
 // Universo: Top 6 de ganhos 24h (gainers24h). Sem gatilho de entrada por
-// ranking — só reage ao preço face à SMA(15), com uma banda de ±0.5%
+// ranking — só reage ao preço face à SMA(21), com uma banda de ±0.5%
 // (mesma ideia da CLOEmaFlip) para não inverter em cada cruzamento por
-// ruído: entra SHORT quando o fecho está pelo menos 0.5% abaixo da SMA(15),
+// ruído: entra SHORT quando o fecho está pelo menos 0.5% abaixo da SMA(21),
 // inverte para LONG quando fica pelo menos 0.5% acima (e vice-versa depois
 // de já estar posicionada). Dentro da banda não faz nada, só mantém o que
 // já estiver aberto. Stop-loss de 7% anexado à ordem na Bybit.

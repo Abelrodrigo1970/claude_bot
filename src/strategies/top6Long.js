@@ -2,7 +2,7 @@ const { SMA } = require('technicalindicators');
 
 const STRATEGY_NAME = 'Top6LONG';
 const TOP_N = 6;
-const SMA_PERIOD = 15;
+const SMA_PERIOD = 21;
 const THRESHOLD_PCT = 0.5; // % de distância mínima ao preço da SMA para inverter
 
 function calculateIndicators(candles) {
@@ -23,7 +23,7 @@ function calculateIndicators(candles) {
 // Entra LONG assim que o símbolo entra no Top 6 de ganhos 24h (rank vem em
 // context.rank, calculado no runner a partir do scanner de gainers24h).
 // Depois de posicionada, ignora o ranking e só olha para o preço face à
-// SMA(15), com uma banda de ±0.5% (mesma ideia da CLOEmaFlip) para não
+// SMA(21), com uma banda de ±0.5% (mesma ideia da CLOEmaFlip) para não
 // inverter em cada cruzamento por ruído: inverte para SHORT quando o fecho
 // fica pelo menos 0.5% abaixo, volta a LONG quando fica pelo menos 0.5%
 // acima. Dentro da banda mantém a posição. Stop-loss de 7% anexado à ordem.
