@@ -265,9 +265,9 @@ app.get('/api/scanner/history', async (req, res) => {
   }
 });
 
-// Inicia scan de topo de ganhos 24h (fire-and-forget) — ?limit=6
+// Inicia scan de topo de ganhos 24h (fire-and-forget) — ?limit=4
 app.post('/api/scanner/gainers/start', (req, res) => {
-  const limit = parseInt(req.query.limit) || 6;
+  const limit = parseInt(req.query.limit) || 4;
   startScanGainers(limit);
   res.json({ ok: true });
 });
@@ -275,7 +275,7 @@ app.post('/api/scanner/gainers/start', (req, res) => {
 // GET para cron jobs externos — scanner Top ganhos 24h
 app.get('/api/cron/scanGainers', (req, res) => {
   res.json({ ok: true, message: 'Scanner Top 24h iniciado', time: new Date() });
-  startScanGainers(6);
+  startScanGainers(4);
 });
 
 // Estado atual do scan de ganhos 24h (polling)
@@ -398,14 +398,14 @@ cron.schedule('10 * * * *', async () => {
   console.log('📐 Cron 1h: scanner EMA Trend concluído.');
 });
 
-// A cada 2 horas: scanner Top 6 ganhos 24h
+// A cada 2 horas: scanner Top 4 ganhos 24h
 cron.schedule('15 */2 * * *', async () => {
-  console.log('\n📈 Cron 2h: a correr scanner Top 6 (24h)...');
-  await startScanGainers(6);
-  console.log('📈 Cron 2h: scanner Top 6 (24h) concluído.');
+  console.log('\n📈 Cron 2h: a correr scanner Top 4 (24h)...');
+  await startScanGainers(4);
+  console.log('📈 Cron 2h: scanner Top 4 (24h) concluído.');
 });
 
-// A cada 15 min: estratégias de 15m (CandleBreakoutLong/Short sobre o Top 6 24h)
+// A cada 15 min: estratégias de 15m (CandleBreakoutLong/Short sobre o Top 4 24h)
 cron.schedule('*/15 * * * *', async () => {
   const fastStrategies = STRATEGIES.filter(s => s.timeframe === '15m');
   if (!fastStrategies.length) return;

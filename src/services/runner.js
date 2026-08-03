@@ -6,8 +6,7 @@ const trendSurfer         = require('../strategies/trendSurfer');
 // GainerRSIFade reaproveita a sua generateSignal (ver mais abaixo).
 const stockRSI            = require('../strategies/stockRSI');
 const stockSMA            = require('../strategies/stockSMA');
-const top6Short           = require('../strategies/top6Short');
-const top6Long            = require('../strategies/top6Long');
+const top4RotationFade    = require('../strategies/top4RotationFade');
 const ema90TopFade        = require('../strategies/ema90TopFade');
 const stochMomentum       = require('../strategies/stochMomentum');
 const cloEmaFlip          = require('../strategies/cloEmaFlip');
@@ -29,7 +28,7 @@ const STRATEGIES = [
     scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: trendSurfer.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     enabled: true,
   },
   {
@@ -40,35 +39,9 @@ const STRATEGIES = [
     symbolExclude: ['COIN', 'MSTR', 'HOOD'],
     timeframe: '2h',
     generateSignal: stockSMA.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     stopLossPct: 0.05,
     enabled: true,
-  },
-  {
-    name: top6Short.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    symbolSource: 'gainers24h',
-    timeframe: '15m',
-    generateSignal: top6Short.generateSignal,
-    positionSize: 100,
-    stopLossPct: 0.07,
-    // Substitui a CandleBreakoutShort (RSI+SMA) por um cruzamento simples
-    // preço x SMA(15) — nunca corrida nem testada, arranca só em estudo.
-    enabled: false,
-  },
-  {
-    name: top6Long.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    symbolSource: 'gainers24h',
-    timeframe: '15m',
-    generateSignal: top6Long.generateSignal,
-    positionSize: 100,
-    stopLossPct: 0.07,
-    // Entra long ao entrar no Top 6 de ganhos 24h, inverte por SMA(15) —
-    // nunca corrida nem testada, arranca só em estudo.
-    enabled: false,
   },
   {
     name: 'GainerRSIFade',
@@ -77,15 +50,31 @@ const STRATEGIES = [
     symbolSource: 'gainers24h',
     timeframe: '15m',
     // Reaproveita a lógica exata da StockRSI (RSI14 x EMA9(RSI), gap>=3, RSI
-    // extremo) sobre o universo do Top 6 ganhos 24h. Backtest sobre 125
+    // extremo) sobre o universo do Top 4 ganhos 24h. Backtest sobre 125
     // símbolos/18 dias: 86 trades, WR 40.7%, +1.07%/trade — quase só SHORT
     // (83/86), estável nas duas metades cronológicas do período. Sem SL hits
     // no backtest, mas mantém 20% como rede de segurança (igual ao CandleBreakout).
     generateSignal: stockRSI.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     stopLossPct: 0.20,
     // Nunca correu de facto sobre este universo (só em backtest) — arranca em
     // estudo até acumular trades reais antes de ligar ordens na Bybit.
+    enabled: false,
+  },
+  {
+    name: top4RotationFade.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'gainers24hDropped',
+    timeframe: '1h',
+    generateSignal: top4RotationFade.generateSignal,
+    positionSize: 60,
+    stopLossPct: 0.25,
+    maxHoldHours: 4,
+    // Abre SHORT quando um símbolo sai do Top 4 de ganhos 24h (aposta que o
+    // pump esgotou). SL 25%, sem TP, fecha tudo ao fim de ~4h (2 sessões de
+    // scan) e reabre se ainda estiver fora do Top 4. Nunca corrida nem
+    // testada — arranca só em estudo.
     enabled: false,
   },
   {
@@ -95,7 +84,7 @@ const STRATEGIES = [
     scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: ema90TopFade.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     stopLossPct: 0.26,
     // Backtest intracandle (139 trades fechados, 27/07) confirma que qualquer SL
     // piora o resultado agregado — a 26% ainda corta 5 trades que atingem essa
@@ -112,7 +101,7 @@ const STRATEGIES = [
     scannerPeriod: 90,
     timeframe: '1h',
     generateSignal: stochMomentum.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     // Nunca tinha corrido antes (não estava registada) — arranca só em estudo
     // até haver dados de desempenho reais antes de ligar ordens na Bybit.
     enabled: false,
@@ -123,7 +112,7 @@ const STRATEGIES = [
     symbol: 'CL/USDT:USDT',
     timeframe: '1h',
     generateSignal: cloEmaFlip.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     // Sem SL — não foi pedido. Está sempre posicionada (long ou short), a
     // inverter quando a EMA12 cruza 1% para o outro lado da EMA80. Símbolo
     // corrigido de CLO/USDT para CL/USDT (30/07) — estava a negociar o ativo
@@ -139,7 +128,7 @@ const STRATEGIES = [
     // Mesma lógica da CLOEmaFlip (EMA12 x EMA80, limiar 0.5%), aplicada ao
     // universo de stocks/ETFs em vez de um único símbolo.
     generateSignal: cloEmaFlip.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     // Take-profit parcial: só em SHORT ("na venda"), fecha 50% da posição
     // quando o lucro atinge 18% — a outra metade continua até ao flip normal.
     takeProfitPct: 0.18,
@@ -155,7 +144,7 @@ const STRATEGIES = [
     symbolSource: 'stocks',
     timeframe: '1h',
     generateSignal: stoch50.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     // Stochastic K(50)/suavização 9/%D 9 — cruzamento de %K sobre %D, filtrado
     // por %D>20. Nunca corrida nem testada — arranca só em estudo.
     enabled: false,
@@ -167,7 +156,7 @@ const STRATEGIES = [
     scannerPeriod: 200,
     timeframe: '1h',
     generateSignal: ema200Top5.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     // Estudo com histórico completo (25/06-01/08, 44 sessões): LONG no Top 5
     // EMA200, fecha tudo a cada scan novo e reabre — baseline WR 50.9%/PF
     // 1.30/+29.94. Com TP parcial 50% a +25% e SL a -25%: PF 1.41/+34.71 e
@@ -389,9 +378,27 @@ async function runStrategyOnSymbol(strategy, symbol) {
       }
     }
 
+    // Hold máximo (opt-in por estratégia via strategy.maxHoldHours) — fecha a
+    // posição passadas N horas desde a entrada, independente do sinal da
+    // estratégia (ex: Top4RotationFade fecha tudo ao fim de ~4h).
+    if (strategy.maxHoldHours && currentPos) {
+      const pos = openPositions[key];
+      if (pos && pos.openedAt) {
+        const heldMs = Date.now() - pos.openedAt;
+        if (heldMs >= strategy.maxHoldHours * 60 * 60 * 1000) {
+          const logLine = `⏳ [${symbol.split('/')[0]}] Hold máximo (${strategy.maxHoldHours}h) atingido — fecha a $${currentPrice}`;
+          runState.log.unshift(logLine);
+          if (runState.log.length > 200) runState.log.pop();
+          console.log(`[${strategy.name}] ${logLine}`);
+          await closePositionFully(strategy, symbol, key, currentPrice);
+          return;
+        }
+      }
+    }
+
     // Rank e sessão de scan atuais (1-indexed) — usados por estratégias que
     // dependem da posição no ranking, não das velas (ex: EMA90TopFade,
-    // Top6LONG, EMA200Top5). scannedAt identifica a sessão de scan em curso —
+    // EMA200Top5). scannedAt identifica a sessão de scan em curso —
     // permite a estratégias como a EMA200Top5 saber quando uma sessão nova
     // começou, para fechar tudo e reabrir o ranking atual.
     let rank = null;
@@ -483,7 +490,7 @@ async function openPosition(strategy, symbol, key, side, currentPrice, reason, s
 
   const qty = (strategy.positionSize / currentPrice).toFixed(4);
   const tradeId = await openTrade(strategy.name, symbol, side, currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
-  openPositions[key] = { tradeId, side, entryPrice: currentPrice, qty: parseFloat(qty), tpTaken: false, scanTs };
+  openPositions[key] = { tradeId, side, entryPrice: currentPrice, qty: parseFloat(qty), tpTaken: false, scanTs, openedAt: Date.now() };
 
   if (!strategy.enabled) return; // Bybit desligado — fica só na simulação/estudo
 
@@ -559,6 +566,16 @@ function resolveSymbols(strategy) {
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
     // results já vem ordenado por change24h desc — topN restringe ao ranking de topo
     if (strategy.topN) symbols = symbols.slice(0, strategy.topN);
+  } else if (strategy.symbolSource === 'gainers24hDropped') {
+    // Só os símbolos que estavam no Top N do scan anterior e já não estão no
+    // atual — usado pela Top4RotationFade para detetar quem acabou de sair.
+    const scan = getGainersState();
+    if (scan.status === 'done') {
+      const current = new Set((scan.results || []).map(r => r.symbol));
+      symbols = (scan.previousResults || []).map(r => r.symbol).filter(s => !current.has(s));
+    } else {
+      symbols = [];
+    }
   } else if (!strategy.scannerPeriod) {
     symbols = [strategy.symbol];
   } else {
@@ -581,14 +598,14 @@ async function ensureSymbols(strategy) {
   if (resolveSymbols(strategy).length > 0) return;
   if (strategy.scannerPeriod) {
     await startScan(strategy.scannerPeriod, 50);
-  } else if (strategy.symbolSource === 'gainers24h') {
-    await startScanGainers(6);
+  } else if (strategy.symbolSource === 'gainers24h' || strategy.symbolSource === 'gainers24hDropped') {
+    await startScanGainers(4);
   }
 }
 
 function scannerLabel(strategy) {
   if (strategy.scannerPeriod) return `Scanner EMA${strategy.scannerPeriod}`;
-  if (strategy.symbolSource === 'gainers24h') return 'Scanner Top 24h';
+  if (strategy.symbolSource === 'gainers24h' || strategy.symbolSource === 'gainers24hDropped') return 'Scanner Top 24h';
   return 'Scanner';
 }
 
@@ -620,7 +637,7 @@ async function runAll() {
     // Pré-passo: correr scanner automático para estratégias dinâmicas sem símbolos
     // (corre para todas, mesmo com Bybit desligado — sinais/estudo continuam)
     for (const strategy of STRATEGIES) {
-      if (!strategy.scannerPeriod && strategy.symbolSource !== 'gainers24h') continue;
+      if (!strategy.scannerPeriod && strategy.symbolSource !== 'gainers24h' && strategy.symbolSource !== 'gainers24hDropped') continue;
       if (resolveSymbols(strategy).length === 0) {
         const label = scannerLabel(strategy);
         const msg = `🔍 ${label} não tem dados — a correr automaticamente...`;
@@ -684,7 +701,7 @@ async function runAll() {
 // Carrega posições abertas da BD ao arrancar (sobrevive a reinicios)
 async function loadOpenPositions() {
   try {
-    const { rows } = await pool.query(`SELECT strategy_name, symbol, side, id, entry_price, quantity FROM trades WHERE status='open'`);
+    const { rows } = await pool.query(`SELECT strategy_name, symbol, side, id, entry_price, quantity, opened_at FROM trades WHERE status='open'`);
     rows.forEach(r => {
       const key = `${r.strategy_name}_${r.symbol}`;
       const entryPrice = parseFloat(r.entry_price);
@@ -698,7 +715,7 @@ async function loadOpenPositions() {
         const expectedFullQty = strategy.positionSize / entryPrice;
         tpTaken = qty < expectedFullQty * 0.99;
       }
-      openPositions[key] = { tradeId: r.id, side: r.side, entryPrice, qty, tpTaken };
+      openPositions[key] = { tradeId: r.id, side: r.side, entryPrice, qty, tpTaken, openedAt: new Date(r.opened_at).getTime() };
     });
     if (rows.length) console.log(`[Runner] ${rows.length} posições abertas carregadas da BD`);
   } catch { /* BD ainda não disponível */ }

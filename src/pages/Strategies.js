@@ -2,18 +2,6 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 const STRATEGY_META = {
-  Top6SHORT: {
-    description: 'Top 6 de ganhos 24h no 15m. Entra SHORT quando o fecho está abaixo da SMA(21), inverte para LONG quando cruza de volta para cima — e vice-versa. SL 7%.',
-    tags: ['SMA21', 'cruzamento', 'gainers24h', 'long-short', '15m'],
-    difficulty: 'Easy',
-    source: 'Custom',
-  },
-  Top6LONG: {
-    description: 'Top 6 de ganhos 24h no 15m. Entra LONG assim que o símbolo entra no Top 6; depois disso inverte por SMA(21) — abaixo vira SHORT, acima volta a LONG. SL 7%.',
-    tags: ['SMA21', 'gainers24h', 'ranking', 'long-short', '15m'],
-    difficulty: 'Easy',
-    source: 'Custom',
-  },
   TrendSurfer: {
     description: 'Surfa tendências usando EMAs (12/30/80) com confirmação de RSI e volume. Só LONG — o scanner EMA90 garante uptrend diário.',
     tags: ['trend-following', 'EMA', 'RSI', 'volume'],
@@ -33,8 +21,14 @@ const STRATEGY_META = {
     source: 'Custom',
   },
   GainerRSIFade: {
-    description: 'Lógica da StockRSI (RSI14 x EMA9(RSI), gap mínimo de 3 pontos) aplicada ao universo do Top 6 ganhos 24h em 15m. Na prática, quase só SHORT — vende o cruzamento de RSI vindo de sobrecompra nos maiores gainers do dia.',
+    description: 'Lógica da StockRSI (RSI14 x EMA9(RSI), gap mínimo de 3 pontos) aplicada ao universo do Top 4 ganhos 24h em 15m. Na prática, quase só SHORT — vende o cruzamento de RSI vindo de sobrecompra nos maiores gainers do dia.',
     tags: ['RSI-cross', 'gainers24h', 'fade', '15m'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
+  Top4RotationFade: {
+    description: 'Abre SHORT em símbolos que acabaram de sair do Top 4 de ganhos 24h (estavam no scan anterior, já não estão no atual) — aposta que o pump esgotou. Sem TP. SL 25%, fecha tudo ao fim de ~4h e reabre se ainda estiver fora do Top 4.',
+    tags: ['gainers24h', 'rotação', 'fade', 'short-only'],
     difficulty: 'Medium',
     source: 'Custom',
   },

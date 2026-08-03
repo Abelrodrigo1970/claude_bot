@@ -6,8 +6,9 @@ const SMA_PERIOD    = 18;
 const MIN_GAP       = 0.8;  // pontos mínimos acumulados desde o pico
 const LOOKBACK      = 10;   // janela para encontrar pico recente
 const RECENT_WINDOW = 3;    // pico deve estar nas últimas N velas da janela (evita re-trigger)
-const RSI_SHORT_MAX = 60;   // SHORT so quando RSI nao esta ja muito oversold
-const RSI_LONG_MIN  = 40;   // LONG so quando RSI nao esta ja muito overbought (espelho do RSI_SHORT_MAX)
+const RSI_SHORT_MAX = 55;   // SHORT so quando RSI nao esta ja muito oversold
+const RSI_LONG_MIN  = 45;   // LONG so quando RSI nao esta ja muito overbought (espelho do RSI_SHORT_MAX)
+const MIN_VOL_RATIO  = 1;   // exige volume >= media para confirmar a entrada (evita sinais em ruido de baixo volume)
 
 function calculateIndicators(candles) {
   const closes  = candles.map(c => c.close);
@@ -45,10 +46,10 @@ function calculateIndicators(candles) {
   const volRatio   = avgVolume > 0 ? lastVolume / avgVolume : 0;
   const lastRsi    = rsiArr[rsiArr.length - 1];
 
-  // SHORT valido: queda >= MIN_GAP + ainda a cair + pico recente + RSI nao oversold
-  const validShort = dropFromPeak >= MIN_GAP && falling && peakIsRecent && lastRsi <= RSI_SHORT_MAX;
-  // LONG valido: subida >= MIN_GAP + ainda a subir + vale recente + RSI nao overbought
-  const validLong  = riseFromTrough >= MIN_GAP && rising && troughIsRecent && lastRsi >= RSI_LONG_MIN;
+  // SHORT valido: queda >= MIN_GAP + ainda a cair + pico recente + RSI nao oversold + volume confirma
+  const validShort = dropFromPeak >= MIN_GAP && falling && peakIsRecent && lastRsi <= RSI_SHORT_MAX && volRatio >= MIN_VOL_RATIO;
+  // LONG valido: subida >= MIN_GAP + ainda a subir + vale recente + RSI nao overbought + volume confirma
+  const validLong  = riseFromTrough >= MIN_GAP && rising && troughIsRecent && lastRsi >= RSI_LONG_MIN && volRatio >= MIN_VOL_RATIO;
 
   return {
     rsi: lastRsi,
@@ -139,6 +140,7 @@ function generateSignal(candles, currentPosition = null) {
     if (!ind.troughIsRecent)          missing.push('vale antigo (repetição bloqueada)');
     if (ind.rsi < RSI_LONG_MIN)       missing.push(`RSI=${ind.rsi.toFixed(1)}<${RSI_LONG_MIN}`);
   }
+  if (ind.volRatio < MIN_VOL_RATIO) missing.push(`volume=${ind.volRatio.toFixed(2)}x<${MIN_VOL_RATIO}x`);
 
   return {
     signal: 'hold',

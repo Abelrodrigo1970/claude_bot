@@ -112,12 +112,15 @@ function getState(period = 200) {
 // Ranking simples por variação de preço nas últimas 24h (não usa EMA).
 // Usa fetchTickers em lote — muito mais leve que os scanners EMA (1 pedido vs. ~250).
 
-let gainersState = { status: 'idle', progress: 0, total: 0, results: [], scannedAt: null, error: null };
+let gainersState = { status: 'idle', progress: 0, total: 0, results: [], previousResults: [], scannedAt: null, error: null };
 
-async function startScanGainers(limit = 6) {
+async function startScanGainers(limit = 4) {
   if (gainersState.status === 'scanning') return;
   if (gainersState.status === 'done' && gainersState.scannedAt && Date.now() - gainersState.scannedAt < CACHE_TTL) return;
 
+  // Guarda o Top N anterior antes de o sobrepor — usado pela Top4RotationFade
+  // para detetar símbolos que acabaram de sair do ranking.
+  const previousResults = gainersState.results;
   gainersState = { ...gainersState, status: 'scanning', progress: 0, total: 0, results: [], error: null };
 
   try {
@@ -159,9 +162,10 @@ async function startScanGainers(limit = 6) {
     const top = results.slice(0, limit);
     const scannedAt = new Date();
 
-    gainersState.results   = top;
-    gainersState.scannedAt = scannedAt.getTime();
-    gainersState.status    = 'done';
+    gainersState.results         = top;
+    gainersState.previousResults = previousResults;
+    gainersState.scannedAt       = scannedAt.getTime();
+    gainersState.status          = 'done';
 
     // Guarda no histórico da BD (silencioso se BD não estiver configurada)
     try {

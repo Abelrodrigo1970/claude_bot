@@ -335,7 +335,7 @@ function GainersPanel() {
   }, []);
 
   const startScan = async () => {
-    await axios.post(`/api/scanner/gainers/start?limit=6`);
+    await axios.post(`/api/scanner/gainers/start?limit=4`);
     setState(s => ({ ...s, status: 'scanning', progress: 0, results: [] }));
     setView('scan');
     stopPolling();
@@ -352,7 +352,7 @@ function GainersPanel() {
       <div className="page-header">
         <div>
           <div className="page-sub">
-            Top 6 maiores subidas nas últimas 24h · Top 250 por volume · atualiza a cada 2h
+            Top 4 maiores subidas nas últimas 24h · Top 250 por volume · atualiza a cada 2h
             {state.scannedAt && (
               <span className="scan-time"> · Scan: {new Date(state.scannedAt).toLocaleTimeString('pt-PT')}</span>
             )}
@@ -610,7 +610,7 @@ export default function Scanner() {
           className={`scanner-tab ${tab === 'gainers24h' ? 'active' : ''}`}
           onClick={() => setTab('gainers24h')}
         >
-          Top 6 (24h)
+          Top 4 (24h)
         </button>
         <button
           className={`scanner-tab ${tab === 'ematrend' ? 'active' : ''}`}
