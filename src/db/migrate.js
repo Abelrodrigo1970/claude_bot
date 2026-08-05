@@ -102,6 +102,21 @@ async function migrate() {
         scanned_at TIMESTAMP      NOT NULL DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS scanner_ema_trend_stocks (
+        id         SERIAL PRIMARY KEY,
+        rank       INT            NOT NULL,
+        symbol     VARCHAR(50)    NOT NULL,
+        price      DECIMAL(20,8)  NOT NULL,
+        ema21_1d   DECIMAL(20,8)  NOT NULL,
+        ema50_1d   DECIMAL(20,8)  NOT NULL,
+        ema21_1h   DECIMAL(20,8)  NOT NULL,
+        ema50_1h   DECIMAL(20,8)  NOT NULL,
+        pct_above  DECIMAL(10,4)  NOT NULL,
+        change_24h DECIMAL(10,4),
+        volume     DECIMAL(20,8),
+        scanned_at TIMESTAMP      NOT NULL DEFAULT NOW()
+      );
+
       CREATE TABLE IF NOT EXISTS strategy_settings (
         strategy_name VARCHAR(100) PRIMARY KEY,
         enabled       BOOLEAN      NOT NULL DEFAULT true,
@@ -123,6 +138,7 @@ async function migrate() {
       CREATE INDEX IF NOT EXISTS idx_scanner_period_time ON scanner_results(ema_period, scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_gainers_time ON scanner_gainers(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_ema_trend_time ON scanner_ema_trend(scanned_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_scanner_ema_trend_stocks_time ON scanner_ema_trend_stocks(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_stock_symbols_active ON stock_symbols(active);
     `);
     console.log('✅ Migration completed successfully');

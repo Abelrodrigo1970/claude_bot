@@ -2,13 +2,8 @@
 const bybit = require('./bybit');
 const { getState: getScannerState, startScan, getGainersState, startScanGainers } = require('./scanner');
 const trendSurfer         = require('../strategies/trendSurfer');
-// StockRSI já não corre como estratégia própria — o módulo fica porque a
-// GainerRSIFade reaproveita a sua generateSignal (ver mais abaixo).
-const stockRSI            = require('../strategies/stockRSI');
 const stockSMA            = require('../strategies/stockSMA');
-const top4RotationFade    = require('../strategies/top4RotationFade');
 const ema90TopFade        = require('../strategies/ema90TopFade');
-const stochMomentum       = require('../strategies/stochMomentum');
 const cloEmaFlip          = require('../strategies/cloEmaFlip');
 const stoch50             = require('../strategies/stoch50');
 const ema200Top5          = require('../strategies/ema200Top5');
@@ -44,40 +39,6 @@ const STRATEGIES = [
     enabled: true,
   },
   {
-    name: 'GainerRSIFade',
-    market: 'crypto',
-    symbol: null,
-    symbolSource: 'gainers24h',
-    timeframe: '15m',
-    // Reaproveita a lógica exata da StockRSI (RSI14 x EMA9(RSI), gap>=3, RSI
-    // extremo) sobre o universo do Top 4 ganhos 24h. Backtest sobre 125
-    // símbolos/18 dias: 86 trades, WR 40.7%, +1.07%/trade — quase só SHORT
-    // (83/86), estável nas duas metades cronológicas do período. Sem SL hits
-    // no backtest, mas mantém 20% como rede de segurança (igual ao CandleBreakout).
-    generateSignal: stockRSI.generateSignal,
-    positionSize: 60,
-    stopLossPct: 0.20,
-    // Nunca correu de facto sobre este universo (só em backtest) — arranca em
-    // estudo até acumular trades reais antes de ligar ordens na Bybit.
-    enabled: false,
-  },
-  {
-    name: top4RotationFade.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    symbolSource: 'gainers24hDropped',
-    timeframe: '1h',
-    generateSignal: top4RotationFade.generateSignal,
-    positionSize: 60,
-    stopLossPct: 0.25,
-    maxHoldHours: 4,
-    // Abre SHORT quando um símbolo sai do Top 4 de ganhos 24h (aposta que o
-    // pump esgotou). SL 25%, sem TP, fecha tudo ao fim de ~4h (2 sessões de
-    // scan) e reabre se ainda estiver fora do Top 4. Nunca corrida nem
-    // testada — arranca só em estudo.
-    enabled: false,
-  },
-  {
     name: ema90TopFade.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
@@ -95,18 +56,6 @@ const STRATEGIES = [
     enabled: true,
   },
   {
-    name: stochMomentum.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    scannerPeriod: 90,
-    timeframe: '1h',
-    generateSignal: stochMomentum.generateSignal,
-    positionSize: 60,
-    // Nunca tinha corrido antes (não estava registada) — arranca só em estudo
-    // até haver dados de desempenho reais antes de ligar ordens na Bybit.
-    enabled: false,
-  },
-  {
     name: cloEmaFlip.STRATEGY_NAME,
     market: 'crypto',
     symbol: 'CL/USDT:USDT',
@@ -117,24 +66,6 @@ const STRATEGIES = [
     // inverter quando a EMA12 cruza 1% para o outro lado da EMA80. Símbolo
     // corrigido de CLO/USDT para CL/USDT (30/07) — estava a negociar o ativo
     // errado. Desligada até confirmar o comportamento no ativo certo.
-    enabled: false,
-  },
-  {
-    name: 'StockEmaFlipTP',
-    market: 'stock',
-    symbol: null,
-    symbolSource: 'stocks',
-    timeframe: '1h',
-    // Mesma lógica da CLOEmaFlip (EMA12 x EMA80, limiar 0.5%), aplicada ao
-    // universo de stocks/ETFs em vez de um único símbolo.
-    generateSignal: cloEmaFlip.generateSignal,
-    positionSize: 60,
-    // Take-profit parcial: só em SHORT ("na venda"), fecha 50% da posição
-    // quando o lucro atinge 18% — a outra metade continua até ao flip normal.
-    takeProfitPct: 0.18,
-    takeProfitCloseFraction: 0.5,
-    takeProfitSide: 'short',
-    // Nunca corrida nem testada — arranca só em estudo.
     enabled: false,
   },
   {

@@ -451,13 +451,13 @@ function EmaTrendResultsTable({ results }) {
   );
 }
 
-function EmaTrendHistoryPanel() {
+function EmaTrendHistoryPanel({ apiBase = '/api/scanner/ematrend' }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [openIdx, setOpenIdx]   = useState(0);
 
   useEffect(() => {
-    axios.get(`/api/scanner/ematrend/history?sessions=10`)
+    axios.get(`${apiBase}/history?sessions=10`)
       .then(r => setSessions(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -497,7 +497,7 @@ function EmaTrendHistoryPanel() {
   );
 }
 
-function EmaTrendPanel() {
+function EmaTrendPanel({ apiBase = '/api/scanner/ematrend', subtitle = 'Preço acima da EMA21 e EMA50, no diário E no 1h · Top 250 por volume' }) {
   const [view, setView]   = useState('scan');
   const [state, setState] = useState({ status: 'idle', progress: 0, total: 0, results: [], scannedAt: null });
   const pollRef = useRef(null);
@@ -506,14 +506,14 @@ function EmaTrendPanel() {
 
   const fetchState = useCallback(async () => {
     try {
-      const { data } = await axios.get(`/api/scanner/ematrend`);
+      const { data } = await axios.get(apiBase);
       setState(data);
       if (data.status !== 'scanning') stopPolling();
     } catch { stopPolling(); }
-  }, []);
+  }, [apiBase]);
 
   const startScan = async () => {
-    await axios.post(`/api/scanner/ematrend/start?limit=50`);
+    await axios.post(`${apiBase}/start?limit=50`);
     setState(s => ({ ...s, status: 'scanning', progress: 0, results: [] }));
     setView('scan');
     stopPolling();
@@ -532,7 +532,7 @@ function EmaTrendPanel() {
       <div className="page-header">
         <div>
           <div className="page-sub">
-            Preço acima da EMA21 e EMA50, no diário E no 1h · Top 250 por volume
+            {subtitle}
             {state.scannedAt && (
               <span className="scan-time"> · Scan: {new Date(state.scannedAt).toLocaleTimeString('pt-PT')}</span>
             )}
@@ -552,7 +552,7 @@ function EmaTrendPanel() {
       </div>
 
       {view === 'history' ? (
-        <EmaTrendHistoryPanel />
+        <EmaTrendHistoryPanel apiBase={apiBase} />
       ) : (
         <>
           {state.status === 'scanning' && (
@@ -618,10 +618,23 @@ export default function Scanner() {
         >
           EMA Trend (21/50)
         </button>
+        <button
+          className={`scanner-tab ${tab === 'ematrend-stocks' ? 'active' : ''}`}
+          onClick={() => setTab('ematrend-stocks')}
+        >
+          EMA Trend Stocks (21/50)
+        </button>
       </div>
 
       {tab === 'gainers24h' ? <GainersPanel key="gainers24h" />
         : tab === 'ematrend' ? <EmaTrendPanel key="ematrend" />
+        : tab === 'ematrend-stocks' ? (
+          <EmaTrendPanel
+            key="ematrend-stocks"
+            apiBase="/api/scanner/ematrend-stocks"
+            subtitle="Preço acima da EMA21 e EMA50, no diário E no 1h · Universo de stocks/ETFs"
+          />
+        )
         : <ScannerPanel key={tab} period={tab} />}
     </div>
   );

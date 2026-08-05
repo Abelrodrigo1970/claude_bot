@@ -14,34 +14,10 @@ const STRATEGY_META = {
     difficulty: 'Easy',
     source: 'Custom',
   },
-  StochMomentum: {
-    description: 'Cruzamento do Stochastic (%K/%D) em zona extrema, confirmado por RSI, volume e direção da vela. LONG em oversold + cruzamento para cima, SHORT em overbought + cruzamento para baixo.',
-    tags: ['stochastic', 'RSI', 'momentum', 'long-short'],
-    difficulty: 'Medium',
-    source: 'Custom',
-  },
-  GainerRSIFade: {
-    description: 'Lógica da StockRSI (RSI14 x EMA9(RSI), gap mínimo de 3 pontos) aplicada ao universo do Top 4 ganhos 24h em 15m. Na prática, quase só SHORT — vende o cruzamento de RSI vindo de sobrecompra nos maiores gainers do dia.',
-    tags: ['RSI-cross', 'gainers24h', 'fade', '15m'],
-    difficulty: 'Medium',
-    source: 'Custom',
-  },
-  Top4RotationFade: {
-    description: 'Abre SHORT em símbolos que acabaram de sair do Top 4 de ganhos 24h (estavam no scan anterior, já não estão no atual) — aposta que o pump esgotou. Sem TP. SL 25%, fecha tudo ao fim de ~4h e reabre se ainda estiver fora do Top 4.',
-    tags: ['gainers24h', 'rotação', 'fade', 'short-only'],
-    difficulty: 'Medium',
-    source: 'Custom',
-  },
   CLOEmaFlip: {
     description: 'Só CL/USDT, no 1h. Sempre posicionada: LONG quando a EMA12 está 0,5%+ acima da EMA80, SHORT quando está 0,5%+ abaixo — inverte diretamente quando o spread cruza para o outro lado.',
     tags: ['EMA-spread', 'single-symbol', 'always-in', '1h'],
     difficulty: 'Easy',
-    source: 'Custom',
-  },
-  StockEmaFlipTP: {
-    description: 'Mesma lógica da CLOEmaFlip (EMA12 x EMA80, limiar 0,5%) aplicada a stocks/ETFs no 1h. Em SHORT, fecha 50% da posição assim que o lucro atinge 18% — a outra metade fica até ao próximo flip.',
-    tags: ['EMA-spread', 'stocks', 'take-profit-parcial', '1h'],
-    difficulty: 'Medium',
     source: 'Custom',
   },
   Stoch50: {

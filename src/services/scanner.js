@@ -326,8 +326,122 @@ function getEmaTrendState() {
   return emaTrendState;
 }
 
+// ─── SCANNER EMA TREND STOCKS (21/50, diário + 1h) ─────────────
+// Igual ao EMA Trend acima, mas sobre o universo de stocks/ETFs
+// (tabela stock_symbols) em vez do top 250 de perpétuos por volume.
+
+let emaTrendStocksState = { status: 'idle', progress: 0, total: 0, results: [], scannedAt: null, error: null };
+
+async function startScanEmaTrendStocks(limit = 50) {
+  if (emaTrendStocksState.status === 'scanning') return;
+  if (emaTrendStocksState.status === 'done' && emaTrendStocksState.scannedAt && Date.now() - emaTrendStocksState.scannedAt < CACHE_TTL) return;
+
+  emaTrendStocksState = { ...emaTrendStocksState, status: 'scanning', progress: 0, total: 0, results: [], error: null };
+
+  try {
+    const { rows: stockRows } = await pool.query('SELECT symbol FROM stock_symbols WHERE active=true ORDER BY ticker');
+    const symbols = stockRows.map(r => r.symbol);
+
+    let tickers = {};
+    try {
+      tickers = await bybit.exchange.fetchTickers(symbols);
+    } catch {
+      // segue sem change24h/volume se o fetch em lote falhar
+    }
+
+    console.log(`[Scanner EMATrend Stocks] ${symbols.length} stocks/ETFs elegíveis`);
+    emaTrendStocksState.total = symbols.length;
+
+    const needed = 50 + 10;
+    const results = [];
+
+    for (let i = 0; i < symbols.length; i++) {
+      emaTrendStocksState.progress = i + 1;
+      const symbol = symbols[i];
+
+      try {
+        const [daily, hourly] = await Promise.all([
+          bybit.getCandles(symbol, '1d', needed + 5),
+          bybit.getCandles(symbol, '1h', needed + 5),
+        ]);
+        if (daily.length < needed || hourly.length < needed) continue;
+
+        const closesD = daily.map(c => c.close);
+        const closesH = hourly.map(c => c.close);
+
+        const ema21D = EMA.calculate({ period: 21, values: closesD }).at(-1);
+        const ema50D = EMA.calculate({ period: 50, values: closesD }).at(-1);
+        const ema21H = EMA.calculate({ period: 21, values: closesH }).at(-1);
+        const ema50H = EMA.calculate({ period: 50, values: closesH }).at(-1);
+
+        const price = closesH[closesH.length - 1];
+
+        const passes = price > ema21D && price > ema50D && price > ema21H && price > ema50H;
+        if (!passes) continue;
+
+        const pctAbove = ((price - ema21D) / ema21D + (price - ema50D) / ema50D +
+                           (price - ema21H) / ema21H + (price - ema50H) / ema50H) / 4 * 100;
+
+        results.push({
+          symbol,
+          price,
+          ema21_1d: ema21D,
+          ema50_1d: ema50D,
+          ema21_1h: ema21H,
+          ema50_1h: ema50H,
+          pctAbove,
+          change24h: tickers[symbol]?.percentage ?? null,
+          volume: tickers[symbol]?.quoteVolume ?? 0,
+        });
+      } catch {
+        // simbolo sem dados suficientes, ignorar
+      }
+    }
+
+    results.sort((a, b) => b.pctAbove - a.pctAbove);
+    const top = results.slice(0, limit);
+    const scannedAt = new Date();
+
+    emaTrendStocksState.results   = top;
+    emaTrendStocksState.scannedAt = scannedAt.getTime();
+    emaTrendStocksState.status    = 'done';
+
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (let i = 0; i < top.length; i++) {
+          const r = top[i];
+          await client.query(
+            `INSERT INTO scanner_ema_trend_stocks (rank, symbol, price, ema21_1d, ema50_1d, ema21_1h, ema50_1h, pct_above, change_24h, volume, scanned_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+            [i + 1, r.symbol, r.price, r.ema21_1d, r.ema50_1d, r.ema21_1h, r.ema50_1h, r.pctAbove, r.change24h, r.volume, scannedAt]
+          );
+        }
+        await client.query('COMMIT');
+        console.log(`[Scanner EMATrend Stocks] ${top.length} resultados guardados na BD`);
+      } catch (dbErr) {
+        await client.query('ROLLBACK');
+        console.warn('[Scanner EMATrend Stocks] Erro ao guardar no BD:', dbErr.message);
+      } finally {
+        client.release();
+      }
+    } catch {
+      // BD não configurada — continua sem guardar
+    }
+  } catch (err) {
+    emaTrendStocksState.status = 'error';
+    emaTrendStocksState.error  = err.message;
+  }
+}
+
+function getEmaTrendStocksState() {
+  return emaTrendStocksState;
+}
+
 module.exports = {
   startScan, getState,
   startScanGainers, getGainersState,
   startScanEmaTrend, getEmaTrendState,
+  startScanEmaTrendStocks, getEmaTrendStocksState,
 };

@@ -10,6 +10,7 @@ const {
   startScan, getState,
   startScanGainers, getGainersState,
   startScanEmaTrend, getEmaTrendState,
+  startScanEmaTrendStocks, getEmaTrendStocksState,
 } = require('./services/scanner');
 
 const app = express();
@@ -363,6 +364,55 @@ app.get('/api/scanner/ematrend/history', async (req, res) => {
   }
 });
 
+// Inicia scan EMA Trend Stocks (21/50, diário+1h, universo stock_symbols) — ?limit=50
+app.post('/api/scanner/ematrend-stocks/start', (req, res) => {
+  const limit = parseInt(req.query.limit) || 50;
+  startScanEmaTrendStocks(limit);
+  res.json({ ok: true });
+});
+
+// GET para cron jobs externos — scanner EMA Trend Stocks
+app.get('/api/cron/scanEmaTrendStocks', (req, res) => {
+  res.json({ ok: true, message: 'Scanner EMA Trend Stocks iniciado', time: new Date() });
+  startScanEmaTrendStocks(50);
+});
+
+// Estado atual do scan EMA Trend Stocks (polling)
+app.get('/api/scanner/ematrend-stocks', (req, res) => {
+  res.json(getEmaTrendStocksState());
+});
+
+// Histórico de scans EMA Trend Stocks — ?sessions=10
+app.get('/api/scanner/ematrend-stocks/history', async (req, res) => {
+  try {
+    const sessions = parseInt(req.query.sessions) || 10;
+
+    const { rows: sessionRows } = await pool.query(
+      `SELECT DISTINCT scanned_at FROM scanner_ema_trend_stocks ORDER BY scanned_at DESC LIMIT $1`,
+      [sessions]
+    );
+
+    if (!sessionRows.length) return res.json([]);
+
+    const dates = sessionRows.map(r => r.scanned_at);
+    const { rows } = await pool.query(
+      `SELECT * FROM scanner_ema_trend_stocks WHERE scanned_at = ANY($1) ORDER BY scanned_at DESC, rank ASC`,
+      [dates]
+    );
+
+    const grouped = {};
+    rows.forEach(r => {
+      const key = r.scanned_at.toISOString();
+      if (!grouped[key]) grouped[key] = { scanned_at: r.scanned_at, results: [] };
+      grouped[key].results.push(r);
+    });
+
+    res.json(Object.values(grouped));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── STATIC FILES (React build) ────────────────────────────────
 
 const buildPath = path.join(__dirname, '../build');
@@ -396,6 +446,13 @@ cron.schedule('10 * * * *', async () => {
   console.log('\n📐 Cron 1h: a correr scanner EMA Trend...');
   await startScanEmaTrend(50);
   console.log('📐 Cron 1h: scanner EMA Trend concluído.');
+});
+
+// A cada hora: scanner EMA Trend Stocks (21/50, diário+1h, universo stocks/ETFs) — usa cache 2h
+cron.schedule('20 * * * *', async () => {
+  console.log('\n📐 Cron 1h: a correr scanner EMA Trend Stocks...');
+  await startScanEmaTrendStocks(50);
+  console.log('📐 Cron 1h: scanner EMA Trend Stocks concluído.');
 });
 
 // A cada 2 horas: scanner Top 4 ganhos 24h
