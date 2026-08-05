@@ -45,8 +45,8 @@ const STRATEGY_META = {
     source: 'Custom',
   },
   Stoch50: {
-    description: 'Stocks & ETFs no 1h. Stochastic lento (%K 50, suavização 9, %D 9): compra quando %K cruza acima de %D, vende quando cruza abaixo — só se %D estiver acima de 20.',
-    tags: ['stochastic', 'K50', 'cruzamento', 'stocks', '1h'],
+    description: 'Stocks & ETFs no 1h (universo reduzido, exclui os 20 piores do backtest). Stochastic lento (%K 50, suavização 40, %D 11): compra quando %K cruza acima de %D, vende quando cruza abaixo — sem filtro, qualquer cruzamento inverte a posição. TP parcial 50% a +15% em ambos os lados.',
+    tags: ['stochastic', 'K50', 'cruzamento', 'stocks', 'take-profit-parcial', '1h'],
     difficulty: 'Medium',
     source: 'Custom',
   },

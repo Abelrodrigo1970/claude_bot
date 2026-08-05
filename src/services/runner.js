@@ -142,11 +142,22 @@ const STRATEGIES = [
     market: 'stock',
     symbol: null,
     symbolSource: 'stocks',
+    symbolExclude: [
+      'QNTX', 'SKHYNIX', 'IWM', 'ASTS', 'BMNR', 'SPCX', 'EWY', 'ORCL', 'CBRS', 'NVDA',
+      'SPY', 'TSM', 'HOOD', 'META', 'SAMSUNG', 'NOW', 'EWT', 'IBM', 'LLY', 'CSCO',
+    ],
     timeframe: '1h',
     generateSignal: stoch50.generateSignal,
     positionSize: 60,
-    // Stochastic K(50)/suavização 9/%D 9 — cruzamento de %K sobre %D, filtrado
-    // por %D>20. Nunca corrida nem testada — arranca só em estudo.
+    // Stochastic K(50)/suavização 40/%D 11 — cruzamento de %K sobre %D, sem
+    // filtro. Backtest (74 símbolos, ~70 dias, sem TP): WR 36.9%, +305.71 USDT
+    // vs. config antiga (K9/D9, filtro D>20): WR 31.5%, -709.59 USDT. Com TP
+    // parcial 50% a +15% (ambos os lados): +448.89 USDT no mesmo backtest —
+    // melhor das 3 variantes testadas (10/15/20%). Excluídos os 20 símbolos
+    // consistentemente piores no backtest (QNTX é o pior, -70 USDT sozinho).
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    takeProfitPct: 0.15,
+    takeProfitCloseFraction: 0.5,
     enabled: false,
   },
   {
@@ -345,7 +356,8 @@ async function runStrategyOnSymbol(strategy, symbol) {
 
     // Take-profit parcial (opt-in por estratégia) — verificado antes do sinal
     // da estratégia, é gestão de posição e não depende da lógica de entrada/saída.
-    if (strategy.takeProfitPct && currentPos === strategy.takeProfitSide) {
+    // Sem takeProfitSide definido, aplica-se aos dois lados (long e short).
+    if (strategy.takeProfitPct && currentPos && (!strategy.takeProfitSide || currentPos === strategy.takeProfitSide)) {
       const pos = openPositions[key];
       if (pos && !pos.tpTaken && pos.entryPrice) {
         const pnlPct = pos.side === 'long'

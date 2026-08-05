@@ -2,9 +2,8 @@ const { Stochastic, SMA } = require('technicalindicators');
 
 const STRATEGY_NAME = 'Stoch50';
 const K_LENGTH = 50;
-const K_SMOOTH = 9;
-const D_SMOOTH = 9;
-const D_FLOOR = 20; // filtro: só entra/inverte com %D acima disto
+const K_SMOOTH = 40;
+const D_SMOOTH = 11;
 
 function calculateIndicators(candles) {
   const closes = candles.map(c => c.close);
@@ -27,13 +26,12 @@ function calculateIndicators(candles) {
     k: k0, d: d0,
     crossUp: k1 <= d1 && k0 > d0,
     crossDown: k1 >= d1 && k0 < d0,
-    dAboveFloor: d0 > D_FLOOR,
   };
 }
 
-// Compra quando %K cruza acima de %D, vende quando cruza abaixo — só se %D
-// estiver acima de 20 (evita cruzamentos na zona extrema de sobrevenda).
-// Sempre posicionada: sem cruzamento válido mantém o que já estiver aberto.
+// Compra quando %K cruza acima de %D, vende quando cruza abaixo — sem filtro,
+// qualquer cruzamento é válido. Sempre posicionada: sem cruzamento mantém o
+// que já estiver aberto.
 function generateSignal(candles, currentPosition = null) {
   const minCandles = K_LENGTH + K_SMOOTH + D_SMOOTH + 5;
   if (candles.length < minCandles) {
@@ -43,14 +41,14 @@ function generateSignal(candles, currentPosition = null) {
   const ind = calculateIndicators(candles);
 
   if (!currentPosition) {
-    if (ind.crossUp && ind.dAboveFloor) {
+    if (ind.crossUp) {
       return {
         signal: 'long',
         reason: `%K(${ind.k.toFixed(1)}) cruzou acima de %D(${ind.d.toFixed(1)})`,
         indicators: ind,
       };
     }
-    if (ind.crossDown && ind.dAboveFloor) {
+    if (ind.crossDown) {
       return {
         signal: 'short',
         reason: `%K(${ind.k.toFixed(1)}) cruzou abaixo de %D(${ind.d.toFixed(1)})`,
@@ -60,10 +58,10 @@ function generateSignal(candles, currentPosition = null) {
     return { signal: 'hold', reason: `Sem cruzamento válido — %K=${ind.k?.toFixed(1)}, %D=${ind.d?.toFixed(1)}`, indicators: ind };
   }
 
-  if (currentPosition === 'long' && ind.crossDown && ind.dAboveFloor) {
+  if (currentPosition === 'long' && ind.crossDown) {
     return { signal: 'flip_to_short', reason: `%K cruzou abaixo de %D(${ind.d.toFixed(1)}) — fecha long, abre short`, indicators: ind };
   }
-  if (currentPosition === 'short' && ind.crossUp && ind.dAboveFloor) {
+  if (currentPosition === 'short' && ind.crossUp) {
     return { signal: 'flip_to_long', reason: `%K cruzou acima de %D(${ind.d.toFixed(1)}) — fecha short, abre long`, indicators: ind };
   }
 
