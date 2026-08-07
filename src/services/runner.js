@@ -127,24 +127,29 @@ const STRATEGIES = [
     symbols: [
       'USAR/USDT:USDT', 'TQQQ/USDT:USDT', 'NOKIA/USDT:USDT', 'SMCI/USDT:USDT', 'HPE/USDT:USDT',
       'STXX/USDT:USDT', 'DELL/USDT:USDT', 'WDC/USDT:USDT', 'HOOD/USDT:USDT', 'BABA/USDT:USDT',
+      'SNDK/USDT:USDT', 'NBIS/USDT:USDT', 'MU/USDT:USDT',
     ],
     timeframe: '1h',
     generateSignal: stochRsiTop4Flip.generateSignal,
     positionSize: 60,
     stopLossLongPct: 0.05,
     stopLossShortPct: 0.07,
+    takeProfitPct: 0.19,
+    takeProfitCloseFraction: 0.5,
     // StochRSI 1h (RSI50/Stoch50/SmoothK40/SmoothD11) sobre uma lista fixa —
     // o Top10 do backtest de 30 dias sobre o universo de stocks/ETFs (ver
     // src/backtests/backtest-stochRsiTop4-stocks.js, corrido em 07/08):
     // USAR +45.4%, TQQQ +21.5%, NOKIA +21.4%, SMCI +19.2%, HPE +18.0%,
     // STXX +14.3%, DELL +14.1%, WDC +13.6%, HOOD +13.0%, BABA +12.6%.
     // Substitui o ranking dinâmico Top4 de ganhos 24h (cripto) — sem
-    // scanner nem rank, todos os 10 símbolos ficam sempre elegíveis para
+    // scanner nem rank, todos os símbolos ficam sempre elegíveis para
     // entrar (ver rankOk em generateSignal). LONG quando %K cruza acima de
     // %D (inverte um SHORT aberto, se existir). Fecha o LONG quando %K
     // cruza abaixo de %D; só abre SHORT nesse momento se o preço estiver
     // ≥1% abaixo da MA21(1h) — caso contrário fecha sem inverter. SL -5%
-    // no long / +7% no short, sem TP em nenhum dos lados.
+    // no long / +7% no short. TP parcial 50% da posição a +19% (ambos os
+    // lados, sem takeProfitSide definido). SNDK, NBIS e MU adicionados
+    // fora do Top10 do backtest original.
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
