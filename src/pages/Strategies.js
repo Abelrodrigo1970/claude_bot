@@ -32,6 +32,12 @@ const STRATEGY_META = {
     difficulty: 'Easy',
     source: 'Custom',
   },
+  StochRSITop4Flip: {
+    description: 'StochRSI no 1h (RSI 50 / Stoch 50 / SmoothK 40 / SmoothD 11), só velas fechadas, sobre uma lista fixa de 10 stocks/ETFs (USAR, TQQQ, NOKIA, SMCI, HPE, STXX, DELL, WDC, HOOD, BABA — os melhores de um backtest de 30 dias). LONG quando %K cruza acima de %D (inverte um SHORT aberto, se existir; SL -5%). Fecha o LONG quando %K cruza abaixo de %D — só abre SHORT nesse fecho se o preço estiver ≥1% abaixo da MA21 1h (SL +7%), senão fica flat. Sem TP.',
+    tags: ['StochRSI', 'top10-backtest', 'lista-fixa', 'cruzamento', 'MA21', 'long-short', '1h'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
 };
 
 function DifficultyBadge({ level }) {
@@ -235,7 +241,9 @@ export default function Strategies() {
                             ? <span className="blue">{s.symbolCount} stocks/ETFs</span>
                             : s.scannerPeriod
                               ? <span className="green">TOP {s.symbolCount} · EMA{s.scannerPeriod}</span>
-                              : s.symbol?.split('/')[0]}
+                              : s.symbols?.length
+                                ? <span className="blue">{s.symbolCount} símbolos (lista fixa)</span>
+                                : s.symbol?.split('/')[0]}
                         </span>
                       </span>
                       <span className="meta-item">

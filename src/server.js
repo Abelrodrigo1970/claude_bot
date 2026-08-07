@@ -28,9 +28,10 @@ app.get('/api/strategies', (req, res) => {
     name:          s.name,
     market:        s.market || 'crypto',
     symbol:        s.symbol,
+    symbols:       s.symbols || null,
     scannerPeriod: s.scannerPeriod || null,
     symbolSource:  s.symbolSource || null,
-    symbolCount:   (s.symbolSource || s.scannerPeriod) ? resolveSymbols(s).length : 1,
+    symbolCount:   s.symbols?.length ?? ((s.symbolSource || s.scannerPeriod) ? resolveSymbols(s).length : 1),
     timeframe:     s.timeframe,
     enabled:       s.enabled,
   })));

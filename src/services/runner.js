@@ -7,6 +7,16 @@ const ema90TopFade        = require('../strategies/ema90TopFade');
 const cloEmaFlip          = require('../strategies/cloEmaFlip');
 const stoch50             = require('../strategies/stoch50');
 const ema200Top5          = require('../strategies/ema200Top5');
+const stochRsiTop4Flip    = require('../strategies/stochRsiTop4Flip');
+
+// SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
+// stopLossPct quando o lado específico não está definido, para não mudar o
+// comportamento das estratégias existentes (SL simétrico nos dois lados).
+function stopLossPctFor(strategy, side) {
+  if (side === 'long' && strategy.stopLossLongPct != null) return strategy.stopLossLongPct;
+  if (side === 'short' && strategy.stopLossShortPct != null) return strategy.stopLossShortPct;
+  return strategy.stopLossPct;
+}
 
 // Taxa taker da Bybit (USDT perpetuals, ordens market) — aplicada dos dois
 // lados (entrada+saída) para que o PnL registado fique líquido de comissão.
@@ -107,6 +117,34 @@ const STRATEGIES = [
     takeProfitCloseFraction: 0.5,
     takeProfitSide: 'long',
     stopLossPct: 0.25,
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: stochRsiTop4Flip.STRATEGY_NAME,
+    market: 'stock',
+    symbol: null,
+    symbols: [
+      'USAR/USDT:USDT', 'TQQQ/USDT:USDT', 'NOKIA/USDT:USDT', 'SMCI/USDT:USDT', 'HPE/USDT:USDT',
+      'STXX/USDT:USDT', 'DELL/USDT:USDT', 'WDC/USDT:USDT', 'HOOD/USDT:USDT', 'BABA/USDT:USDT',
+    ],
+    timeframe: '1h',
+    generateSignal: stochRsiTop4Flip.generateSignal,
+    positionSize: 60,
+    stopLossLongPct: 0.05,
+    stopLossShortPct: 0.07,
+    // StochRSI 1h (RSI50/Stoch50/SmoothK40/SmoothD11) sobre uma lista fixa —
+    // o Top10 do backtest de 30 dias sobre o universo de stocks/ETFs (ver
+    // src/backtests/backtest-stochRsiTop4-stocks.js, corrido em 07/08):
+    // USAR +45.4%, TQQQ +21.5%, NOKIA +21.4%, SMCI +19.2%, HPE +18.0%,
+    // STXX +14.3%, DELL +14.1%, WDC +13.6%, HOOD +13.0%, BABA +12.6%.
+    // Substitui o ranking dinâmico Top4 de ganhos 24h (cripto) — sem
+    // scanner nem rank, todos os 10 símbolos ficam sempre elegíveis para
+    // entrar (ver rankOk em generateSignal). LONG quando %K cruza acima de
+    // %D (inverte um SHORT aberto, se existir). Fecha o LONG quando %K
+    // cruza abaixo de %D; só abre SHORT nesse momento se o preço estiver
+    // ≥1% abaixo da MA21(1h) — caso contrário fecha sem inverter. SL -5%
+    // no long / +7% no short, sem TP em nenhum dos lados.
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
@@ -304,14 +342,15 @@ async function runStrategyOnSymbol(strategy, symbol) {
     // openPosition), mas isso só protege quando a estratégia está ligada. Em
     // modo estudo (enabled=false) essa ordem não existe, por isso replicamos
     // aqui o mesmo limite para os trades de papel respeitarem o SL também.
-    if (strategy.stopLossPct && currentPos) {
+    const slPct = stopLossPctFor(strategy, currentPos);
+    if (slPct && currentPos) {
       const pos = openPositions[key];
       if (pos && pos.entryPrice) {
         const lossPct = pos.side === 'long'
           ? (pos.entryPrice - currentPrice) / pos.entryPrice
           : (currentPrice - pos.entryPrice) / pos.entryPrice;
-        if (lossPct >= strategy.stopLossPct) {
-          const logLine = `🛑 [${symbol.split('/')[0]}] Stop-loss (${(strategy.stopLossPct * 100).toFixed(0)}%) atingido — fecha a $${currentPrice}`;
+        if (lossPct >= slPct) {
+          const logLine = `🛑 [${symbol.split('/')[0]}] Stop-loss (${(slPct * 100).toFixed(0)}%) atingido — fecha a $${currentPrice}`;
           runState.log.unshift(logLine);
           if (runState.log.length > 200) runState.log.pop();
           console.log(`[${strategy.name}] ${logLine}`);
@@ -432,13 +471,14 @@ async function openPosition(strategy, symbol, key, side, currentPrice, reason, s
   }
 
   const qty = (strategy.positionSize / currentPrice).toFixed(4);
-  const tradeId = await openTrade(strategy.name, symbol, side, currentPrice, qty, { reason, stopLossPct: strategy.stopLossPct });
+  const slPct = stopLossPctFor(strategy, side);
+  const tradeId = await openTrade(strategy.name, symbol, side, currentPrice, qty, { reason, stopLossPct: slPct });
   openPositions[key] = { tradeId, side, entryPrice: currentPrice, qty: parseFloat(qty), tpTaken: false, scanTs, openedAt: Date.now() };
 
   if (!strategy.enabled) return; // Bybit desligado — fica só na simulação/estudo
 
-  const orderParams = strategy.stopLossPct
-    ? { stopLoss: (currentPrice * (side === 'long' ? 1 - strategy.stopLossPct : 1 + strategy.stopLossPct)).toFixed(8) }
+  const orderParams = slPct
+    ? { stopLoss: (currentPrice * (side === 'long' ? 1 - slPct : 1 + slPct)).toFixed(8) }
     : {};
   try {
     await bybit.placeMarketOrder(symbol, side === 'long' ? 'buy' : 'sell', parseFloat(qty), orderParams);
@@ -502,7 +542,12 @@ function symbolsWithOpenPositions(strategyName) {
 // Resolve símbolos para uma estratégia
 function resolveSymbols(strategy) {
   let symbols;
-  if (strategy.symbolSource === 'stocks') {
+  if (strategy.symbols?.length) {
+    // Lista fixa de símbolos (array), sem depender de scanner nem da BD de
+    // stocks — usada por estratégias com um universo curado à mão (ex:
+    // Top10 de um backtest).
+    symbols = strategy.symbols;
+  } else if (strategy.symbolSource === 'stocks') {
     symbols = stockSymbolsCache;
   } else if (strategy.symbolSource === 'gainers24h') {
     const scan = getGainersState();
