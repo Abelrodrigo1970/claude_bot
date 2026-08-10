@@ -53,7 +53,10 @@ const STRATEGIES = [
     market: 'crypto',
     symbol: null,
     scannerPeriod: 90,
-    timeframe: '1h',
+    // Diário (não 1h) — a estratégia é 100% rank-driven e não olhava para velas
+    // até agora, mas o filtro de RSI(14) novo (ver ema90TopFade.js) precisa de
+    // candles diárias para bater com o estudo que o validou.
+    timeframe: '1d',
     generateSignal: ema90TopFade.generateSignal,
     positionSize: 60,
     stopLossPct: 0.26,
@@ -63,6 +66,10 @@ const STRATEGIES = [
     // (total simulado +394% vs. +556% sem SL). Ligado mesmo assim agora que a
     // estratégia está com ordens reais — o SL aqui é para limitar a perda máxima
     // por posição, não para melhorar o retorno esperado.
+    //
+    // Filtro RSI(14)<72 nos shorts adicionado em 10/08 — estudo sobre os 158
+    // shorts fechados até então: os 42 com RSI diário>=72 na entrada somam
+    // -183.96 USDT; os outros 116 (RSI<72) somam +90.11 USDT. Ver ema90TopFade.js.
     enabled: true,
   },
   {
