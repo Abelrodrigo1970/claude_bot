@@ -8,6 +8,7 @@ const cloEmaFlip          = require('../strategies/cloEmaFlip');
 const stoch50             = require('../strategies/stoch50');
 const ema200Top5          = require('../strategies/ema200Top5');
 const stochRsiTop4Flip    = require('../strategies/stochRsiTop4Flip');
+const top2GainersEma21    = require('../strategies/top2GainersEma21');
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
 // stopLossPct quando o lado específico não está definido, para não mudar o
@@ -157,6 +158,25 @@ const STRATEGIES = [
     // no long / +7% no short. TP parcial 50% da posição a +19% (ambos os
     // lados, sem takeProfitSide definido). SNDK, NBIS e MU adicionados
     // fora do Top10 do backtest original.
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: top2GainersEma21.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'gainers24h',
+    topN: 2,
+    timeframe: '15m',
+    generateSignal: top2GainersEma21.generateSignal,
+    positionSize: 60,
+    stopLossPct: 0.05,
+    takeProfitPct: 0.14,
+    takeProfitCloseFraction: 1,
+    // Estudo 13/08 (ver top2GainersEma21.js): backtest completo (10/07-13/08)
+    // sobre o scanner Top ganhos 24h restrito ao Top2, EMA21 no fecho, 15m —
+    // 201 trades, WR 32.3% (breakeven 26.3%), +1.14%/trade, soma +230%.
+    // TP fecha 100% da posição (fraction:1), não parcial.
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
