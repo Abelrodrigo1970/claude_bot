@@ -22,6 +22,27 @@ app.use(express.json());
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
 
+// TEMPORÁRIO — limpeza pontual de linhas "open" órfãs (posição já não existe
+// na Bybit, ficou presa na BD por perda de estado em memória num restart).
+// Remover depois de usar (ver conversa 13/08).
+app.post('/api/admin/close-orphans', async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'ids obrigatório' });
+    const { rows } = await pool.query(
+      `UPDATE trades
+       SET status='closed', pnl=0, pnl_pct=0, exit_price=entry_price, closed_at=NOW(),
+           metadata = metadata || '{"reason":"fecho manual — linha orfa sem posicao real na Bybit"}'::jsonb
+       WHERE id = ANY($1) AND status='open'
+       RETURNING id, symbol, strategy_name`,
+      [ids]
+    );
+    res.json({ closed: rows.length, rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Lista todas as estratégias
 app.get('/api/strategies', (req, res) => {
   res.json(STRATEGIES.map(s => ({
