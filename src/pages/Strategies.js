@@ -14,22 +14,10 @@ const STRATEGY_META = {
     difficulty: 'Easy',
     source: 'Custom',
   },
-  CLOEmaFlip: {
-    description: 'Só CL/USDT, no 1h. Sempre posicionada: LONG quando a EMA12 está 0,5%+ acima da EMA80, SHORT quando está 0,5%+ abaixo — inverte diretamente quando o spread cruza para o outro lado.',
-    tags: ['EMA-spread', 'single-symbol', 'always-in', '1h'],
-    difficulty: 'Easy',
-    source: 'Custom',
-  },
   Stoch50: {
     description: 'Stocks & ETFs no 1h (universo reduzido, exclui os 20 piores do backtest). Stochastic lento (%K 50, suavização 40, %D 11): compra quando %K cruza acima de %D, vende quando cruza abaixo — sem filtro, qualquer cruzamento inverte a posição. TP parcial 50% a +15% em ambos os lados.',
     tags: ['stochastic', 'K50', 'cruzamento', 'stocks', 'take-profit-parcial', '1h'],
     difficulty: 'Medium',
-    source: 'Custom',
-  },
-  EMA200Top5: {
-    description: 'LONG no Top 5 do ranking EMA200 — fecha tudo a cada scan novo e reabre o Top 5 atual. TP parcial 50% a +25%, SL a -25%. Sem entradas novas ao Domingo/Segunda (piores dias no estudo). Backtest (25/06-01/08): PF 1.41, +34.71 com TP/SL.',
-    tags: ['EMA200', 'ranking', 'take-profit-parcial', 'stop-loss', 'filtro-dia', 'long', '1h'],
-    difficulty: 'Easy',
     source: 'Custom',
   },
   StochRSITop4Flip: {

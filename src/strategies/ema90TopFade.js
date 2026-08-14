@@ -18,14 +18,22 @@ const RSI_SHORT_MAX = 72;
 //
 // SHORT quando o símbolo entra no top 8 do ranking EMA90 (% acima da EMA90
 // diária) — aposta que o pump já está esticado — mas só se o RSI(14) diário
-// ainda não estiver extremo (< 72); acima disso o pump tende a continuar e a
-// estratégia fica de fora até esfriar. LONG quando sai do top 8 — compra o
-// recuo. Sem stop-loss de propósito no desenho original: nos dados, qualquer
-// SL entre 5% e 20% piorou o resultado (o SL de 26% em produção é decisão à
-// parte, ver runner.js).
+// ainda não estiver extremo (< 72) e o QQQ (proxy do Nasdaq, ver context.qqqPositive,
+// calculado no runner) não estiver a subir nesse dia. LONG quando sai do top 8 —
+// compra o recuo. Sem stop-loss de propósito no desenho original: nos dados,
+// qualquer SL entre 5% e 20% piorou o resultado (o SL de 26% em produção é
+// decisão à parte, ver runner.js).
+//
+// Filtro QQQ adicionado em 14/08 — estudo dia-a-dia (01/07-14/08, 178 shorts):
+// nos 20 dias em que o QQQ fechou em alta, o short somou -112.16 USDT; nos 25
+// dias em que fechou em baixa, somou +19.41 USDT. O short desta estratégia só
+// tem edge quando o mercado de ações está em queda — bloqueia só a entrada
+// nova (e a reentrada via flip_to_short); não fecha shorts já abertos nem
+// mexe no lado long.
 function generateSignal(candles, currentPosition = null, context = {}) {
   const rank = context.rank ?? null;
   const inTopN = rank != null && rank <= TOP_N;
+  const qqqBlocksShort = context.qqqPositive === true;
 
   const closes = candles.map(c => c.close);
   const rsiArr = RSI.calculate({ period: RSI_PERIOD, values: closes });
@@ -34,6 +42,13 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   const rsiLabel = rsi != null ? rsi.toFixed(1) : 'n/a';
 
   if (!currentPosition) {
+    if (inTopN && qqqBlocksShort) {
+      return {
+        signal: 'hold',
+        reason: `Top ${TOP_N} (rank ${rank}) mas QQQ está em alta hoje — short bloqueado (só tem edge com o Nasdaq a cair)`,
+        indicators: { rank, rsi },
+      };
+    }
     if (inTopN && rsiTooHot) {
       return {
         signal: 'hold',
@@ -60,6 +75,13 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   }
 
   if (currentPosition === 'long' && inTopN) {
+    if (qqqBlocksShort) {
+      return {
+        signal: 'hold',
+        reason: `Reentrou no top ${TOP_N} (rank ${rank}) mas QQQ em alta — mantém long, não inverte para short`,
+        indicators: { rank, rsi },
+      };
+    }
     if (rsiTooHot) {
       return {
         signal: 'hold',

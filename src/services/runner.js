@@ -4,11 +4,8 @@ const { getState: getScannerState, startScan, getGainersState, startScanGainers 
 const trendSurfer         = require('../strategies/trendSurfer');
 const stockSMA            = require('../strategies/stockSMA');
 const ema90TopFade        = require('../strategies/ema90TopFade');
-const cloEmaFlip          = require('../strategies/cloEmaFlip');
 const stoch50             = require('../strategies/stoch50');
-const ema200Top5          = require('../strategies/ema200Top5');
 const stochRsiTop4Flip    = require('../strategies/stochRsiTop4Flip');
-const top2GainersEma21    = require('../strategies/top2GainersEma21');
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
 // stopLossPct quando o lado específico não está definido, para não mudar o
@@ -22,6 +19,27 @@ function stopLossPctFor(strategy, side) {
 // Taxa taker da Bybit (USDT perpetuals, ordens market) — aplicada dos dois
 // lados (entrada+saída) para que o PnL registado fique líquido de comissão.
 const TAKER_FEE_RATE = 0.00055;
+
+// Regime QQQ (proxy do Nasdaq) — opt-in via strategy.qqqShortFilter (ver
+// EMA90TopFade). Compara o close da vela diária em curso (ainda a formar-se,
+// como o resto do código já faz para ranks — ver scanner.js) com o close do
+// dia anterior. Cache de 15min para não pedir isto à Bybit a cada símbolo.
+let qqqRegimeCache = { positive: null, fetchedAt: 0 };
+const QQQ_CACHE_TTL = 15 * 60 * 1000;
+
+async function getQqqPositive() {
+  if (Date.now() - qqqRegimeCache.fetchedAt < QQQ_CACHE_TTL) return qqqRegimeCache.positive;
+  try {
+    const candles = await bybit.getCandles('QQQ/USDT:USDT', '1d', 2);
+    if (candles.length < 2) return qqqRegimeCache.positive;
+    const prevClose = candles[candles.length - 2].close;
+    const lastClose = candles[candles.length - 1].close;
+    qqqRegimeCache = { positive: lastClose >= prevClose, fetchedAt: Date.now() };
+  } catch (err) {
+    console.warn(`[Runner] Falha ao obter regime QQQ: ${err.message}`);
+  }
+  return qqqRegimeCache.positive;
+}
 
 // Registry de estratégias ativas
 // market: 'crypto' | 'stock'
@@ -71,20 +89,13 @@ const STRATEGIES = [
     // Filtro RSI(14)<72 nos shorts adicionado em 10/08 — estudo sobre os 158
     // shorts fechados até então: os 42 com RSI diário>=72 na entrada somam
     // -183.96 USDT; os outros 116 (RSI<72) somam +90.11 USDT. Ver ema90TopFade.js.
+    //
+    // Filtro QQQ adicionado em 14/08 — estudo dia-a-dia (01/07-14/08): o short
+    // só ganha dinheiro quando o Nasdaq (QQQ) fecha em baixa (-112.16 USDT em
+    // dias QQQ+ vs +19.41 em dias QQQ-). qqqShortFilter liga o cálculo do
+    // regime QQQ no runner (context.qqqPositive) — ver getQqqPositive abaixo.
+    qqqShortFilter: true,
     enabled: true,
-  },
-  {
-    name: cloEmaFlip.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: 'CL/USDT:USDT',
-    timeframe: '1h',
-    generateSignal: cloEmaFlip.generateSignal,
-    positionSize: 60,
-    // Sem SL — não foi pedido. Está sempre posicionada (long ou short), a
-    // inverter quando a EMA12 cruza 1% para o outro lado da EMA80. Símbolo
-    // corrigido de CLO/USDT para CL/USDT (30/07) — estava a negociar o ativo
-    // errado. Desligada até confirmar o comportamento no ativo certo.
-    enabled: false,
   },
   {
     name: stoch50.STRATEGY_NAME,
@@ -104,28 +115,15 @@ const STRATEGIES = [
     // parcial 50% a +15% (ambos os lados): +448.89 USDT no mesmo backtest —
     // melhor das 3 variantes testadas (10/15/20%). Excluídos os 20 símbolos
     // consistentemente piores no backtest (QNTX é o pior, -70 USDT sozinho).
+    //
+    // Long-only desde 14/08 — estudo dia-a-dia (05-14/08, dados reais): o
+    // short perdia em dias QQQ+ e QQQ- (-59.03 e -46.32 USDT), sem edge em
+    // nenhum regime. Long-only teria dado +147.80 USDT no período vs. +42.44
+    // real (long+short). generateSignal já não abre short — ver stoch50.js.
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     takeProfitPct: 0.15,
     takeProfitCloseFraction: 0.5,
-    enabled: false,
-  },
-  {
-    name: ema200Top5.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    scannerPeriod: 200,
-    timeframe: '1h',
-    generateSignal: ema200Top5.generateSignal,
-    positionSize: 60,
-    // Estudo com histórico completo (25/06-01/08, 44 sessões): LONG no Top 5
-    // EMA200, fecha tudo a cada scan novo e reabre — baseline WR 50.9%/PF
-    // 1.30/+29.94. Com TP parcial 50% a +25% e SL a -25%: PF 1.41/+34.71 e
-    // drawdown -7.74 (vs -13.39 sem proteção) — melhor combinação testada.
-    takeProfitPct: 0.25,
-    takeProfitCloseFraction: 0.5,
     takeProfitSide: 'long',
-    stopLossPct: 0.25,
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
   {
@@ -158,25 +156,6 @@ const STRATEGIES = [
     // no long / +7% no short. TP parcial 50% da posição a +19% (ambos os
     // lados, sem takeProfitSide definido). SNDK, NBIS e MU adicionados
     // fora do Top10 do backtest original.
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
-    enabled: false,
-  },
-  {
-    name: top2GainersEma21.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    symbolSource: 'gainers24h',
-    topN: 2,
-    timeframe: '15m',
-    generateSignal: top2GainersEma21.generateSignal,
-    positionSize: 60,
-    stopLossPct: 0.05,
-    takeProfitPct: 0.14,
-    takeProfitCloseFraction: 1,
-    // Estudo 13/08 (ver top2GainersEma21.js): backtest completo (10/07-13/08)
-    // sobre o scanner Top ganhos 24h restrito ao Top2, EMA21 no fecho, 15m —
-    // 201 trades, WR 32.3% (breakeven 26.3%), +1.14%/trade, soma +230%.
-    // TP fecha 100% da posição (fraction:1), não parcial.
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
@@ -432,7 +411,9 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const posForSession = openPositions[key];
     const newScanSession = !!(posForSession && posForSession.scanTs != null && scannedAt != null && scannedAt !== posForSession.scanTs);
 
-    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, { rank, scannedAt, newScanSession });
+    const qqqPositive = strategy.qqqShortFilter ? await getQqqPositive() : null;
+
+    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, { rank, scannedAt, newScanSession, qqqPositive });
 
     const isAction = signal !== 'hold' && signal !== 'none';
     const icon = isAction ? '🔔' : '·';
