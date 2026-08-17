@@ -10,6 +10,7 @@ const ema90TopFade        = require('../strategies/ema90TopFade');
 const stoch50             = require('../strategies/stoch50');
 const stochRsiTop4Flip    = require('../strategies/stochRsiTop4Flip');
 const pullbackTrend       = require('../strategies/pullbackTrend');
+const stockEma1270Cross   = require('../strategies/stockEma1270Cross');
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
 // stopLossPct quando o lado específico não está definido, para não mudar o
@@ -186,6 +187,37 @@ const STRATEGIES = [
     // vale reavaliar daqui a 2-3 semanas para confirmar se não foi só
     // ruído desta janela mais curta. Ver
     // src/backtests/backtest-pullbackTrend-sltp.js.
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: stockEma1270Cross.STRATEGY_NAME,
+    market: 'stock',
+    symbol: null,
+    symbols: [
+      'NBIS/USDT:USDT', 'AXTI/USDT:USDT', 'MRVL/USDT:USDT', 'COHR/USDT:USDT', 'ASTS/USDT:USDT',
+      'AAOI/USDT:USDT', 'RKLB/USDT:USDT', 'HPE/USDT:USDT', 'USAR/USDT:USDT', 'SMCI/USDT:USDT',
+      'GLW/USDT:USDT', 'GOOGL/USDT:USDT', 'MSFT/USDT:USDT', 'BABA/USDT:USDT', 'META/USDT:USDT',
+    ],
+    timeframe: '1h',
+    generateSignal: stockEma1270Cross.generateSignal,
+    positionSize: 60,
+    takeProfitPct: 0.19,
+    takeProfitCloseFraction: 0.5,
+    // Cruzamento EMA12/EMA70 (1h), sempre no mercado — inverte de posição a
+    // cada cruzamento, sem filtro (ver stockEma1270Cross.js). Lista de 15
+    // símbolos curada a partir de um estudo sobre os 74 stocks/ETFs (ver
+    // backtest-stockEma1270Cross.js, 48 dias): universo completo perdia
+    // (-278.11 USDT, PF 0.83), mas estes 15 — todos individualmente
+    // positivos — deram +234.52 USDT, PF 1.99 sem SL/TP.
+    //
+    // TP parcial 50% a 19% — sweep sobre o TOP15 (ver
+    // backtest-stockEma1270Cross-top15-sltp.js e -top15-tp2.js): SL fixo
+    // (2-12%) foi sempre pior que sem SL, por isso fica sem stopLossPct.
+    // TP testado de 5% a 29% — pico em 18-20%, com 19% o melhor exato
+    // (+264.15 USDT, PF 2.13, maxDD -29.22, WR 44.9%, vs. +236.91/PF1.99/
+    // maxDD-40.44 sem TP). Diferença entre 18/19/20% é pequena (~1%),
+    // qualquer um destes é uma escolha sólida.
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },

@@ -38,6 +38,12 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
+  StockEma1270Cross: {
+    description: 'Stocks no 1h, cruzamento EMA12/EMA70: sempre no mercado, inverte de posição a cada cruzamento (cima=LONG, baixo=SHORT). Lista curada de 15 tickers (NBIS, AXTI, MRVL, COHR, ASTS, AAOI, RKLB, HPE, USAR, SMCI, GLW, GOOGL, MSFT, BABA, META) — o universo completo de 74 perdia dinheiro, este subconjunto deu profit factor ~2. TP parcial 50% a +19%, sem SL (qualquer SL fixo piorou o resultado nos backtests).',
+    tags: ['EMA12', 'EMA70', 'cruzamento', 'stocks', 'lista-curada', 'take-profit-parcial', 'long-short', '1h'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
 };
 
 function DifficultyBadge({ level }) {
