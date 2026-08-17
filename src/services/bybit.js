@@ -10,6 +10,16 @@ const exchange = new ccxt.bybit({
   ...(process.env.BYBIT_TESTNET === 'true' && { hostname: 'api-testnet.bybit.com' }),
 });
 
+// Instância pública (sem apiKey/secret) só para dados de mercado — candles e
+// ticker são leitura pública, nunca precisaram de conta. Isola getCandles/
+// getTicker de uma API key inválida/expirada em .env, que só deve bloquear
+// operações que mexem mesmo na conta (ordens, posições, saldo — via
+// `exchange` acima).
+const publicExchange = new ccxt.bybit({
+  options: { defaultType: 'linear' },
+  ...(process.env.BYBIT_TESTNET === 'true' && { hostname: 'api-testnet.bybit.com' }),
+});
+
 /**
  * Fetch OHLCV candles
  * @param {string} symbol - e.g. 'BIC/USDT:USDT'
@@ -17,7 +27,7 @@ const exchange = new ccxt.bybit({
  * @param {number} limit - number of candles
  */
 async function getCandles(symbol, timeframe = '1h', limit = 200) {
-  const ohlcv = await exchange.fetchOHLCV(symbol, timeframe, undefined, limit);
+  const ohlcv = await publicExchange.fetchOHLCV(symbol, timeframe, undefined, limit);
   return ohlcv.map(([time, open, high, low, close, volume]) => ({
     time: new Date(time),
     open, high, low, close, volume,
@@ -61,7 +71,7 @@ async function closePosition(symbol) {
  * Get current ticker price
  */
 async function getTicker(symbol) {
-  return await exchange.fetchTicker(symbol);
+  return await publicExchange.fetchTicker(symbol);
 }
 
 /**
@@ -71,4 +81,4 @@ async function getBalance() {
   return await exchange.fetchBalance();
 }
 
-module.exports = { getCandles, getPosition, placeMarketOrder, closePosition, getTicker, getBalance, exchange };
+module.exports = { getCandles, getPosition, placeMarketOrder, closePosition, getTicker, getBalance, exchange, publicExchange };

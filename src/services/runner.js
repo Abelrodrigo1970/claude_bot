@@ -1,11 +1,15 @@
 ﻿const pool = require('../db/pool');
 const bybit = require('./bybit');
-const { getState: getScannerState, startScan, getGainersState, startScanGainers } = require('./scanner');
+const {
+  getState: getScannerState, startScan, getGainersState, startScanGainers,
+  getEmaTrendTotalState, startScanEmaTrendTotal,
+} = require('./scanner');
 const trendSurfer         = require('../strategies/trendSurfer');
 const stockSMA            = require('../strategies/stockSMA');
 const ema90TopFade        = require('../strategies/ema90TopFade');
 const stoch50             = require('../strategies/stoch50');
 const stochRsiTop4Flip    = require('../strategies/stochRsiTop4Flip');
+const pullbackTrend       = require('../strategies/pullbackTrend');
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
 // stopLossPct quando o lado específico não está definido, para não mudar o
@@ -156,6 +160,32 @@ const STRATEGIES = [
     // no long / +7% no short. TP parcial 50% da posição a +19% (ambos os
     // lados, sem takeProfitSide definido). SNDK, NBIS e MU adicionados
     // fora do Top10 do backtest original.
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: pullbackTrend.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'emaTrendTotal',
+    timeframe: '1h',
+    generateSignal: pullbackTrend.generateSignal,
+    positionSize: 60,
+    takeProfitPct: 0.15,
+    takeProfitCloseFraction: 0.5,
+    stopLossPct: 0.05,
+    // Entra em pullback à EMA21 dentro de tendência (EMA21>EMA50), sobre o
+    // universo do scanner EMA Trend sem limite de top-N (ver
+    // getEmaTrendTotalState/startScanEmaTrendTotal em scanner.js). TP
+    // parcial 50% a +15% + SL 5% — estudo de 17 dias (01-17/08, 207
+    // símbolos) deu +302.22 USDT, PF 1.94, maxDD -20.83, WR 38.4%, o
+    // melhor combo dessa janela (vs. +293.25/PF1.84/maxDD-34.31 sem SL).
+    // Nota: em janelas mais longas anteriores (30 e ~41 dias) qualquer SL
+    // fixo tinha sido sempre pior que sem SL — esta é a primeira janela em
+    // que o SL 5% ajudou. Escolhido mesmo assim por decisão do utilizador;
+    // vale reavaliar daqui a 2-3 semanas para confirmar se não foi só
+    // ruído desta janela mais curta. Ver
+    // src/backtests/backtest-pullbackTrend-sltp.js.
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
@@ -577,6 +607,9 @@ function resolveSymbols(strategy) {
     } else {
       symbols = [];
     }
+  } else if (strategy.symbolSource === 'emaTrendTotal') {
+    const scan = getEmaTrendTotalState();
+    symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
   } else if (!strategy.scannerPeriod) {
     symbols = [strategy.symbol];
   } else {
@@ -601,12 +634,15 @@ async function ensureSymbols(strategy) {
     await startScan(strategy.scannerPeriod, 50);
   } else if (strategy.symbolSource === 'gainers24h' || strategy.symbolSource === 'gainers24hDropped') {
     await startScanGainers(4);
+  } else if (strategy.symbolSource === 'emaTrendTotal') {
+    await startScanEmaTrendTotal();
   }
 }
 
 function scannerLabel(strategy) {
   if (strategy.scannerPeriod) return `Scanner EMA${strategy.scannerPeriod}`;
   if (strategy.symbolSource === 'gainers24h' || strategy.symbolSource === 'gainers24hDropped') return 'Scanner Top 24h';
+  if (strategy.symbolSource === 'emaTrendTotal') return 'Scanner EMA Trend (sem limite)';
   return 'Scanner';
 }
 
@@ -638,12 +674,14 @@ async function runAll() {
     // Pré-passo: correr scanner automático para estratégias dinâmicas sem símbolos
     // (corre para todas, mesmo com Bybit desligado — sinais/estudo continuam)
     for (const strategy of STRATEGIES) {
-      if (!strategy.scannerPeriod && strategy.symbolSource !== 'gainers24h' && strategy.symbolSource !== 'gainers24hDropped') continue;
+      const isDynamicSource = strategy.scannerPeriod || strategy.symbolSource === 'gainers24h' ||
+        strategy.symbolSource === 'gainers24hDropped' || strategy.symbolSource === 'emaTrendTotal';
+      if (!isDynamicSource) continue;
       if (resolveSymbols(strategy).length === 0) {
         const label = scannerLabel(strategy);
         const msg = `🔍 ${label} não tem dados — a correr automaticamente...`;
         runState.log.unshift(msg);
-        runState.phase = `scanner_${strategy.scannerPeriod || 'gainers24h'}`;
+        runState.phase = `scanner_${strategy.scannerPeriod || strategy.symbolSource}`;
         console.log(`[Runner] ${msg}`);
         await ensureSymbols(strategy);
         const n = resolveSymbols(strategy).length;

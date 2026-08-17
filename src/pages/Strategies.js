@@ -26,6 +26,18 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
+  EMA90TopFade: {
+    description: 'Cripto, diário. SHORT quando o símbolo entra no top 8 do ranking "% acima da EMA90" (aposta que o pump está esticado) — só se o RSI(14) diário ainda não estiver extremo (<72) e o QQQ (proxy Nasdaq) não estiver em alta nesse dia. Fecha e inverte para LONG quando sai do top 8 (compra o recuo). SL 26% — testado propositadamente largo, qualquer SL entre 5-20% piorou o resultado nos dados históricos.',
+    tags: ['EMA90', 'ranking', 'fade', 'RSI', 'filtro-QQQ', 'long-short', '1d'],
+    difficulty: 'Hard',
+    source: 'Custom',
+  },
+  PullbackTrend: {
+    description: 'Cripto, 1h, sobre o universo do scanner EMA Trend sem limite de top-N (preço > EMA21 e EMA50, diário e 1h). Entra LONG só depois de um recuo à EMA21 dentro da tendência (EMA21>EMA50), confirmado por RSI a recuperar (≥45, a subir) e uma vela de fecho de volta acima da EMA21 — não persegue o cruzamento, espera a retoma. Sai quando o preço perde a EMA50 ou a tendência inverte com RSI<40. TP parcial 50% a +15% · SL 5%.',
+    tags: ['EMA21', 'EMA50', 'pullback', 'RSI', 'trend-following', 'take-profit-parcial', '1h'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
 };
 
 function DifficultyBadge({ level }) {
@@ -229,9 +241,11 @@ export default function Strategies() {
                             ? <span className="blue">{s.symbolCount} stocks/ETFs</span>
                             : s.scannerPeriod
                               ? <span className="green">TOP {s.symbolCount} · EMA{s.scannerPeriod}</span>
-                              : s.symbols?.length
-                                ? <span className="blue">{s.symbolCount} símbolos (lista fixa)</span>
-                                : s.symbol?.split('/')[0]}
+                              : s.symbolSource === 'emaTrendTotal'
+                                ? <span className="green">{s.symbolCount} · EMA Trend</span>
+                                : s.symbols?.length
+                                  ? <span className="blue">{s.symbolCount} símbolos (lista fixa)</span>
+                                  : s.symbol?.split('/')[0]}
                         </span>
                       </span>
                       <span className="meta-item">
@@ -267,6 +281,9 @@ export default function Strategies() {
                       <div className="scanner-warning">
                         ⚠️ Corre o Scanner EMA{s.scannerPeriod} primeiro para carregar os símbolos.
                       </div>
+                    )}
+                    {s.symbolSource === 'emaTrendTotal' && s.symbolCount === 0 && (
+                      <div className="scanner-warning">⚠️ Corre o Scanner EMA Trend primeiro para carregar os símbolos.</div>
                     )}
                   </div>
                 );

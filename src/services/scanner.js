@@ -4,6 +4,12 @@ const pool  = require('../db/pool');
 
 const CACHE_TTL = 2 * 60 * 60 * 1000; // 2 horas — alinhado com o ciclo do cron
 
+// loadMarkets/fetchTickers abaixo usam bybit.publicExchange (sem
+// apiKey/secret) — são leitura pública de mercado, nunca precisaram de
+// conta, e assim ficam imunes a uma API key inválida/expirada em .env
+// (essa só deve bloquear ordens/posições/saldo, que continuam via
+// bybit.exchange). Ver bybit.js.
+
 const VALID_PERIODS = [200, 90];
 
 const states = Object.fromEntries(
@@ -19,7 +25,7 @@ async function startScan(period = 200, limit = 50) {
   states[period] = { ...s, status: 'scanning', progress: 0, total: 0, results: [], error: null };
 
   try {
-    const markets = await bybit.exchange.loadMarkets();
+    const markets = await bybit.publicExchange.loadMarkets();
 
     const perps = Object.values(markets)
       .filter(m =>
@@ -124,7 +130,7 @@ async function startScanGainers(limit = 4) {
   gainersState = { ...gainersState, status: 'scanning', progress: 0, total: 0, results: [], error: null };
 
   try {
-    const markets = await bybit.exchange.loadMarkets();
+    const markets = await bybit.publicExchange.loadMarkets();
 
     // Nota: m.info.turnover24h não existe nos dados de loadMarkets() (só no ticker),
     // por isso não há como pré-filtrar por volume aqui sem primeiro pedir os tickers.
@@ -142,7 +148,7 @@ async function startScanGainers(limit = 4) {
     console.log(`[Scanner Top24h] ${perps.length} pares elegíveis`);
 
     const symbols = perps.map(m => m.symbol);
-    const tickers = await bybit.exchange.fetchTickers(symbols);
+    const tickers = await bybit.publicExchange.fetchTickers(symbols);
     gainersState.progress = perps.length;
 
     const results = perps
@@ -214,7 +220,7 @@ async function startScanEmaTrend(limit = 50) {
   emaTrendState = { ...emaTrendState, status: 'scanning', progress: 0, total: 0, results: [], error: null };
 
   try {
-    const markets = await bybit.exchange.loadMarkets();
+    const markets = await bybit.publicExchange.loadMarkets();
 
     const perps = Object.values(markets).filter(m =>
       m.linear &&
@@ -227,7 +233,7 @@ async function startScanEmaTrend(limit = 50) {
     // Ordena pelos pares com mais volume real (via ticker, loadMarkets não tem turnover24h)
     let ranked = perps;
     try {
-      const tickers = await bybit.exchange.fetchTickers(perps.map(m => m.symbol));
+      const tickers = await bybit.publicExchange.fetchTickers(perps.map(m => m.symbol));
       ranked = perps
         .map(m => ({ market: m, volume: tickers[m.symbol]?.quoteVolume || 0, change24h: tickers[m.symbol]?.percentage ?? null }))
         .sort((a, b) => b.volume - a.volume)
@@ -344,7 +350,7 @@ async function startScanEmaTrendStocks(limit = 50) {
 
     let tickers = {};
     try {
-      tickers = await bybit.exchange.fetchTickers(symbols);
+      tickers = await bybit.publicExchange.fetchTickers(symbols);
     } catch {
       // segue sem change24h/volume se o fetch em lote falhar
     }
@@ -439,9 +445,114 @@ function getEmaTrendStocksState() {
   return emaTrendStocksState;
 }
 
+// ─── SCANNER EMA TREND TOTAL (sem limite de top-N) ─────────────
+// Igual ao EMA Trend acima (preço > EMA21 e > EMA50, diário e 1h), mas
+// devolve TODOS os símbolos que passam o filtro, sem cortar a um top-N —
+// é o universo "sem limite" usado no estudo da PullbackTrend (ver
+// src/backtests/backtest-pullbackTrend-emaTrend.js). Estado próprio,
+// separado do emaTrendState (top-N) acima, para não pisar a cache
+// partilhada com o painel do Scanner na UI. Não persiste em BD — não tem
+// painel de histórico próprio, é só para o runner resolver símbolos.
+let emaTrendTotalState = { status: 'idle', progress: 0, total: 0, results: [], scannedAt: null, error: null };
+
+async function startScanEmaTrendTotal() {
+  if (emaTrendTotalState.status === 'scanning') return;
+  if (emaTrendTotalState.status === 'done' && emaTrendTotalState.scannedAt && Date.now() - emaTrendTotalState.scannedAt < CACHE_TTL) return;
+
+  emaTrendTotalState = { ...emaTrendTotalState, status: 'scanning', progress: 0, total: 0, results: [], error: null };
+
+  try {
+    const markets = await bybit.publicExchange.loadMarkets();
+
+    const perps = Object.values(markets).filter(m =>
+      m.linear &&
+      m.type === 'swap' &&
+      m.settle === 'USDT' &&
+      m.active &&
+      !m.symbol.includes('USDC')
+    );
+
+    let ranked = perps;
+    try {
+      const tickers = await bybit.publicExchange.fetchTickers(perps.map(m => m.symbol));
+      ranked = perps
+        .map(m => ({ market: m, volume: tickers[m.symbol]?.quoteVolume || 0, change24h: tickers[m.symbol]?.percentage ?? null }))
+        .sort((a, b) => b.volume - a.volume)
+        .slice(0, 250);
+    } catch {
+      ranked = perps.slice(0, 250).map(m => ({ market: m, volume: 0, change24h: null }));
+    }
+
+    console.log(`[Scanner EMATrend Total] ${ranked.length} pares elegíveis (top volume)`);
+    emaTrendTotalState.total = ranked.length;
+
+    const needed = 50 + 10;
+    const results = [];
+
+    for (let i = 0; i < ranked.length; i++) {
+      emaTrendTotalState.progress = i + 1;
+      const { market, volume, change24h } = ranked[i];
+
+      try {
+        const [daily, hourly] = await Promise.all([
+          bybit.getCandles(market.symbol, '1d', needed + 5),
+          bybit.getCandles(market.symbol, '1h', needed + 5),
+        ]);
+        if (daily.length < needed || hourly.length < needed) continue;
+
+        const closesD = daily.map(c => c.close);
+        const closesH = hourly.map(c => c.close);
+
+        const ema21D = EMA.calculate({ period: 21, values: closesD }).at(-1);
+        const ema50D = EMA.calculate({ period: 50, values: closesD }).at(-1);
+        const ema21H = EMA.calculate({ period: 21, values: closesH }).at(-1);
+        const ema50H = EMA.calculate({ period: 50, values: closesH }).at(-1);
+
+        const price = closesH[closesH.length - 1];
+
+        const passes = price > ema21D && price > ema50D && price > ema21H && price > ema50H;
+        if (!passes) continue;
+
+        const pctAbove = ((price - ema21D) / ema21D + (price - ema50D) / ema50D +
+                           (price - ema21H) / ema21H + (price - ema50H) / ema50H) / 4 * 100;
+
+        results.push({
+          symbol: market.symbol,
+          price,
+          ema21_1d: ema21D,
+          ema50_1d: ema50D,
+          ema21_1h: ema21H,
+          ema50_1h: ema50H,
+          pctAbove,
+          change24h,
+          volume,
+        });
+      } catch {
+        // par sem dados suficientes, ignorar
+      }
+    }
+
+    results.sort((a, b) => b.pctAbove - a.pctAbove);
+
+    emaTrendTotalState.results   = results; // sem slice — todos os que passam o filtro
+    emaTrendTotalState.scannedAt = Date.now();
+    emaTrendTotalState.status    = 'done';
+    console.log(`[Scanner EMATrend Total] ${results.length} pares elegíveis (sem limite)`);
+  } catch (err) {
+    emaTrendTotalState.status = 'error';
+    emaTrendTotalState.error  = err.message;
+    console.warn(`[Scanner EMATrend Total] Erro: ${err.message}`);
+  }
+}
+
+function getEmaTrendTotalState() {
+  return emaTrendTotalState;
+}
+
 module.exports = {
   startScan, getState,
   startScanGainers, getGainersState,
   startScanEmaTrend, getEmaTrendState,
   startScanEmaTrendStocks, getEmaTrendStocksState,
+  startScanEmaTrendTotal, getEmaTrendTotalState,
 };
