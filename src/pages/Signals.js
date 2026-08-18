@@ -42,6 +42,7 @@ export default function Signals() {
   const [signals,    setSignals]    = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [view,       setView]       = useState('all');
+  const [activeStrategyNames, setActiveStrategyNames] = useState(null); // null = ainda não carregou
 
   // Filtros
   const [fStrategy,  setFStrategy]  = useState('');
@@ -65,8 +66,23 @@ export default function Signals() {
     return () => clearInterval(id);
   }, []);
 
+  // Nomes das estratégias atualmente configuradas — usado para tirar do
+  // filtro sinais antigos de estratégias já removidas (ex: Top2GainersEma21Dip),
+  // que continuam na BD mas já não existem em STRATEGIES.
+  useEffect(() => {
+    axios.get('/api/strategies')
+      .then(({ data }) => setActiveStrategyNames(new Set(data.map(s => s.name))))
+      .catch(() => setActiveStrategyNames(new Set())); // falha na BD/API — não filtra nada de mais
+  }, []);
+
   // Opções únicas para os dropdowns
-  const strategies  = useMemo(() => [...new Set(signals.map(s => s.strategy_name))].sort(), [signals]);
+  const strategies = useMemo(() => {
+    const all = [...new Set(signals.map(s => s.strategy_name))];
+    const active = activeStrategyNames && activeStrategyNames.size > 0
+      ? all.filter(s => activeStrategyNames.has(s))
+      : all;
+    return active.sort();
+  }, [signals, activeStrategyNames]);
   const signalTypes = useMemo(() => [...new Set(signals.map(s => s.signal_type))].sort(), [signals]);
   const pairs       = useMemo(() => [...new Set(signals.map(s => s.symbol?.split('/')[0]))].filter(Boolean).sort(), [signals]);
 
