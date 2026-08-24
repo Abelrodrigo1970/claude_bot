@@ -8,8 +8,6 @@ const trendSurfer         = require('../strategies/trendSurfer');
 const stockSMA            = require('../strategies/stockSMA');
 const ema90TopFade        = require('../strategies/ema90TopFade');
 const stoch50             = require('../strategies/stoch50');
-const stochRsiTop4Flip    = require('../strategies/stochRsiTop4Flip');
-const pullbackTrend       = require('../strategies/pullbackTrend');
 const stockEma1270Cross   = require('../strategies/stockEma1270Cross');
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
@@ -129,65 +127,6 @@ const STRATEGIES = [
     takeProfitPct: 0.15,
     takeProfitCloseFraction: 0.5,
     takeProfitSide: 'long',
-    enabled: false,
-  },
-  {
-    name: stochRsiTop4Flip.STRATEGY_NAME,
-    market: 'stock',
-    symbol: null,
-    symbols: [
-      'USAR/USDT:USDT', 'TQQQ/USDT:USDT', 'NOKIA/USDT:USDT', 'SMCI/USDT:USDT', 'HPE/USDT:USDT',
-      'STXX/USDT:USDT', 'DELL/USDT:USDT', 'WDC/USDT:USDT', 'HOOD/USDT:USDT', 'BABA/USDT:USDT',
-      'SNDK/USDT:USDT', 'NBIS/USDT:USDT', 'MU/USDT:USDT',
-    ],
-    timeframe: '1h',
-    generateSignal: stochRsiTop4Flip.generateSignal,
-    positionSize: 60,
-    stopLossLongPct: 0.05,
-    stopLossShortPct: 0.07,
-    takeProfitPct: 0.19,
-    takeProfitCloseFraction: 0.5,
-    // StochRSI 1h (RSI50/Stoch50/SmoothK40/SmoothD11) sobre uma lista fixa —
-    // o Top10 do backtest de 30 dias sobre o universo de stocks/ETFs (ver
-    // src/backtests/backtest-stochRsiTop4-stocks.js, corrido em 07/08):
-    // USAR +45.4%, TQQQ +21.5%, NOKIA +21.4%, SMCI +19.2%, HPE +18.0%,
-    // STXX +14.3%, DELL +14.1%, WDC +13.6%, HOOD +13.0%, BABA +12.6%.
-    // Substitui o ranking dinâmico Top4 de ganhos 24h (cripto) — sem
-    // scanner nem rank, todos os símbolos ficam sempre elegíveis para
-    // entrar (ver rankOk em generateSignal). LONG quando %K cruza acima de
-    // %D (inverte um SHORT aberto, se existir). Fecha o LONG quando %K
-    // cruza abaixo de %D; só abre SHORT nesse momento se o preço estiver
-    // ≥1% abaixo da MA21(1h) — caso contrário fecha sem inverter. SL -5%
-    // no long / +7% no short. TP parcial 50% da posição a +19% (ambos os
-    // lados, sem takeProfitSide definido). SNDK, NBIS e MU adicionados
-    // fora do Top10 do backtest original.
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
-    enabled: false,
-  },
-  {
-    name: pullbackTrend.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    symbolSource: 'emaTrendTotal',
-    timeframe: '1h',
-    generateSignal: pullbackTrend.generateSignal,
-    positionSize: 60,
-    takeProfitPct: 0.15,
-    takeProfitCloseFraction: 0.5,
-    stopLossPct: 0.05,
-    // Entra em pullback à EMA21 dentro de tendência (EMA21>EMA50), sobre o
-    // universo do scanner EMA Trend sem limite de top-N (ver
-    // getEmaTrendTotalState/startScanEmaTrendTotal em scanner.js). TP
-    // parcial 50% a +15% + SL 5% — estudo de 17 dias (01-17/08, 207
-    // símbolos) deu +302.22 USDT, PF 1.94, maxDD -20.83, WR 38.4%, o
-    // melhor combo dessa janela (vs. +293.25/PF1.84/maxDD-34.31 sem SL).
-    // Nota: em janelas mais longas anteriores (30 e ~41 dias) qualquer SL
-    // fixo tinha sido sempre pior que sem SL — esta é a primeira janela em
-    // que o SL 5% ajudou. Escolhido mesmo assim por decisão do utilizador;
-    // vale reavaliar daqui a 2-3 semanas para confirmar se não foi só
-    // ruído desta janela mais curta. Ver
-    // src/backtests/backtest-pullbackTrend-sltp.js.
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
   {
