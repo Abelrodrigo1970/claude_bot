@@ -87,6 +87,16 @@ async function migrate() {
         scanned_at TIMESTAMP      NOT NULL DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS scanner_pump (
+        id         SERIAL PRIMARY KEY,
+        rank       INT            NOT NULL,
+        symbol     VARCHAR(50)    NOT NULL,
+        price      DECIMAL(20,8)  NOT NULL,
+        change_24h DECIMAL(10,4)  NOT NULL,
+        volume     DECIMAL(20,8),
+        scanned_at TIMESTAMP      NOT NULL DEFAULT NOW()
+      );
+
       CREATE TABLE IF NOT EXISTS scanner_ema_trend (
         id         SERIAL PRIMARY KEY,
         rank       INT            NOT NULL,
@@ -137,6 +147,7 @@ async function migrate() {
       CREATE INDEX IF NOT EXISTS idx_signals_created    ON signals(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_period_time ON scanner_results(ema_period, scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_gainers_time ON scanner_gainers(scanned_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_scanner_pump_time ON scanner_pump(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_ema_trend_time ON scanner_ema_trend(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_ema_trend_stocks_time ON scanner_ema_trend_stocks(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_stock_symbols_active ON stock_symbols(active);

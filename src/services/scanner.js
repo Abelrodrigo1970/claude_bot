@@ -207,6 +207,95 @@ function getGainersState() {
   return gainersState;
 }
 
+// ─── SCANNER PUMP 24H (sem limite de top-N) ────────────────────
+// Variante do scanner Top ganhos 24h acima: em vez de cortar a um Top N,
+// devolve TODOS os pares com variação 24h acima de um limiar (10% por
+// omissão) — pensado para apanhar qualquer par em "pump", não só os 4
+// maiores. Mesma fonte de dados (fetchTickers em lote), sem EMA.
+
+let pumpState = { status: 'idle', progress: 0, total: 0, results: [], scannedAt: null, error: null };
+
+async function startScanPump(thresholdPct = 10) {
+  if (pumpState.status === 'scanning') return;
+  if (pumpState.status === 'done' && pumpState.scannedAt && Date.now() - pumpState.scannedAt < CACHE_TTL) return;
+
+  pumpState = { ...pumpState, status: 'scanning', progress: 0, total: 0, results: [], error: null };
+
+  try {
+    const markets = await bybit.publicExchange.loadMarkets();
+
+    const perps = Object.values(markets)
+      .filter(m =>
+        m.linear &&
+        m.type === 'swap' &&
+        m.settle === 'USDT' &&
+        m.active &&
+        !m.symbol.includes('USDC')
+      );
+
+    pumpState.total = perps.length;
+    console.log(`[Scanner Pump24h] ${perps.length} pares elegíveis — limiar ${thresholdPct}%`);
+
+    const symbols = perps.map(m => m.symbol);
+    const tickers = await bybit.publicExchange.fetchTickers(symbols);
+    pumpState.progress = perps.length;
+
+    const results = perps
+      .map(m => {
+        const t = tickers[m.symbol];
+        if (!t || t.percentage == null || t.last == null) return null;
+        return {
+          symbol:    m.symbol,
+          price:     t.last,
+          change24h: t.percentage,
+          volume:    t.quoteVolume ?? 0,
+        };
+      })
+      .filter(Boolean)
+      .filter(r => r.change24h >= thresholdPct)
+      .sort((a, b) => b.change24h - a.change24h);
+
+    const scannedAt = new Date();
+
+    pumpState.results   = results; // sem slice — todos os que passam o limiar
+    pumpState.scannedAt = scannedAt.getTime();
+    pumpState.status    = 'done';
+    console.log(`[Scanner Pump24h] ${results.length} pares acima de +${thresholdPct}%`);
+
+    // Guarda no histórico da BD (silencioso se BD não estiver configurada)
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (let i = 0; i < results.length; i++) {
+          const r = results[i];
+          await client.query(
+            `INSERT INTO scanner_pump (rank, symbol, price, change_24h, volume, scanned_at)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [i + 1, r.symbol, r.price, r.change24h, r.volume, scannedAt]
+          );
+        }
+        await client.query('COMMIT');
+        console.log(`[Scanner Pump24h] ${results.length} resultados guardados na BD`);
+      } catch (dbErr) {
+        await client.query('ROLLBACK');
+        console.warn('[Scanner Pump24h] Erro ao guardar no BD:', dbErr.message);
+      } finally {
+        client.release();
+      }
+    } catch {
+      // BD não configurada — continua sem guardar
+    }
+  } catch (err) {
+    pumpState.status = 'error';
+    pumpState.error  = err.message;
+  }
+}
+
+function getPumpState() {
+  return pumpState;
+}
+
 // ─── SCANNER EMA TREND (21/50, diário + 1h) ────────────────────
 // Só entram os pares em que o preço está acima da EMA21 E da EMA50,
 // tanto no diário como no 1h — 4 condições simultâneas.
@@ -552,6 +641,7 @@ function getEmaTrendTotalState() {
 module.exports = {
   startScan, getState,
   startScanGainers, getGainersState,
+  startScanPump, getPumpState,
   startScanEmaTrend, getEmaTrendState,
   startScanEmaTrendStocks, getEmaTrendStocksState,
   startScanEmaTrendTotal, getEmaTrendTotalState,

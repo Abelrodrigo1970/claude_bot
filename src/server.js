@@ -9,6 +9,7 @@ const { runAll, runStrategy, STRATEGIES, getRunState, resolveSymbols, getMemoryS
 const {
   startScan, getState,
   startScanGainers, getGainersState,
+  startScanPump, getPumpState,
   startScanEmaTrend, getEmaTrendState,
   startScanEmaTrendStocks, getEmaTrendStocksState,
 } = require('./services/scanner');
@@ -316,6 +317,55 @@ app.get('/api/scanner/gainers/history', async (req, res) => {
   }
 });
 
+// Inicia scan de pump 24h — todos os pares acima do limiar, sem top-N — ?threshold=10
+app.post('/api/scanner/pump/start', (req, res) => {
+  const threshold = parseFloat(req.query.threshold) || 10;
+  startScanPump(threshold);
+  res.json({ ok: true });
+});
+
+// GET para cron jobs externos — scanner Pump 24h
+app.get('/api/cron/scanPump', (req, res) => {
+  res.json({ ok: true, message: 'Scanner Pump 24h iniciado', time: new Date() });
+  startScanPump(10);
+});
+
+// Estado atual do scan de pump 24h (polling)
+app.get('/api/scanner/pump', (req, res) => {
+  res.json(getPumpState());
+});
+
+// Histórico de scans de pump 24h — ?sessions=10
+app.get('/api/scanner/pump/history', async (req, res) => {
+  try {
+    const sessions = parseInt(req.query.sessions) || 10;
+
+    const { rows: sessionRows } = await pool.query(
+      `SELECT DISTINCT scanned_at FROM scanner_pump ORDER BY scanned_at DESC LIMIT $1`,
+      [sessions]
+    );
+
+    if (!sessionRows.length) return res.json([]);
+
+    const dates = sessionRows.map(r => r.scanned_at);
+    const { rows } = await pool.query(
+      `SELECT * FROM scanner_pump WHERE scanned_at = ANY($1) ORDER BY scanned_at DESC, rank ASC`,
+      [dates]
+    );
+
+    const grouped = {};
+    rows.forEach(r => {
+      const key = r.scanned_at.toISOString();
+      if (!grouped[key]) grouped[key] = { scanned_at: r.scanned_at, results: [] };
+      grouped[key].results.push(r);
+    });
+
+    res.json(Object.values(grouped));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Inicia scan EMA Trend (21/50, diário+1h) — ?limit=50
 app.post('/api/scanner/ematrend/start', (req, res) => {
   const limit = parseInt(req.query.limit) || 50;
@@ -461,6 +511,13 @@ cron.schedule('15 */2 * * *', async () => {
   console.log('\n📈 Cron 2h: a correr scanner Top 4 (24h)...');
   await startScanGainers(4);
   console.log('📈 Cron 2h: scanner Top 4 (24h) concluído.');
+});
+
+// A cada 2 horas: scanner Pump 24h (todos os pares acima de +10%, sem top-N)
+cron.schedule('25 */2 * * *', async () => {
+  console.log('\n🚀 Cron 2h: a correr scanner Pump 24h...');
+  await startScanPump(10);
+  console.log('🚀 Cron 2h: scanner Pump 24h concluído.');
 });
 
 // A cada 15 min: estratégias de 15m (CandleBreakoutLong/Short sobre o Top 4 24h)
