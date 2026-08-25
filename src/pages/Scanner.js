@@ -228,7 +228,7 @@ function ScannerPanel({ period }) {
   );
 }
 
-function GainersResultsTable({ results }) {
+function PumpResultsTable({ results }) {
   return (
     <div className="card" style={{ padding: 0 }}>
       <div className="table-wrap">
@@ -273,13 +273,13 @@ function GainersResultsTable({ results }) {
   );
 }
 
-function GainersHistoryPanel() {
+function PumpHistoryPanel() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [openIdx, setOpenIdx]   = useState(0);
 
   useEffect(() => {
-    axios.get(`/api/scanner/gainers/history?sessions=10`)
+    axios.get(`/api/scanner/pump/history?sessions=10`)
       .then(r => setSessions(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -310,7 +310,7 @@ function GainersHistoryPanel() {
           </div>
           {openIdx === idx && (
             <div style={{ marginTop: 16 }}>
-              <GainersResultsTable results={session.results} />
+              <PumpResultsTable results={session.results} />
             </div>
           )}
         </div>
@@ -319,7 +319,7 @@ function GainersHistoryPanel() {
   );
 }
 
-function GainersPanel() {
+function PumpPanel() {
   const [view, setView]   = useState('scan');
   const [state, setState] = useState({ status: 'idle', progress: 0, total: 0, results: [], scannedAt: null });
   const pollRef = useRef(null);
@@ -328,14 +328,14 @@ function GainersPanel() {
 
   const fetchState = useCallback(async () => {
     try {
-      const { data } = await axios.get(`/api/scanner/gainers`);
+      const { data } = await axios.get(`/api/scanner/pump`);
       setState(data);
       if (data.status !== 'scanning') stopPolling();
     } catch { stopPolling(); }
   }, []);
 
   const startScan = async () => {
-    await axios.post(`/api/scanner/gainers/start?limit=4`);
+    await axios.post(`/api/scanner/pump/start?threshold=10`);
     setState(s => ({ ...s, status: 'scanning', progress: 0, results: [] }));
     setView('scan');
     stopPolling();
@@ -352,7 +352,7 @@ function GainersPanel() {
       <div className="page-header">
         <div>
           <div className="page-sub">
-            Top 4 maiores subidas nas últimas 24h · Top 250 por volume · atualiza a cada 2h
+            Todos os pares com variação 24h acima de +10% · sem limite de topN · atualiza a cada 2h
             {state.scannedAt && (
               <span className="scan-time"> · Scan: {new Date(state.scannedAt).toLocaleTimeString('pt-PT')}</span>
             )}
@@ -372,19 +372,25 @@ function GainersPanel() {
       </div>
 
       {view === 'history' ? (
-        <GainersHistoryPanel />
+        <PumpHistoryPanel />
       ) : (
         <>
           {state.status === 'idle' && (
             <div className="card">
               <div className="empty">
-                Clica em <strong>Iniciar Scanner</strong> para ver as 6 moedas que mais subiram nas últimas 24h.
+                Clica em <strong>Iniciar Scanner</strong> para ver todos os pares que subiram mais de 10% nas últimas 24h.
               </div>
             </div>
           )}
 
+          {state.status === 'done' && state.results?.length === 0 && (
+            <div className="card">
+              <div className="empty">Nenhum par acima de +10% neste momento.</div>
+            </div>
+          )}
+
           {state.results?.length > 0 && (
-            <GainersResultsTable results={state.results} />
+            <PumpResultsTable results={state.results} />
           )}
 
           {state.status === 'error' && (
@@ -607,10 +613,10 @@ export default function Scanner() {
           </button>
         ))}
         <button
-          className={`scanner-tab ${tab === 'gainers24h' ? 'active' : ''}`}
-          onClick={() => setTab('gainers24h')}
+          className={`scanner-tab ${tab === 'pump24h' ? 'active' : ''}`}
+          onClick={() => setTab('pump24h')}
         >
-          Top 4 (24h)
+          Pump 24h (&gt;10%)
         </button>
         <button
           className={`scanner-tab ${tab === 'ematrend' ? 'active' : ''}`}
@@ -626,7 +632,7 @@ export default function Scanner() {
         </button>
       </div>
 
-      {tab === 'gainers24h' ? <GainersPanel key="gainers24h" />
+      {tab === 'pump24h' ? <PumpPanel key="pump24h" />
         : tab === 'ematrend' ? <EmaTrendPanel key="ematrend" />
         : tab === 'ematrend-stocks' ? (
           <EmaTrendPanel
