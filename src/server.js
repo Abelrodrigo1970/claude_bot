@@ -520,7 +520,9 @@ cron.schedule('25 */2 * * *', async () => {
   console.log('🚀 Cron 2h: scanner Pump 24h concluído.');
 });
 
-// A cada 15 min: estratégias de 15m (CandleBreakoutLong/Short sobre o Top 4 24h)
+// A cada 15 min: estratégias de 15m (ex: PumpEma60Band sobre o Pump 24h) —
+// runStrategy() já chama ensureSymbols() internamente, por isso não precisa
+// de esperar pelo pré-passo do cron horário para ter símbolos.
 cron.schedule('*/15 * * * *', async () => {
   const fastStrategies = STRATEGIES.filter(s => s.timeframe === '15m');
   if (!fastStrategies.length) return;
