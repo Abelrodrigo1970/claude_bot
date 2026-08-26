@@ -1,0 +1,873 @@
+{
+  "generatedAt": "2026-08-26",
+  "source": "src/backtests/study-6month-movers.js — candles diárias Bybit, 731 pares USDT-linear, janela de 182 dias",
+  "methodology": "subidaMaxPct = maior (máximo - mínimo-corrido-antes-do-máximo) / mínimo, dentro da janela — não a variação início-fim",
+  "filter": "só símbolos que já devolveram mais de 40% do pico (devolveuDoTopoPct < -40) — top 50 destes por subidaMaxPct. Exclui os que ainda seguram o pico (ex: BTR, BR, ONG, VVV) — ver top50-6month-movers-all.json para a lista sem este filtro.",
+  "note": "Lista de referência para futuras estratégias/estudos — não é recomendação de compra nem de venda. Ver artefacto 'Depois do Pico'.",
+  "movers": [
+    {
+      "symbol": "LAB/USDT:USDT",
+      "subidaMaxPct": 19765,
+      "minimo": 0.13489,
+      "dataMinimo": "2026-03-05",
+      "maximo": 26.7963,
+      "dataMaximo": "2026-06-02",
+      "inicioFimPct": -55,
+      "devolveuDoTopoPct": -99.7,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 50,
+        "pnlUsdt": -1353.66,
+        "risco": "extremo — moeda ainda no 1º pump, subiu muito mais depois da entrada; short sem SL destruído"
+      }
+    },
+    {
+      "symbol": "RAVE/USDT:USDT",
+      "subidaMaxPct": 13808,
+      "minimo": 0.20555,
+      "dataMinimo": "2026-03-12",
+      "maximo": 28.58816,
+      "dataMaximo": "2026-04-18",
+      "inicioFimPct": -26,
+      "devolveuDoTopoPct": -99,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 50,
+        "pnlUsdt": -82.35,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "AKE/USDT:USDT",
+      "subidaMaxPct": 9291,
+      "minimo": 0.0001738,
+      "dataMinimo": "2026-07-10",
+      "maximo": 0.016322,
+      "dataMaximo": "2026-08-14",
+      "inicioFimPct": 2632,
+      "devolveuDoTopoPct": -53.2,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 50,
+        "pnlUsdt": -616.37,
+        "risco": "extremo — moeda ainda no 1º pump, subiu muito mais depois da entrada; short sem SL destruído"
+      }
+    },
+    {
+      "symbol": "BEAT/USDT:USDT",
+      "subidaMaxPct": 5967,
+      "minimo": 0.19046,
+      "dataMinimo": "2026-02-27",
+      "maximo": 11.5555,
+      "dataMaximo": "2026-06-12",
+      "inicioFimPct": -44,
+      "devolveuDoTopoPct": -98.9,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 50,
+        "pnlUsdt": -46.84,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "ARIA/USDT:USDT",
+      "subidaMaxPct": 5864,
+      "minimo": 0.01938,
+      "dataMinimo": "2026-04-09",
+      "maximo": 1.15582,
+      "dataMaximo": "2026-04-13",
+      "inicioFimPct": -55,
+      "devolveuDoTopoPct": -96.9,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 50,
+        "pnlUsdt": -67.57,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "TUT/USDT:USDT",
+      "subidaMaxPct": 4011,
+      "minimo": 0.007998,
+      "dataMinimo": "2026-03-29",
+      "maximo": 0.328814,
+      "dataMaximo": "2026-08-09",
+      "inicioFimPct": 403,
+      "devolveuDoTopoPct": -84.5,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 0,
+        "pnlUsdt": -13.81,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "VELVET/USDT:USDT",
+      "subidaMaxPct": 3701,
+      "minimo": 0.05689,
+      "dataMinimo": "2026-03-23",
+      "maximo": 2.16267,
+      "dataMaximo": "2026-06-29",
+      "inicioFimPct": 41,
+      "devolveuDoTopoPct": -94.2,
+      "fadeStudy": {
+        "trades": 3,
+        "winRatePct": 66.7,
+        "pnlUsdt": 9.67,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "STO/USDT:USDT",
+      "subidaMaxPct": 3478,
+      "minimo": 0.0559,
+      "dataMinimo": "2026-03-07",
+      "maximo": 2,
+      "dataMaximo": "2026-04-02",
+      "inicioFimPct": -31,
+      "devolveuDoTopoPct": -97.9,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 100,
+        "pnlUsdt": 2.54,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "BANK/USDT:USDT",
+      "subidaMaxPct": 3084,
+      "minimo": 0.02216,
+      "dataMinimo": "2026-06-05",
+      "maximo": 0.7056,
+      "dataMaximo": "2026-07-27",
+      "inicioFimPct": -10,
+      "devolveuDoTopoPct": -94.9,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 0,
+        "pnlUsdt": -86.73,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "US/USDT:USDT",
+      "subidaMaxPct": 2239,
+      "minimo": 0.002671,
+      "dataMinimo": "2026-03-08",
+      "maximo": 0.062476,
+      "dataMaximo": "2026-07-27",
+      "inicioFimPct": 327,
+      "devolveuDoTopoPct": -75,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 50,
+        "pnlUsdt": -36.02,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "SIREN/USDT:USDT",
+      "subidaMaxPct": 2181,
+      "minimo": 0.22358,
+      "dataMinimo": "2026-03-02",
+      "maximo": 5.1,
+      "dataMaximo": "2026-03-22",
+      "inicioFimPct": -91,
+      "devolveuDoTopoPct": -99.4,
+      "fadeStudy": {
+        "trades": 5,
+        "winRatePct": 80,
+        "pnlUsdt": -25.35,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "BTW/USDT:USDT",
+      "subidaMaxPct": 1980,
+      "minimo": 0.03743,
+      "dataMinimo": "2026-06-05",
+      "maximo": 0.77858,
+      "dataMaximo": "2026-08-19",
+      "inicioFimPct": 663,
+      "devolveuDoTopoPct": -46.8,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 0,
+        "pnlUsdt": -123.5,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "TAC/USDT:USDT",
+      "subidaMaxPct": 1959,
+      "minimo": 0.003346,
+      "dataMinimo": "2026-04-01",
+      "maximo": 0.06888,
+      "dataMaximo": "2026-06-30",
+      "inicioFimPct": 12,
+      "devolveuDoTopoPct": -93.3,
+      "fadeStudy": {
+        "trades": 3,
+        "winRatePct": 33.3,
+        "pnlUsdt": -6.72,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "BSB/USDT:USDT",
+      "subidaMaxPct": 1831,
+      "minimo": 0.1386,
+      "dataMinimo": "2026-03-26",
+      "maximo": 2.677,
+      "dataMaximo": "2026-05-20",
+      "inicioFimPct": -42,
+      "devolveuDoTopoPct": -96.4,
+      "fadeStudy": {
+        "trades": 3,
+        "winRatePct": 66.7,
+        "pnlUsdt": 11.95,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "DEXE/USDT:USDT",
+      "subidaMaxPct": 1461,
+      "minimo": 3.1864,
+      "dataMinimo": "2026-03-02",
+      "maximo": 49.729,
+      "dataMaximo": "2026-07-12",
+      "inicioFimPct": -42,
+      "devolveuDoTopoPct": -96.2,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 100,
+        "pnlUsdt": 52.33,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "PLAYSOUT/USDT:USDT",
+      "subidaMaxPct": 1412,
+      "minimo": 0.01616,
+      "dataMinimo": "2026-02-26",
+      "maximo": 0.24435,
+      "dataMaximo": "2026-04-15",
+      "inicioFimPct": 121,
+      "devolveuDoTopoPct": -83.4,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 0,
+        "pnlUsdt": -42.34,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "ESPORTS/USDT:USDT",
+      "subidaMaxPct": 1403,
+      "minimo": 0.05055,
+      "dataMinimo": "2026-05-25",
+      "maximo": 0.75965,
+      "dataMaximo": "2026-05-25",
+      "inicioFimPct": -95,
+      "devolveuDoTopoPct": -98.1,
+      "fadeStudy": {
+        "trades": 3,
+        "winRatePct": 100,
+        "pnlUsdt": 128.08,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "EVAA/USDT:USDT",
+      "subidaMaxPct": 1286,
+      "minimo": 0.2772,
+      "dataMinimo": "2026-06-05",
+      "maximo": 3.8424,
+      "dataMaximo": "2026-07-08",
+      "inicioFimPct": 60,
+      "devolveuDoTopoPct": -81,
+      "fadeStudy": {
+        "trades": 3,
+        "winRatePct": 100,
+        "pnlUsdt": 57.51,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "UB/USDT:USDT",
+      "subidaMaxPct": 1270,
+      "minimo": 0.0181,
+      "dataMinimo": "2026-04-09",
+      "maximo": 0.24792,
+      "dataMaximo": "2026-05-15",
+      "inicioFimPct": 199,
+      "devolveuDoTopoPct": -52.5,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 0,
+        "pnlUsdt": -62.02,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "H/USDT:USDT",
+      "subidaMaxPct": 1131,
+      "minimo": 0.05385,
+      "dataMinimo": "2026-06-09",
+      "maximo": 0.66283,
+      "dataMaximo": "2026-06-15",
+      "inicioFimPct": -41,
+      "devolveuDoTopoPct": -89.1,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 100,
+        "pnlUsdt": 72.42,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "MAGMA/USDT:USDT",
+      "subidaMaxPct": 1104,
+      "minimo": 0.06935,
+      "dataMinimo": "2026-04-02",
+      "maximo": 0.835,
+      "dataMaximo": "2026-07-03",
+      "inicioFimPct": 149,
+      "devolveuDoTopoPct": -68.7,
+      "fadeStudy": {
+        "trades": 4,
+        "winRatePct": 100,
+        "pnlUsdt": 76.52,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "POWER/USDT:USDT",
+      "subidaMaxPct": 1099,
+      "minimo": 0.16952,
+      "dataMinimo": "2026-03-03",
+      "maximo": 2.03176,
+      "dataMaximo": "2026-03-03",
+      "inicioFimPct": -96,
+      "devolveuDoTopoPct": -96.4,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 100,
+        "pnlUsdt": 64.51,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "CYS/USDT:USDT",
+      "subidaMaxPct": 994,
+      "minimo": 0.168,
+      "dataMinimo": "2026-04-09",
+      "maximo": 1.8385,
+      "dataMaximo": "2026-08-15",
+      "inicioFimPct": 114,
+      "devolveuDoTopoPct": -57.8,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 0,
+        "pnlUsdt": -29.48,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "HEI/USDT:USDT",
+      "subidaMaxPct": 916,
+      "minimo": 0.05488,
+      "dataMinimo": "2026-05-28",
+      "maximo": 0.55746,
+      "dataMaximo": "2026-08-06",
+      "inicioFimPct": 93,
+      "devolveuDoTopoPct": -71.3,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 100,
+        "pnlUsdt": 50.89,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "TAIKO/USDT:USDT",
+      "subidaMaxPct": 900,
+      "minimo": 0.06004,
+      "dataMinimo": "2026-06-25",
+      "maximo": 0.6007,
+      "dataMaximo": "2026-07-01",
+      "inicioFimPct": -40,
+      "devolveuDoTopoPct": -87.8,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 100,
+        "pnlUsdt": 46.73,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "BLESS/USDT:USDT",
+      "subidaMaxPct": 816,
+      "minimo": 0.004092,
+      "dataMinimo": "2026-02-28",
+      "maximo": 0.037496,
+      "dataMaximo": "2026-04-14",
+      "inicioFimPct": 102,
+      "devolveuDoTopoPct": -74.8,
+      "fadeStudy": {
+        "trades": 4,
+        "winRatePct": 100,
+        "pnlUsdt": 112.84,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "B/USDT:USDT",
+      "subidaMaxPct": 800,
+      "minimo": 0.08634,
+      "dataMinimo": "2026-04-19",
+      "maximo": 0.77743,
+      "dataMaximo": "2026-05-14",
+      "inicioFimPct": -8,
+      "devolveuDoTopoPct": -83.3,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 0,
+        "pnlUsdt": -13.69,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "B3/USDT:USDT",
+      "subidaMaxPct": 774,
+      "minimo": 0.0002459,
+      "dataMinimo": "2026-04-29",
+      "maximo": 0.0021486,
+      "dataMaximo": "2026-05-07",
+      "inicioFimPct": 23,
+      "devolveuDoTopoPct": -77.8,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 0,
+        "pnlUsdt": -7.46,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "BLUAI/USDT:USDT",
+      "subidaMaxPct": 736,
+      "minimo": 0.0041,
+      "dataMinimo": "2026-03-04",
+      "maximo": 0.034274,
+      "dataMaximo": "2026-08-11",
+      "inicioFimPct": 144,
+      "devolveuDoTopoPct": -64.3,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 100,
+        "pnlUsdt": 22.72,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "BICO/USDT:USDT",
+      "subidaMaxPct": 722,
+      "minimo": 0.011238,
+      "dataMinimo": "2026-07-29",
+      "maximo": 0.092345,
+      "dataMaximo": "2026-08-09",
+      "inicioFimPct": 9,
+      "devolveuDoTopoPct": -75.5,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 100,
+        "pnlUsdt": 15.49,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "NAORIS/USDT:USDT",
+      "subidaMaxPct": 695,
+      "minimo": 0.021129,
+      "dataMinimo": "2026-03-07",
+      "maximo": 0.167883,
+      "dataMaximo": "2026-05-04",
+      "inicioFimPct": -7,
+      "devolveuDoTopoPct": -82.8,
+      "fadeStudy": {
+        "trades": 3,
+        "winRatePct": 66.7,
+        "pnlUsdt": 23.38,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "APR/USDT:USDT",
+      "subidaMaxPct": 645,
+      "minimo": 0.08498,
+      "dataMinimo": "2026-02-28",
+      "maximo": 0.6333,
+      "dataMaximo": "2026-08-12",
+      "inicioFimPct": 141,
+      "devolveuDoTopoPct": -63.9,
+      "fadeStudy": {
+        "trades": 3,
+        "winRatePct": 100,
+        "pnlUsdt": 86.22,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "NOM/USDT:USDT",
+      "subidaMaxPct": 622,
+      "minimo": 0.001731,
+      "dataMinimo": "2026-03-27",
+      "maximo": 0.0125,
+      "dataMaximo": "2026-04-02",
+      "inicioFimPct": -61,
+      "devolveuDoTopoPct": -87.4,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 100,
+        "pnlUsdt": 17.52,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "ALLO/USDT:USDT",
+      "subidaMaxPct": 593,
+      "minimo": 0.08088,
+      "dataMinimo": "2026-05-18",
+      "maximo": 0.56035,
+      "dataMaximo": "2026-06-08",
+      "inicioFimPct": 127,
+      "devolveuDoTopoPct": -55.3,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 50,
+        "pnlUsdt": -58.04,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "EDEN/USDT:USDT",
+      "subidaMaxPct": 581,
+      "minimo": 0.0257,
+      "dataMinimo": "2026-03-30",
+      "maximo": 0.17511,
+      "dataMaximo": "2026-05-22",
+      "inicioFimPct": 84,
+      "devolveuDoTopoPct": -63.7,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 100,
+        "pnlUsdt": 36.56,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "PORTAL/USDT:USDT",
+      "subidaMaxPct": 578,
+      "minimo": 0.007338,
+      "dataMinimo": "2026-05-29",
+      "maximo": 0.04974,
+      "dataMaximo": "2026-06-01",
+      "inicioFimPct": 29,
+      "devolveuDoTopoPct": -68,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 100,
+        "pnlUsdt": 32.46,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "EPIC/USDT:USDT",
+      "subidaMaxPct": 577,
+      "minimo": 0.1916,
+      "dataMinimo": "2026-05-29",
+      "maximo": 1.2965,
+      "dataMaximo": "2026-08-08",
+      "inicioFimPct": 25,
+      "devolveuDoTopoPct": -73.7,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 100,
+        "pnlUsdt": 9.41,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "1000TAG/USDT:USDT",
+      "subidaMaxPct": 569,
+      "minimo": 0.3316,
+      "dataMinimo": "2026-02-27",
+      "maximo": 2.22,
+      "dataMaximo": "2026-05-04",
+      "inicioFimPct": 128,
+      "devolveuDoTopoPct": -64.2,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 100,
+        "pnlUsdt": 22.94,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "BASED/USDT:USDT",
+      "subidaMaxPct": 557,
+      "minimo": 0.0495,
+      "dataMinimo": "2026-04-11",
+      "maximo": 0.3252,
+      "dataMaximo": "2026-04-16",
+      "inicioFimPct": -40,
+      "devolveuDoTopoPct": -78,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 100,
+        "pnlUsdt": 20.9,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "SKYAI1/USDT:USDT",
+      "subidaMaxPct": 546,
+      "minimo": 0.02273,
+      "dataMinimo": "2026-07-27",
+      "maximo": 0.14682,
+      "dataMaximo": "2026-08-09",
+      "inicioFimPct": -82,
+      "devolveuDoTopoPct": -65.5,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 100,
+        "pnlUsdt": 17.87,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "ACE/USDT:USDT",
+      "subidaMaxPct": 517,
+      "minimo": 0.06152,
+      "dataMinimo": "2026-07-19",
+      "maximo": 0.37944,
+      "dataMaximo": "2026-08-14",
+      "inicioFimPct": 41,
+      "devolveuDoTopoPct": -44.2,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 0,
+        "pnlUsdt": -29.4,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "M/USDT:USDT",
+      "subidaMaxPct": 515,
+      "minimo": 0.4348,
+      "dataMinimo": "2026-06-25",
+      "maximo": 2.6758,
+      "dataMaximo": "2026-06-25",
+      "inicioFimPct": -23,
+      "devolveuDoTopoPct": -58.4,
+      "fadeStudy": {
+        "trades": 0,
+        "winRatePct": null,
+        "pnlUsdt": 0,
+        "risco": "sem-sinal"
+      }
+    },
+    {
+      "symbol": "ENJ/USDT:USDT",
+      "subidaMaxPct": 501,
+      "minimo": 0.01728,
+      "dataMinimo": "2026-03-08",
+      "maximo": 0.103877,
+      "dataMaximo": "2026-04-16",
+      "inicioFimPct": 33,
+      "devolveuDoTopoPct": -74.5,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 0,
+        "pnlUsdt": -24.46,
+        "risco": "negativo"
+      }
+    },
+    {
+      "symbol": "JCT/USDT:USDT",
+      "subidaMaxPct": 463,
+      "minimo": 0.001462,
+      "dataMinimo": "2026-02-28",
+      "maximo": 0.0082244,
+      "dataMaximo": "2026-06-13",
+      "inicioFimPct": 28,
+      "devolveuDoTopoPct": -74.3,
+      "fadeStudy": {
+        "trades": 3,
+        "winRatePct": 100,
+        "pnlUsdt": 65.55,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "CLO/USDT:USDT",
+      "subidaMaxPct": 449,
+      "minimo": 0.05523,
+      "dataMinimo": "2026-05-19",
+      "maximo": 0.3031,
+      "dataMaximo": "2026-06-23",
+      "inicioFimPct": -10,
+      "devolveuDoTopoPct": -72.1,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 100,
+        "pnlUsdt": 38.31,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "TLM/USDT:USDT",
+      "subidaMaxPct": 432,
+      "minimo": 0.0008127,
+      "dataMinimo": "2026-07-01",
+      "maximo": 0.0043268,
+      "dataMaximo": "2026-07-06",
+      "inicioFimPct": -10,
+      "devolveuDoTopoPct": -66.3,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 100,
+        "pnlUsdt": 17.17,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "IN/USDT:USDT",
+      "subidaMaxPct": 428,
+      "minimo": 0.05338,
+      "dataMinimo": "2026-03-29",
+      "maximo": 0.2818,
+      "dataMaximo": "2026-06-30",
+      "inicioFimPct": -54,
+      "devolveuDoTopoPct": -88.8,
+      "fadeStudy": {
+        "trades": 0,
+        "winRatePct": null,
+        "pnlUsdt": 0,
+        "risco": "sem-sinal"
+      }
+    },
+    {
+      "symbol": "STG/USDT:USDT",
+      "subidaMaxPct": 426,
+      "minimo": 0.13045,
+      "dataMinimo": "2026-02-26",
+      "maximo": 0.68651,
+      "dataMaximo": "2026-06-12",
+      "inicioFimPct": 22,
+      "devolveuDoTopoPct": -75.4,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 100,
+        "pnlUsdt": 40.48,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "ORDI/USDT:USDT",
+      "subidaMaxPct": 416,
+      "minimo": 2.086,
+      "dataMinimo": "2026-03-29",
+      "maximo": 10.769,
+      "dataMaximo": "2026-04-17",
+      "inicioFimPct": 70,
+      "devolveuDoTopoPct": -61.5,
+      "fadeStudy": {
+        "trades": 1,
+        "winRatePct": 100,
+        "pnlUsdt": 25.49,
+        "risco": "positivo"
+      }
+    },
+    {
+      "symbol": "AVAAI/USDT:USDT",
+      "subidaMaxPct": 396,
+      "minimo": 0.00436,
+      "dataMinimo": "2026-06-06",
+      "maximo": 0.02163,
+      "dataMaximo": "2026-08-20",
+      "inicioFimPct": 13,
+      "devolveuDoTopoPct": -60.5,
+      "fadeStudy": {
+        "trades": 2,
+        "winRatePct": 100,
+        "pnlUsdt": 38.06,
+        "risco": "positivo"
+      }
+    }
+  ],
+  "fadeStudyMeta": {
+    "regra": "SHORT quando o fecho diário fica mais de 50% acima da EMA20 (1d); fecha quando volta a fechar abaixo da EMA20",
+    "resultadoSemSL": {
+      "trades": 91,
+      "winRatePct": 74.7,
+      "pnlUsdt": -1509.28
+    },
+    "resultadoSemSLExcluindoRiscoExtremo": {
+      "trades": 87,
+      "pnlUsdt": 460.75,
+      "nota": "exclui LAB e AKE — sem eles o conceito é claramente positivo"
+    },
+    "slSweep": [
+      {
+        "slPct": 15,
+        "trades": 213,
+        "winRatePct": 22.1,
+        "pnlUsdt": -205.1
+      },
+      {
+        "slPct": 20,
+        "trades": 200,
+        "winRatePct": 28,
+        "pnlUsdt": -200.12
+      },
+      {
+        "slPct": 25,
+        "trades": 192,
+        "winRatePct": 31.3,
+        "pnlUsdt": -329.88
+      },
+      {
+        "slPct": 30,
+        "trades": 179,
+        "winRatePct": 35.8,
+        "pnlUsdt": -333.67
+      },
+      {
+        "slPct": 50,
+        "trades": 162,
+        "winRatePct": 47.5,
+        "pnlUsdt": -493.36
+      },
+      {
+        "slPct": 75,
+        "trades": 138,
+        "winRatePct": 59.4,
+        "pnlUsdt": -377.64
+      },
+      {
+        "slPct": 100,
+        "trades": 131,
+        "winRatePct": 64.1,
+        "pnlUsdt": -599.03
+      },
+      {
+        "slPct": 150,
+        "trades": 119,
+        "winRatePct": 65.5,
+        "pnlUsdt": -1212.31
+      }
+    ],
+    "conclusao": "Nenhum SL fixo testado deu resultado positivo — SL apertado (15-30%) mata trades que reverteriam bem; SL largo (100-150%) deixa o risco extremo (LAB/AKE) voltar a destruir o resultado. O edge é real (74,7% acerto sem SL) mas precisa de gestão de risco mais inteligente que um SL fixo (ex: nocional menor para os candidatos mais extremos, ou excluir símbolos ainda no 1º pump)."
+  }
+}
