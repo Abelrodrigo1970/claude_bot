@@ -2,6 +2,7 @@
 const bybit = require('./bybit');
 const {
   getState: getScannerState, startScan, getGainersState, startScanGainers,
+  getPumpState, startScanPump,
   getEmaTrendTotalState, startScanEmaTrendTotal,
 } = require('./scanner');
 const trendSurfer         = require('../strategies/trendSurfer');
@@ -9,6 +10,9 @@ const stockSMA            = require('../strategies/stockSMA');
 const ema90TopFade        = require('../strategies/ema90TopFade');
 const stoch50             = require('../strategies/stoch50');
 const stockEma1270Cross   = require('../strategies/stockEma1270Cross');
+const pumpEmaSpread       = require('../strategies/pumpEmaSpread');
+const pumpTrendFlip       = require('../strategies/pumpTrendFlip');
+const pumpEma60Band       = require('../strategies/pumpEma60Band');
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
 // stopLossPct quando o lado específico não está definido, para não mudar o
@@ -157,6 +161,79 @@ const STRATEGIES = [
     // (+264.15 USDT, PF 2.13, maxDD -29.22, WR 44.9%, vs. +236.91/PF1.99/
     // maxDD-40.44 sem TP). Diferença entre 18/19/20% é pequena (~1%),
     // qualquer um destes é uma escolha sólida.
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: pumpEmaSpread.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'pump24h',
+    timeframe: '5m',
+    generateSignal: pumpEmaSpread.generateSignal,
+    positionSize: 60,
+    trailingStopPct: 0.10,
+    // Universo: scanner Pump 24h (todos os pares cripto com variação 24h
+    // >= 10%, sem limite de topN — ver scanner.js/startScanPump). LONG
+    // quando EMA12>EMA21 e SHORT quando EMA12<EMA21, mas só entra se o
+    // spread entre as duas EMAs estiver na banda 0.6%-1.5% (nem acabou de
+    // cruzar sem separação, nem já esticado demais). Fecha quando a
+    // direção inverte com >0.6% de confirmação, OU quando o trailing stop
+    // de 10% (a partir do lucro) dispara — ver
+    // src/backtests/backtest-pumpEmaSpread-live.js. Estudo comparativo
+    // (26/08, universo top10-na-entrada): 3% desde a entrada deu -39,77
+    // USDT em 158 trades; 10% a partir do lucro deu -16,64 em 51 trades —
+    // ainda negativo, mas visivelmente melhor. Vale continuar a afinar
+    // (ex: margem mínima antes de armar o trail).
+    //
+    // Corre a cada hora via runAll (não tem cron de 5m dedicado ainda) —
+    // os sinais de papel ficam mais espaçados do que os 5m reais até se
+    // adicionar um cron próprio, se a estratégia for para a frente.
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: pumpTrendFlip.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'pump24h',
+    timeframe: '1h',
+    generateSignal: pumpTrendFlip.generateSignal,
+    positionSize: 60,
+    trailingStopPct: 0.10,
+    // "Surfa" a tendência do EMA21/50 no 1h (mais lento que a PumpEmaSpread
+    // de propósito — 5m com EMA12/21 cruza ~350x/mês, ruído demais para
+    // isto). Está sempre no mercado: quando a tendência inverte com
+    // confirmação (>1%), vira long↔short diretamente (flip_to_long/
+    // flip_to_short), sem passar por flat. Sem teto de spread — quer ficar
+    // agarrada a tendências esticadas, ao contrário da PumpEmaSpread. SL
+    // é só o trailing stop de 10% a partir do lucro (ver runner.js). Ver
+    // src/backtests/backtest-pumpTrendFlip-live.js.
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: pumpEma60Band.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'pump24h',
+    timeframe: '15m',
+    generateSignal: pumpEma60Band.generateSignal,
+    positionSize: 60,
+    stopLossPct: 0.10,
+    // Regra pedida pelo utilizador (26/08), corrigida (EMA60 — confirmado
+    // contra um gráfico real, "Pivot Boss 4 EMA 12 21 60 200", linha azul —
+    // e timeframe 15m) e depois simplificada com base no estudo. LONG-ONLY:
+    // entra quando o preço está 0-3% acima da EMA60 (banda de entrada). SL
+    // fixo de 10% é a ÚNICA saída — sem sinal de saída próprio (a versão
+    // com saída <-2%/short testada dava pior resultado: só 1 em 28 saídas
+    // por sinal deu lucro). Volta a entrar sempre que a banda 0-3%
+    // reaparecer depois de um SL. Sem TP parcial — testado a vários níveis,
+    // piorou sempre (corta os poucos trades grandes que carregam o
+    // resultado). Estudo comparativo (15m, ~19h de dados reais do
+    // scanner): long+short com flip 84 trades/+197,56 → long-only com saída
+    // <-2% 54 trades/+214,60 → esta versão (só SL) 46 trades/+243,64. Ver
+    // src/backtests/backtest-pumpEma60Band-live.js.
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
@@ -316,7 +393,7 @@ function isOnCooldown(strategyName, symbol, signalType, timeframe) {
   const key = `${strategyName}_${symbol}_${signalType}`;
   const last = signalCooldown[key];
   if (!last) return false;
-  const tfMs = { '15m': 15, '1h': 60, '2h': 120, '4h': 240, '1d': 1440 }[timeframe] || 60;
+  const tfMs = { '5m': 5, '15m': 15, '1h': 60, '2h': 120, '4h': 240, '1d': 1440 }[timeframe] || 60;
   return (Date.now() - last) < tfMs * 60 * 1000;
 }
 
@@ -363,6 +440,43 @@ async function runStrategyOnSymbol(strategy, symbol) {
           : (currentPrice - pos.entryPrice) / pos.entryPrice;
         if (lossPct >= slPct) {
           const logLine = `🛑 [${symbol.split('/')[0]}] Stop-loss (${(slPct * 100).toFixed(0)}%) atingido — fecha a $${currentPrice}`;
+          runState.log.unshift(logLine);
+          if (runState.log.length > 200) runState.log.pop();
+          console.log(`[${strategy.name}] ${logLine}`);
+          await closePositionFully(strategy, symbol, key, currentPrice);
+          return;
+        }
+      }
+    }
+
+    // Trailing stop (opt-in via strategy.trailingStopPct) — só ATIVA depois
+    // de a posição entrar em lucro pela primeira vez; antes disso não há
+    // proteção nenhuma, o movimento inicial fica livre. Uma vez ativo, fica
+    // sempre ativo. Testado nos estudos da PumpEmaSpread (26/08): a versão
+    // "desde a entrada" cortava os melhores trades em minutos (ex: BTR,
+    // +227% flutuante reduzido a +4,79 realizado); "a partir do lucro"
+    // recuperou grande parte disso (+10,49). Independente do SL fixo — se
+    // ambos estiverem configurados, o que disparar primeiro fecha a
+    // posição. extremePrice/trailActive não são persistidos em BD; ao
+    // reiniciar o servidor recomeçam do zero (ver loadOpenPositions).
+    if (strategy.trailingStopPct && currentPos) {
+      const pos = openPositions[key];
+      if (pos && pos.entryPrice) {
+        if (!pos.trailActive) {
+          const nowInProfit = pos.side === 'long' ? currentPrice > pos.entryPrice : currentPrice < pos.entryPrice;
+          if (nowInProfit) pos.trailActive = true;
+        }
+      }
+      if (pos && pos.entryPrice && pos.trailActive) {
+        pos.extremePrice = pos.side === 'long'
+          ? Math.max(pos.extremePrice ?? pos.entryPrice, currentPrice)
+          : Math.min(pos.extremePrice ?? pos.entryPrice, currentPrice);
+        const trailPrice = pos.side === 'long'
+          ? pos.extremePrice * (1 - strategy.trailingStopPct)
+          : pos.extremePrice * (1 + strategy.trailingStopPct);
+        const trailHit = pos.side === 'long' ? currentPrice <= trailPrice : currentPrice >= trailPrice;
+        if (trailHit) {
+          const logLine = `📉 [${symbol.split('/')[0]}] Trailing stop (${(strategy.trailingStopPct * 100).toFixed(0)}%) atingido — extremo $${pos.extremePrice} → fecha a $${currentPrice}`;
           runState.log.unshift(logLine);
           if (runState.log.length > 200) runState.log.pop();
           console.log(`[${strategy.name}] ${logLine}`);
@@ -487,7 +601,7 @@ async function openPosition(strategy, symbol, key, side, currentPrice, reason, s
   const qty = (strategy.positionSize / currentPrice).toFixed(4);
   const slPct = stopLossPctFor(strategy, side);
   const tradeId = await openTrade(strategy.name, symbol, side, currentPrice, qty, { reason, stopLossPct: slPct });
-  openPositions[key] = { tradeId, side, entryPrice: currentPrice, qty: parseFloat(qty), tpTaken: false, scanTs, openedAt: Date.now() };
+  openPositions[key] = { tradeId, side, entryPrice: currentPrice, extremePrice: currentPrice, trailActive: false, qty: parseFloat(qty), tpTaken: false, scanTs, openedAt: Date.now() };
 
   if (!strategy.enabled) return; // Bybit desligado — fica só na simulação/estudo
 
@@ -581,6 +695,9 @@ function resolveSymbols(strategy) {
   } else if (strategy.symbolSource === 'emaTrendTotal') {
     const scan = getEmaTrendTotalState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
+  } else if (strategy.symbolSource === 'pump24h') {
+    const scan = getPumpState();
+    symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
   } else if (!strategy.scannerPeriod) {
     symbols = [strategy.symbol];
   } else {
@@ -607,6 +724,8 @@ async function ensureSymbols(strategy) {
     await startScanGainers(4);
   } else if (strategy.symbolSource === 'emaTrendTotal') {
     await startScanEmaTrendTotal();
+  } else if (strategy.symbolSource === 'pump24h') {
+    await startScanPump(10);
   }
 }
 
@@ -614,6 +733,7 @@ function scannerLabel(strategy) {
   if (strategy.scannerPeriod) return `Scanner EMA${strategy.scannerPeriod}`;
   if (strategy.symbolSource === 'gainers24h' || strategy.symbolSource === 'gainers24hDropped') return 'Scanner Top 24h';
   if (strategy.symbolSource === 'emaTrendTotal') return 'Scanner EMA Trend (sem limite)';
+  if (strategy.symbolSource === 'pump24h') return 'Scanner Pump 24h';
   return 'Scanner';
 }
 
@@ -646,7 +766,8 @@ async function runAll() {
     // (corre para todas, mesmo com Bybit desligado — sinais/estudo continuam)
     for (const strategy of STRATEGIES) {
       const isDynamicSource = strategy.scannerPeriod || strategy.symbolSource === 'gainers24h' ||
-        strategy.symbolSource === 'gainers24hDropped' || strategy.symbolSource === 'emaTrendTotal';
+        strategy.symbolSource === 'gainers24hDropped' || strategy.symbolSource === 'emaTrendTotal' ||
+        strategy.symbolSource === 'pump24h';
       if (!isDynamicSource) continue;
       if (resolveSymbols(strategy).length === 0) {
         const label = scannerLabel(strategy);
@@ -725,7 +846,7 @@ async function loadOpenPositions() {
         const expectedFullQty = strategy.positionSize / entryPrice;
         tpTaken = qty < expectedFullQty * 0.99;
       }
-      openPositions[key] = { tradeId: r.id, side: r.side, entryPrice, qty, tpTaken, openedAt: new Date(r.opened_at).getTime() };
+      openPositions[key] = { tradeId: r.id, side: r.side, entryPrice, extremePrice: entryPrice, trailActive: false, qty, tpTaken, openedAt: new Date(r.opened_at).getTime() };
     });
     if (rows.length) console.log(`[Runner] ${rows.length} posições abertas carregadas da BD`);
   } catch { /* BD ainda não disponível */ }
