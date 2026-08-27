@@ -593,6 +593,191 @@ function EmaTrendPanel({ apiBase = '/api/scanner/ematrend', subtitle = 'Preço a
   );
 }
 
+function Volatile50ResultsTable({ results }) {
+  return (
+    <div className="card" style={{ padding: 0 }}>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Par</th>
+              <th>Preço</th>
+              <th>Vela 15m</th>
+              <th>Volume (vela)</th>
+              <th>Média 10 velas</th>
+              <th>Rácio volume</th>
+              <th>Spike</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((r, i) => (
+              <tr key={r.symbol} className={(r.isSpike ?? r.is_spike) ? 'row-spike' : ''}>
+                <td className="muted">{i + 1}</td>
+                <td>
+                  <a
+                    className="symbol-link"
+                    href={`https://www.tradingview.com/chart/?symbol=BYBIT:${r.symbol.split('/')[0]}USDT.P`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Ver no TradingView"
+                  >
+                    <span className="symbol-name">{r.symbol.split('/')[0]}</span>
+                    <span className="symbol-suffix">/USDT</span>
+                    <span className="tv-icon">↗</span>
+                  </a>
+                </td>
+                <td className="mono">{fmt(r.price, 6)}</td>
+                <td className={`mono ${(r.changePct ?? r.change_pct) >= 0 ? 'green' : 'red'}`}>
+                  {(r.changePct ?? r.change_pct) >= 0 ? '+' : ''}{fmt(r.changePct ?? r.change_pct)}%
+                </td>
+                <td className="mono muted">{fmtVol(r.volume)}</td>
+                <td className="mono muted">{fmtVol(r.avgVolume10 ?? r.avg_volume_10)}</td>
+                <td className="mono">{fmt(r.volumeRatio ?? r.volume_ratio, 1)}x</td>
+                <td>{(r.isSpike ?? r.is_spike) ? <span className="spike-badge">🔥 SPIKE</span> : <span className="muted">—</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function Volatile50HistoryPanel() {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [openIdx, setOpenIdx]   = useState(0);
+
+  useEffect(() => {
+    axios.get(`/api/scanner/volatile50/history?sessions=10`)
+      .then(r => setSessions(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="loading"><div className="spinner" /></div>;
+  if (!sessions.length) return (
+    <div className="card"><div className="empty">Nenhum histórico ainda. Corre o scanner para começar a guardar.</div></div>
+  );
+
+  return (
+    <div>
+      {sessions.map((session, idx) => {
+        const spikes = session.results.filter(r => r.is_spike).length;
+        return (
+          <div key={session.scanned_at} className="card" style={{ marginBottom: 12 }}>
+            <div
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+              onClick={() => setOpenIdx(openIdx === idx ? -1 : idx)}
+            >
+              <div>
+                <span style={{ fontWeight: 600, color: '#e2e8f0' }}>
+                  {format(new Date(session.scanned_at), 'dd/MM/yyyy HH:mm')}
+                </span>
+                <span className="muted" style={{ marginLeft: 12, fontSize: 12 }}>
+                  {session.results.length} símbolos {spikes > 0 && `· ${spikes} spike(s)`}
+                </span>
+              </div>
+              <span className="muted">{openIdx === idx ? '▲' : '▼'}</span>
+            </div>
+            {openIdx === idx && (
+              <div style={{ marginTop: 16 }}>
+                <Volatile50ResultsTable results={session.results} />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Volatile50Panel() {
+  const [view, setView]   = useState('scan');
+  const [state, setState] = useState({ status: 'idle', progress: 0, total: 0, results: [], scannedAt: null });
+  const pollRef = useRef(null);
+
+  const stopPolling = () => { clearInterval(pollRef.current); pollRef.current = null; };
+
+  const fetchState = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`/api/scanner/volatile50`);
+      setState(data);
+      if (data.status !== 'scanning') stopPolling();
+    } catch { stopPolling(); }
+  }, []);
+
+  const startScan = async () => {
+    await axios.post(`/api/scanner/volatile50/start`);
+    setState(s => ({ ...s, status: 'scanning', progress: 0, results: [] }));
+    setView('scan');
+    stopPolling();
+    pollRef.current = setInterval(fetchState, 2000);
+  };
+
+  useEffect(() => {
+    fetchState();
+    return () => stopPolling();
+  }, [fetchState]);
+
+  const spikeCount = state.results?.filter(r => r.isSpike).length || 0;
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <div className="page-sub">
+            Os 50 símbolos com maior subida nos últimos 6 meses (já em queda &gt;40% do pico) · vela de 15m com volume ≥5x a média das 10 velas anteriores + fecho acima da abertura · atualiza a cada 15min
+            {state.scannedAt && (
+              <span className="scan-time"> · Scan: {new Date(state.scannedAt).toLocaleTimeString('pt-PT')}</span>
+            )}
+          </div>
+          <div className="scanner-tabs" style={{ marginTop: 10 }}>
+            <button className={`scanner-tab ${view === 'scan' ? 'active' : ''}`} onClick={() => setView('scan')}>
+              Atual {spikeCount > 0 && `(🔥 ${spikeCount})`}
+            </button>
+            <button className={`scanner-tab ${view === 'history' ? 'active' : ''}`} onClick={() => setView('history')}>
+              Histórico
+            </button>
+          </div>
+        </div>
+        <button className="btn btn-primary" onClick={startScan} disabled={state.status === 'scanning'}>
+          {state.status === 'scanning' ? `⏳ A escanear... (${state.progress}/${state.total})` : state.status === 'done' ? '🔄 Atualizar' : '🔍 Iniciar Scanner'}
+        </button>
+      </div>
+
+      {view === 'history' ? (
+        <Volatile50HistoryPanel />
+      ) : (
+        <>
+          {state.status === 'idle' && (
+            <div className="card">
+              <div className="empty">
+                Clica em <strong>Iniciar Scanner</strong> para vigiar os 50 símbolos mais voláteis.
+              </div>
+            </div>
+          )}
+
+          {state.status === 'done' && state.results?.length === 0 && (
+            <div className="card">
+              <div className="empty">Sem dados neste momento.</div>
+            </div>
+          )}
+
+          {state.results?.length > 0 && (
+            <Volatile50ResultsTable results={state.results} />
+          )}
+
+          {state.status === 'error' && (
+            <div className="card"><div className="empty red">Erro: {state.error}</div></div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Scanner() {
   const [tab, setTab] = useState(200);
 
@@ -630,6 +815,12 @@ export default function Scanner() {
         >
           EMA Trend Stocks (21/50)
         </button>
+        <button
+          className={`scanner-tab ${tab === 'volatile50' ? 'active' : ''}`}
+          onClick={() => setTab('volatile50')}
+        >
+          Lista 50 (spike)
+        </button>
       </div>
 
       {tab === 'pump24h' ? <PumpPanel key="pump24h" />
@@ -641,6 +832,7 @@ export default function Scanner() {
             subtitle="Preço acima da EMA21 e EMA50, no diário E no 1h · Universo de stocks/ETFs"
           />
         )
+        : tab === 'volatile50' ? <Volatile50Panel key="volatile50" />
         : <ScannerPanel key={tab} period={tab} />}
     </div>
   );

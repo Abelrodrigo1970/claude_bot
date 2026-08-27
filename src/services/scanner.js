@@ -1,6 +1,7 @@
 const { EMA } = require('technicalindicators');
 const bybit = require('./bybit');
 const pool  = require('../db/pool');
+const telegram = require('./telegram');
 
 const CACHE_TTL = 2 * 60 * 60 * 1000; // 2 horas — alinhado com o ciclo do cron
 
@@ -638,6 +639,114 @@ function getEmaTrendTotalState() {
   return emaTrendTotalState;
 }
 
+// ─── SCANNER LISTA 50 (spike de volume, 15m) ───────────────────
+// Universo FIXO: os 50 símbolos de src/backtests/data/top50-6month-movers.json
+// (maiores subidas dos últimos 6 meses, já em queda de mais de 40% do pico —
+// ver o estudo de fade nesse ficheiro). Pedido pelo utilizador (27/08) para
+// vigiar se algum deles volta a mexer-se com força: deteta "spike" numa vela
+// de 15m já fechada quando o volume é >= 5x a média das 10 velas anteriores
+// E o fecho é acima da abertura (confirma subida, não só volume).
+//
+// Cache mais curta que os outros scanners (10min, não 2h) porque este corre
+// a cada 15min via cron — precisa de refrescar a cada candle nova.
+const VOLATILE50_SYMBOLS = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
+const VOLATILE50_SPIKE_RATIO = 5;
+const VOLATILE50_CACHE_TTL = 10 * 60 * 1000;
+
+let volatile50State = { status: 'idle', progress: 0, total: 0, results: [], scannedAt: null, error: null };
+
+async function startScanVolatile50() {
+  if (volatile50State.status === 'scanning') return;
+  if (volatile50State.status === 'done' && volatile50State.scannedAt && Date.now() - volatile50State.scannedAt < VOLATILE50_CACHE_TTL) return;
+
+  volatile50State = { ...volatile50State, status: 'scanning', progress: 0, total: VOLATILE50_SYMBOLS.length, results: [], error: null };
+
+  try {
+    const results = [];
+
+    for (let i = 0; i < VOLATILE50_SYMBOLS.length; i++) {
+      volatile50State.progress = i + 1;
+      const symbol = VOLATILE50_SYMBOLS[i];
+
+      try {
+        // 12 velas: as últimas 10 fechadas antes da atual + a vela fechada
+        // atual (índice -2) + a vela em formação (índice -1, descartada).
+        const candles = await bybit.getCandles(symbol, '15m', 12);
+        if (candles.length < 12) continue;
+
+        const current = candles[candles.length - 2];
+        const prior   = candles.slice(candles.length - 12, candles.length - 2);
+        if (!current || prior.length < 10) continue;
+
+        const avgVolume10 = prior.reduce((a, c) => a + c.volume, 0) / prior.length;
+        const volumeRatio = avgVolume10 > 0 ? current.volume / avgVolume10 : 0;
+        const changePct   = current.open > 0 ? ((current.close - current.open) / current.open) * 100 : 0;
+        const isSpike     = volumeRatio >= VOLATILE50_SPIKE_RATIO && current.close > current.open;
+
+        results.push({
+          symbol,
+          price: current.close,
+          changePct,
+          volume: current.volume,
+          avgVolume10,
+          volumeRatio,
+          isSpike,
+          candleTime: current.time,
+        });
+      } catch {
+        // símbolo sem dados suficientes no momento, ignora
+      }
+    }
+
+    results.sort((a, b) => b.volumeRatio - a.volumeRatio);
+
+    const scannedAt = new Date();
+    volatile50State.results   = results;
+    volatile50State.scannedAt = scannedAt.getTime();
+    volatile50State.status    = 'done';
+    const spikeResults = results.filter(r => r.isSpike);
+    console.log(`[Scanner Lista50] ${spikeResults.length} spike(s) de volume em ${results.length}/${VOLATILE50_SYMBOLS.length} símbolos`);
+
+    if (spikeResults.length) {
+      const lines = spikeResults.map(r =>
+        `<b>${r.symbol.split('/')[0]}</b> +${r.changePct.toFixed(1)}% na vela · volume ${r.volumeRatio.toFixed(1)}x a média · preço ${r.price}`
+      );
+      const msg = `🔥 <b>Spike na Lista 50</b> (vela de 15m)\n\n${lines.join('\n')}`;
+      telegram.sendMessage(msg); // não bloqueia o scan — falha de envio é só um warning na consola
+    }
+
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (let i = 0; i < results.length; i++) {
+          const r = results[i];
+          await client.query(
+            `INSERT INTO scanner_volatile50 (rank, symbol, price, change_pct, volume, avg_volume_10, volume_ratio, is_spike, candle_time, scanned_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+            [i + 1, r.symbol, r.price, r.changePct, r.volume, r.avgVolume10, r.volumeRatio, r.isSpike, r.candleTime, scannedAt]
+          );
+        }
+        await client.query('COMMIT');
+      } catch (dbErr) {
+        await client.query('ROLLBACK');
+        console.warn('[Scanner Lista50] Erro ao guardar no BD:', dbErr.message);
+      } finally {
+        client.release();
+      }
+    } catch {
+      // BD não configurada — continua sem guardar
+    }
+  } catch (err) {
+    volatile50State.status = 'error';
+    volatile50State.error  = err.message;
+  }
+}
+
+function getVolatile50State() {
+  return volatile50State;
+}
+
 module.exports = {
   startScan, getState,
   startScanGainers, getGainersState,
@@ -645,4 +754,5 @@ module.exports = {
   startScanEmaTrend, getEmaTrendState,
   startScanEmaTrendStocks, getEmaTrendStocksState,
   startScanEmaTrendTotal, getEmaTrendTotalState,
+  startScanVolatile50, getVolatile50State,
 };

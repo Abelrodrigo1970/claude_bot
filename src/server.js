@@ -12,6 +12,7 @@ const {
   startScanPump, getPumpState,
   startScanEmaTrend, getEmaTrendState,
   startScanEmaTrendStocks, getEmaTrendStocksState,
+  startScanVolatile50, getVolatile50State,
 } = require('./services/scanner');
 
 const app = express();
@@ -464,6 +465,54 @@ app.get('/api/scanner/ematrend-stocks/history', async (req, res) => {
   }
 });
 
+// Inicia scan da Lista 50 (spike de volume 5x + subida, velas de 15m)
+app.post('/api/scanner/volatile50/start', (req, res) => {
+  startScanVolatile50();
+  res.json({ ok: true });
+});
+
+// GET para cron jobs externos — scanner Lista 50
+app.get('/api/cron/scanVolatile50', (req, res) => {
+  res.json({ ok: true, message: 'Scanner Lista 50 iniciado', time: new Date() });
+  startScanVolatile50();
+});
+
+// Estado atual do scan da Lista 50 (polling)
+app.get('/api/scanner/volatile50', (req, res) => {
+  res.json(getVolatile50State());
+});
+
+// Histórico de scans da Lista 50 — ?sessions=10
+app.get('/api/scanner/volatile50/history', async (req, res) => {
+  try {
+    const sessions = parseInt(req.query.sessions) || 10;
+
+    const { rows: sessionRows } = await pool.query(
+      `SELECT DISTINCT scanned_at FROM scanner_volatile50 ORDER BY scanned_at DESC LIMIT $1`,
+      [sessions]
+    );
+
+    if (!sessionRows.length) return res.json([]);
+
+    const dates = sessionRows.map(r => r.scanned_at);
+    const { rows } = await pool.query(
+      `SELECT * FROM scanner_volatile50 WHERE scanned_at = ANY($1) ORDER BY scanned_at DESC, rank ASC`,
+      [dates]
+    );
+
+    const grouped = {};
+    rows.forEach(r => {
+      const key = r.scanned_at.toISOString();
+      if (!grouped[key]) grouped[key] = { scanned_at: r.scanned_at, results: [] };
+      grouped[key].results.push(r);
+    });
+
+    res.json(Object.values(grouped));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── STATIC FILES (React build) ────────────────────────────────
 
 const buildPath = path.join(__dirname, '../build');
@@ -518,6 +567,15 @@ cron.schedule('25 */2 * * *', async () => {
   console.log('\n🚀 Cron 2h: a correr scanner Pump 24h...');
   await startScanPump(10);
   console.log('🚀 Cron 2h: scanner Pump 24h concluído.');
+});
+
+// A cada 15 min (2min depois de cada fecho de vela): scanner Lista 50 —
+// deteta spike de volume (>=5x a média das 10 velas anteriores) + subida
+// nos 50 símbolos de src/backtests/data/top50-6month-movers.json.
+cron.schedule('2,17,32,47 * * * *', async () => {
+  console.log('\n⚡ Cron 15m: a correr scanner Lista 50 (spike de volume)...');
+  await startScanVolatile50();
+  console.log('⚡ Cron 15m: scanner Lista 50 concluído.');
 });
 
 // A cada 15 min: estratégias de 15m (ex: PumpEma60Band sobre o Pump 24h) —
