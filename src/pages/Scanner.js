@@ -861,7 +861,7 @@ export default function Scanner() {
             key="volatile50-4h"
             apiBase="/api/scanner/volatile50-4h"
             timeframeLabel="4h"
-            updateNote="a cada hora"
+            updateNote="a cada 4h"
           />
         )
         : <ScannerPanel key={tab} period={tab} />}

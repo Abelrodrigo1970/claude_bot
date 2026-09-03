@@ -786,10 +786,12 @@ function createVolatile50Scanner({ timeframe, tableName, cacheTtl, label }) {
 const volatile50Scanner15m = createVolatile50Scanner({
   timeframe: '15m', tableName: 'scanner_volatile50', cacheTtl: 10 * 60 * 1000, label: 'Lista50 15m',
 });
-// 4h: cache mais longa (55min) porque a vela só muda a cada 4h — corre a
-// cada hora via cron, não vale a pena recalcular mais vezes que isso.
+// 4h: cache de ~3h55min (não os 4h exatos, para não ficar "à justa" com o
+// atraso do cron) — a vela só fecha a cada 4h, e o cron (ver server.js)
+// corre alinhado com esses fechos (00h/04h/08h/12h/16h/20h UTC), não de
+// hora a hora.
 const volatile50Scanner4h = createVolatile50Scanner({
-  timeframe: '4h', tableName: 'scanner_volatile50_4h', cacheTtl: 55 * 60 * 1000, label: 'Lista50 4h',
+  timeframe: '4h', tableName: 'scanner_volatile50_4h', cacheTtl: 235 * 60 * 1000, label: 'Lista50 4h',
 });
 
 async function startScanVolatile50() { return volatile50Scanner15m.startScan(); }

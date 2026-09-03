@@ -625,12 +625,12 @@ cron.schedule('2,17,32,47 * * * *', async () => {
   console.log('⚡ Cron 15m: scanner Lista 50 concluído.');
 });
 
-// A cada hora: scanner Lista 50 em 4h (mesma lógica, velas de 4h — a cache
-// de 55min evita recalcular sem uma vela nova ter fechado entretanto).
-cron.schedule('50 * * * *', async () => {
-  console.log('\n⚡ Cron 1h: a correr scanner Lista 50 4h (spike de volume)...');
+// A cada 4h, 5min depois de cada fecho de vela de 4h (00h/04h/08h/12h/16h/
+// 20h UTC — alinhado com os limites de vela da Bybit): scanner Lista 50 4h.
+cron.schedule('5 0,4,8,12,16,20 * * *', async () => {
+  console.log('\n⚡ Cron 4h: a correr scanner Lista 50 4h (spike de volume)...');
   await startScanVolatile50_4h();
-  console.log('⚡ Cron 1h: scanner Lista 50 4h concluído.');
+  console.log('⚡ Cron 4h: scanner Lista 50 4h concluído.');
 });
 
 // A cada 15 min: estratégias de 15m (ex: PumpEma60Band sobre o Pump 24h) —
