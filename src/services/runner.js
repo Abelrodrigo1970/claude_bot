@@ -5,10 +5,12 @@ const {
   getPumpState, startScanPump,
   getEmaTrendTotalState, startScanEmaTrendTotal,
 } = require('./scanner');
-const trendSurfer         = require('../strategies/trendSurfer');
-const ema90TopFade        = require('../strategies/ema90TopFade');
-const stoch50             = require('../strategies/stoch50');
-const stockEma1270Cross   = require('../strategies/stockEma1270Cross');
+const trendSurfer          = require('../strategies/trendSurfer');
+const ema90TopFade         = require('../strategies/ema90TopFade');
+const stoch50              = require('../strategies/stoch50');
+const stockEma1270Cross    = require('../strategies/stockEma1270Cross');
+const volumeSpike3xScaleOut = require('../strategies/volumeSpike3xScaleOut');
+const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
 // stopLossPct quando o lado específico não está definido, para não mudar o
@@ -171,6 +173,31 @@ const STRATEGIES = [
     // (+264.15 USDT, PF 2.13, maxDD -29.22, WR 44.9%, vs. +236.91/PF1.99/
     // maxDD-40.44 sem TP). Diferença entre 18/19/20% é pequena (~1%),
     // qualquer um destes é uma escolha sólida.
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: volumeSpike3xScaleOut.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbols: VOLATILE50_SYMBOLS, // mesmo universo fixo do scanner Lista 50
+    timeframe: '15m',
+    generateSignal: volumeSpike3xScaleOut.generateSignal,
+    positionSize: 60,
+    stopLossPct: 0.04,
+    // Pedida pelo utilizador (03/09): sobre o universo do scanner "Lista 50"
+    // (top50-6month-movers.json), entra long quando o volume da vela de 15m
+    // é >=3x a média das 10 anteriores (e a vela fecha em alta — confirmação
+    // de direção, ver volumeSpike3xScaleOut.js). SL fixo 4%. Dois níveis de
+    // take-profit parcial (ver takeProfitTiers no runner.js, cada fraction
+    // fecha % do que resta nesse momento, não da entrada original): TP1 a
+    // +8% fecha 30%, TP2 a +45% fecha mais 30% (~49% da entrada original
+    // fica aberto depois dos dois). O que sobra sai quando o preço fecha
+    // abaixo da SMA50 de 15m (sinal da própria estratégia).
+    takeProfitTiers: [
+      { pct: 0.08, fraction: 0.30 },
+      { pct: 0.45, fraction: 0.30 },
+    ],
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
@@ -376,6 +403,28 @@ async function runStrategyOnSymbol(strategy, symbol) {
       }
     }
 
+    // Take-profit em vários níveis (opt-in via strategy.takeProfitTiers — array
+    // de { pct, fraction }, ex: [{pct:0.08,fraction:0.30},{pct:0.45,fraction:0.30}]).
+    // Independente do takeProfitPct simples acima (usa-se um ou outro por
+    // estratégia). Cada fraction fecha essa % da quantidade AINDA aberta
+    // nesse momento (não da entrada original) — mesma semântica do
+    // takeProfitCloseFraction simples, só repetida por cada nível. Avança
+    // pos.tpTierIndex a cada nível disparado; o resto fica para a saída por
+    // sinal da própria estratégia (ex: preço abaixo de uma média).
+    if (strategy.takeProfitTiers?.length && currentPos) {
+      const pos = openPositions[key];
+      const tierIdx = pos?.tpTierIndex ?? 0;
+      const tier = strategy.takeProfitTiers[tierIdx];
+      if (pos && tier && pos.entryPrice) {
+        const pnlPct = pos.side === 'long'
+          ? (currentPrice - pos.entryPrice) / pos.entryPrice
+          : (pos.entryPrice - currentPrice) / pos.entryPrice;
+        if (pnlPct >= tier.pct) {
+          await partialTakeProfitTier(strategy, symbol, key, currentPrice, tier);
+        }
+      }
+    }
+
     // Stop-loss "de papel" — a ordem real na Bybit já tem o SL anexado (ver
     // openPosition), mas isso só protege quando a estratégia está ligada. Em
     // modo estudo (enabled=false) essa ordem não existe, por isso replicamos
@@ -550,7 +599,7 @@ async function openPosition(strategy, symbol, key, side, currentPrice, reason, s
   const qty = (strategy.positionSize / currentPrice).toFixed(4);
   const slPct = stopLossPctFor(strategy, side);
   const tradeId = await openTrade(strategy.name, symbol, side, currentPrice, qty, { reason, stopLossPct: slPct });
-  openPositions[key] = { tradeId, side, entryPrice: currentPrice, extremePrice: currentPrice, trailActive: false, qty: parseFloat(qty), tpTaken: false, scanTs, openedAt: Date.now() };
+  openPositions[key] = { tradeId, side, entryPrice: currentPrice, extremePrice: currentPrice, trailActive: false, qty: parseFloat(qty), tpTaken: false, tpTierIndex: 0, scanTs, openedAt: Date.now() };
 
   if (!strategy.enabled) return; // Bybit desligado — fica só na simulação/estudo
 
@@ -588,6 +637,36 @@ async function partialTakeProfit(strategy, symbol, key, currentPrice) {
     await bybit.placeMarketOrder(symbol, closeSide, result.closeQty, { reduceOnly: true });
   } catch (err) {
     console.warn(`[${strategy.name}] Ordem de TP parcial falhou para ${symbol} (BD já atualizada): ${err.message}`);
+  }
+}
+
+// Take-profit em vários níveis (opt-in via strategy.takeProfitTiers) — mesma
+// mecânica da partialTakeProfit acima, mas avança pos.tpTierIndex em vez de
+// um booleano único, para poder disparar vários níveis ao longo da vida da
+// posição (ex: TP1 a +8% fecha 30%, TP2 a +45% fecha mais 30%, o resto sai
+// só pelo sinal de saída da própria estratégia).
+async function partialTakeProfitTier(strategy, symbol, key, currentPrice, tier) {
+  const pos = openPositions[key];
+  if (!pos || !pos.tradeId || !pos.qty) return;
+
+  const result = await partialCloseTrade(pos.tradeId, currentPrice, tier.fraction);
+  if (!result) return;
+
+  pos.qty = result.remainingQty;
+  pos.tpTierIndex = (pos.tpTierIndex ?? 0) + 1;
+
+  const pct = (tier.fraction * 100).toFixed(0);
+  const logLine = `🎯 [${symbol.split('/')[0]}] TP${pos.tpTierIndex} parcial (${pct}% do que restava) a +${(tier.pct * 100).toFixed(0)}% — lucro ${result.pnlPct.toFixed(1)}%`;
+  runState.log.unshift(logLine);
+  console.log(`[${strategy.name}] ${logLine}`);
+
+  if (!strategy.enabled) return; // Bybit desligado — fica só no estudo
+
+  try {
+    const closeSide = pos.side === 'long' ? 'sell' : 'buy';
+    await bybit.placeMarketOrder(symbol, closeSide, result.closeQty, { reduceOnly: true });
+  } catch (err) {
+    console.warn(`[${strategy.name}] Ordem de TP parcial (nível ${pos.tpTierIndex}) falhou para ${symbol} (BD já atualizada): ${err.message}`);
   }
 }
 
@@ -787,15 +866,32 @@ async function loadOpenPositions() {
       const entryPrice = parseFloat(r.entry_price);
       const qty = parseFloat(r.quantity);
       const strategy = STRATEGIES.find(s => s.name === r.strategy_name);
-      // Heurística para restaurar tpTaken após um restart: se a quantidade
-      // guardada é visivelmente menor que a posição cheia esperada, é porque
-      // já houve um take-profit parcial (não há flag persistida para isto).
+      // Heurística para restaurar tpTaken/tpTierIndex após um restart: se a
+      // quantidade guardada é visivelmente menor que a posição cheia
+      // esperada, é porque já houve take-profit(s) parciais (não há flag
+      // persistida para isto). Para takeProfitTiers, estima quantos níveis
+      // já dispararam comparando a qty restante com a fração acumulada
+      // esperada após cada nível (cada fraction fecha % do que restava
+      // nesse momento, não da entrada original — ver partialTakeProfitTier).
       let tpTaken = false;
-      if (strategy?.takeProfitPct && strategy.positionSize && entryPrice > 0) {
+      let tpTierIndex = 0;
+      if (strategy?.positionSize && entryPrice > 0) {
         const expectedFullQty = strategy.positionSize / entryPrice;
-        tpTaken = qty < expectedFullQty * 0.99;
+        if (strategy.takeProfitPct) {
+          tpTaken = qty < expectedFullQty * 0.99;
+        }
+        if (strategy.takeProfitTiers?.length) {
+          let remainingFrac = 1;
+          for (const tier of strategy.takeProfitTiers) {
+            const fracAfterTier = remainingFrac * (1 - tier.fraction);
+            if (qty < expectedFullQty * fracAfterTier * 1.01) {
+              tpTierIndex++;
+              remainingFrac = fracAfterTier;
+            } else break;
+          }
+        }
       }
-      openPositions[key] = { tradeId: r.id, side: r.side, entryPrice, extremePrice: entryPrice, trailActive: false, qty, tpTaken, openedAt: new Date(r.opened_at).getTime() };
+      openPositions[key] = { tradeId: r.id, side: r.side, entryPrice, extremePrice: entryPrice, trailActive: false, qty, tpTaken, tpTierIndex, openedAt: new Date(r.opened_at).getTime() };
     });
     if (rows.length) console.log(`[Runner] ${rows.length} posições abertas carregadas da BD`);
   } catch { /* BD ainda não disponível */ }
