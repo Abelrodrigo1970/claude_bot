@@ -1,5 +1,6 @@
 ﻿const pool = require('../db/pool');
 const bybit = require('./bybit');
+const { EMA } = require('technicalindicators');
 const {
   getState: getScannerState, startScan, getGainersState, startScanGainers,
   getPumpState, startScanPump,
@@ -10,6 +11,7 @@ const ema90TopFade         = require('../strategies/ema90TopFade');
 const stoch50              = require('../strategies/stoch50');
 const stockEma1270Cross    = require('../strategies/stockEma1270Cross');
 const volumeSpike3xScaleOut = require('../strategies/volumeSpike3xScaleOut');
+const ema50BandCrossScaleOut = require('../strategies/ema50BandCrossScaleOut');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
@@ -44,6 +46,30 @@ async function getQqqPositive() {
     console.warn(`[Runner] Falha ao obter regime QQQ: ${err.message}`);
   }
   return qqqRegimeCache.positive;
+}
+
+// Regime BTC — opt-in via strategy.btcTrendFilter (ver
+// Ema50BandCrossScaleOut). Compara o preço de fecho de 4h com a própria
+// EMA50 de 4h do BTC — mesma lógica de tendência que a estratégia aplica a
+// cada símbolo, aplicada ao BTC como filtro de mercado (estudo 03/09: PF
+// 1.26->1.38, maxDD -739->-558 ao bloquear entradas novas quando o BTC
+// está em baixa). Cache de 15min — não vale a pena recalcular a cada símbolo.
+let btcRegimeCache = { bullish: null, fetchedAt: 0 };
+const BTC_REGIME_CACHE_TTL = 15 * 60 * 1000;
+
+async function getBtcBullish() {
+  if (Date.now() - btcRegimeCache.fetchedAt < BTC_REGIME_CACHE_TTL) return btcRegimeCache.bullish;
+  try {
+    const candles = await bybit.getCandles('BTC/USDT:USDT', '4h', 60);
+    const closes = candles.map(c => c.close);
+    const emaArr = EMA.calculate({ period: 50, values: closes });
+    const ema50  = emaArr[emaArr.length - 1];
+    const price  = closes[closes.length - 1];
+    if (ema50 != null) btcRegimeCache = { bullish: price > ema50, fetchedAt: Date.now() };
+  } catch (err) {
+    console.warn(`[Runner] Falha ao obter regime BTC: ${err.message}`);
+  }
+  return btcRegimeCache.bullish;
 }
 
 // Registry de estratégias ativas
@@ -197,6 +223,43 @@ const STRATEGIES = [
     takeProfitTiers: [
       { pct: 0.08, fraction: 0.30 },
       { pct: 0.45, fraction: 0.30 },
+    ],
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: ema50BandCrossScaleOut.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    scannerPeriod: 90, // universo do Scanner EMA90 (mesmo do TrendSurfer/EMA90TopFade)
+    timeframe: '4h',
+    generateSignal: ema50BandCrossScaleOut.generateSignal,
+    positionSize: 60,
+    stopLossPct: 0.10,
+    btcTrendFilter: true, // ver getBtcBullish acima — só entra se o BTC também está acima da própria EMA50
+    // Pedida pelo utilizador (03/09), sobre o universo do scanner EMA90, em
+    // 4h. Entra long quando o preço está a menos de 3% acima da EMA50, OU
+    // acabou de cruzar a EMA50 para cima, E a vela de entrada não teve
+    // >20% de movimento, E o BTC está também em tendência de alta (ver
+    // ema50BandCrossScaleOut.js). SL fixo 10%. Dois níveis de take-profit
+    // parcial (runner.js takeProfitTiers): TP1 a +28% fecha 30%, TP2 a
+    // +48% fecha mais 30% (~49% da entrada original fica aberto depois dos
+    // dois). O que sobra sai quando o preço cai 2% abaixo da EMA50
+    // (tendência invalidada) OU RSI(14) > 87 (exaustão).
+    //
+    // Percurso do estudo (90 dias, universo EMA90 atual, ver
+    // src/backtests/backtest-ema50BandCrossScaleOut*.js):
+    //   v1 (saída <EMA90):                          PF 1.21, PnL +604.92, maxDD -636.47
+    //   v2 (saída <2% EMA50):                        PF 1.27, PnL +670.54
+    //   v2 + filtro vela entrada <=20%:               PF 1.31, PnL +719.50
+    //   v2 + filtro BTC>EMA50 (esta versão):          PF 1.38, PnL +619.58, maxDD -558.46
+    //     (795->583 trades — menos trades, mais lucro E menos drawdown)
+    // Testámos também um limite de posições concorrentes (reduz drawdown
+    // mas corta lucro na mesma proporção — pior troca que o filtro BTC) —
+    // não incluído aqui, sem infraestrutura de limite por estratégia ainda.
+    takeProfitTiers: [
+      { pct: 0.28, fraction: 0.30 },
+      { pct: 0.48, fraction: 0.30 },
     ],
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
@@ -525,8 +588,9 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const newScanSession = !!(posForSession && posForSession.scanTs != null && scannedAt != null && scannedAt !== posForSession.scanTs);
 
     const qqqPositive = strategy.qqqShortFilter ? await getQqqPositive() : null;
+    const btcBullish  = strategy.btcTrendFilter ? await getBtcBullish() : null;
 
-    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, { rank, scannedAt, newScanSession, qqqPositive });
+    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, { rank, scannedAt, newScanSession, qqqPositive, btcBullish });
 
     const isAction = signal !== 'hold' && signal !== 'none';
     const icon = isAction ? '🔔' : '·';
