@@ -128,18 +128,28 @@ async function migrate() {
       );
 
       CREATE TABLE IF NOT EXISTS scanner_volatile50 (
-        id             SERIAL PRIMARY KEY,
-        rank           INT            NOT NULL,
-        symbol         VARCHAR(50)    NOT NULL,
-        price          DECIMAL(20,8)  NOT NULL,
-        change_pct     DECIMAL(10,4)  NOT NULL,
-        volume         DECIMAL(20,8),
-        avg_volume_10  DECIMAL(20,8),
-        volume_ratio   DECIMAL(10,3),
-        is_spike       BOOLEAN        NOT NULL DEFAULT false,
-        candle_time    TIMESTAMP,
-        scanned_at     TIMESTAMP      NOT NULL DEFAULT NOW()
+        id                   SERIAL PRIMARY KEY,
+        rank                 INT            NOT NULL,
+        symbol               VARCHAR(50)    NOT NULL,
+        price                DECIMAL(20,8)  NOT NULL,
+        previous_price       DECIMAL(20,8),
+        prev_scan_change_pct DECIMAL(10,4),
+        change_pct           DECIMAL(10,4)  NOT NULL,
+        volume               DECIMAL(20,8),
+        avg_volume_10        DECIMAL(20,8),
+        volume_ratio         DECIMAL(10,3),
+        sma50                DECIMAL(20,8),
+        is_spike             BOOLEAN        NOT NULL DEFAULT false,
+        candle_time          TIMESTAMP,
+        scanned_at           TIMESTAMP      NOT NULL DEFAULT NOW()
       );
+
+      -- Colunas adicionadas em 03/09 (preço/variação vs. sessão de scan
+      -- anterior + filtro de média 50) — ALTER para bases já existentes,
+      -- a CREATE TABLE acima já as inclui em instalações novas.
+      ALTER TABLE scanner_volatile50 ADD COLUMN IF NOT EXISTS previous_price       DECIMAL(20,8);
+      ALTER TABLE scanner_volatile50 ADD COLUMN IF NOT EXISTS prev_scan_change_pct DECIMAL(10,4);
+      ALTER TABLE scanner_volatile50 ADD COLUMN IF NOT EXISTS sma50                DECIMAL(20,8);
 
       CREATE TABLE IF NOT EXISTS strategy_settings (
         strategy_name VARCHAR(100) PRIMARY KEY,

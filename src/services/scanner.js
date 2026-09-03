@@ -649,8 +649,18 @@ function getEmaTrendTotalState() {
 //
 // Cache mais curta que os outros scanners (10min, não 2h) porque este corre
 // a cada 15min via cron — precisa de refrescar a cada candle nova.
+//
+// Filtro de apresentação (03/09, pedido do utilizador): só entram na lista
+// os símbolos com preço acima da SMA(50) das velas de 15m E volume da vela
+// atual > 1x a média das 10 velas anteriores — o "spike" (5x) continua a
+// ser só um destaque (isSpike) dentro deste subconjunto já filtrado, não o
+// critério de entrada na lista. Cada resultado traz também o preço da
+// sessão de scan anterior (previousPrice), para ver a variação entre scans
+// consecutivos de 15min, não só dentro da própria vela.
 const VOLATILE50_SYMBOLS = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 const VOLATILE50_SPIKE_RATIO = 5;
+const VOLATILE50_MA_PERIOD = 50;
+const VOLATILE50_CANDLES_NEEDED = VOLATILE50_MA_PERIOD + 6; // 50 p/ SMA + 10 p/ média de volume (sobrepõe-se) + folga + vela em formação
 const VOLATILE50_CACHE_TTL = 10 * 60 * 1000;
 
 let volatile50State = { status: 'idle', progress: 0, total: 0, results: [], scannedAt: null, error: null };
@@ -658,6 +668,10 @@ let volatile50State = { status: 'idle', progress: 0, total: 0, results: [], scan
 async function startScanVolatile50() {
   if (volatile50State.status === 'scanning') return;
   if (volatile50State.status === 'done' && volatile50State.scannedAt && Date.now() - volatile50State.scannedAt < VOLATILE50_CACHE_TTL) return;
+
+  // Preços da sessão de scan anterior (antes de sobrescrever results) —
+  // usados para a coluna "preço anterior" / variação entre scans.
+  const previousBySymbol = new Map(volatile50State.results.map(r => [r.symbol, r.price]));
 
   volatile50State = { ...volatile50State, status: 'scanning', progress: 0, total: VOLATILE50_SYMBOLS.length, results: [], error: null };
 
@@ -669,13 +683,15 @@ async function startScanVolatile50() {
       const symbol = VOLATILE50_SYMBOLS[i];
 
       try {
-        // 12 velas: as últimas 10 fechadas antes da atual + a vela fechada
-        // atual (índice -2) + a vela em formação (índice -1, descartada).
-        const candles = await bybit.getCandles(symbol, '15m', 12);
-        if (candles.length < 12) continue;
+        // VOLATILE50_CANDLES_NEEDED velas: as 50 fechadas mais recentes
+        // (p/ SMA50) + folga + a vela em formação (última, descartada).
+        const candles = await bybit.getCandles(symbol, '15m', VOLATILE50_CANDLES_NEEDED);
+        const closed = candles.slice(0, -1); // remove a vela ainda em formação
+        if (closed.length < VOLATILE50_MA_PERIOD) continue;
 
-        const current = candles[candles.length - 2];
-        const prior   = candles.slice(candles.length - 12, candles.length - 2);
+        const current = closed[closed.length - 1];
+        const prior   = closed.slice(closed.length - 11, closed.length - 1);
+        const last50  = closed.slice(closed.length - VOLATILE50_MA_PERIOD);
         if (!current || prior.length < 10) continue;
 
         const avgVolume10 = prior.reduce((a, c) => a + c.volume, 0) / prior.length;
@@ -683,13 +699,27 @@ async function startScanVolatile50() {
         const changePct   = current.open > 0 ? ((current.close - current.open) / current.open) * 100 : 0;
         const isSpike     = volumeRatio >= VOLATILE50_SPIKE_RATIO && current.close > current.open;
 
+        const sma50     = last50.reduce((a, c) => a + c.close, 0) / last50.length;
+        const aboveMA50 = current.close > sma50;
+
+        // Só entram na lista os símbolos acima da SMA50 e com volume >1x a
+        // média das 10 velas anteriores (pedido do utilizador, 03/09) — o
+        // spike de 5x continua a ser só um destaque dentro deste subconjunto.
+        if (!aboveMA50 || volumeRatio <= 1) continue;
+
+        const previousPrice     = previousBySymbol.get(symbol) ?? null;
+        const prevScanChangePct = previousPrice ? ((current.close - previousPrice) / previousPrice) * 100 : null;
+
         results.push({
           symbol,
           price: current.close,
+          previousPrice,
+          prevScanChangePct,
           changePct,
           volume: current.volume,
           avgVolume10,
           volumeRatio,
+          sma50,
           isSpike,
           candleTime: current.time,
         });
@@ -722,9 +752,9 @@ async function startScanVolatile50() {
         for (let i = 0; i < results.length; i++) {
           const r = results[i];
           await client.query(
-            `INSERT INTO scanner_volatile50 (rank, symbol, price, change_pct, volume, avg_volume_10, volume_ratio, is_spike, candle_time, scanned_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-            [i + 1, r.symbol, r.price, r.changePct, r.volume, r.avgVolume10, r.volumeRatio, r.isSpike, r.candleTime, scannedAt]
+            `INSERT INTO scanner_volatile50 (rank, symbol, price, previous_price, prev_scan_change_pct, change_pct, volume, avg_volume_10, volume_ratio, sma50, is_spike, candle_time, scanned_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+            [i + 1, r.symbol, r.price, r.previousPrice, r.prevScanChangePct, r.changePct, r.volume, r.avgVolume10, r.volumeRatio, r.sma50, r.isSpike, r.candleTime, scannedAt]
           );
         }
         await client.query('COMMIT');

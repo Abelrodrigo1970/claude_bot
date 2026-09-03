@@ -603,6 +603,7 @@ function Volatile50ResultsTable({ results }) {
               <th>#</th>
               <th>Par</th>
               <th>Preço</th>
+              <th>Preço anterior</th>
               <th>Vela 15m</th>
               <th>Volume (vela)</th>
               <th>Média 10 velas</th>
@@ -611,32 +612,48 @@ function Volatile50ResultsTable({ results }) {
             </tr>
           </thead>
           <tbody>
-            {results.map((r, i) => (
-              <tr key={r.symbol} className={(r.isSpike ?? r.is_spike) ? 'row-spike' : ''}>
-                <td className="muted">{i + 1}</td>
-                <td>
-                  <a
-                    className="symbol-link"
-                    href={`https://www.tradingview.com/chart/?symbol=BYBIT:${r.symbol.split('/')[0]}USDT.P`}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Ver no TradingView"
-                  >
-                    <span className="symbol-name">{r.symbol.split('/')[0]}</span>
-                    <span className="symbol-suffix">/USDT</span>
-                    <span className="tv-icon">↗</span>
-                  </a>
-                </td>
-                <td className="mono">{fmt(r.price, 6)}</td>
-                <td className={`mono ${(r.changePct ?? r.change_pct) >= 0 ? 'green' : 'red'}`}>
-                  {(r.changePct ?? r.change_pct) >= 0 ? '+' : ''}{fmt(r.changePct ?? r.change_pct)}%
-                </td>
-                <td className="mono muted">{fmtVol(r.volume)}</td>
-                <td className="mono muted">{fmtVol(r.avgVolume10 ?? r.avg_volume_10)}</td>
-                <td className="mono">{fmt(r.volumeRatio ?? r.volume_ratio, 1)}x</td>
-                <td>{(r.isSpike ?? r.is_spike) ? <span className="spike-badge">🔥 SPIKE</span> : <span className="muted">—</span>}</td>
-              </tr>
-            ))}
+            {results.map((r, i) => {
+              const prevPrice = r.previousPrice ?? r.previous_price;
+              const prevChangePct = r.prevScanChangePct ?? r.prev_scan_change_pct;
+              return (
+                <tr key={r.symbol} className={(r.isSpike ?? r.is_spike) ? 'row-spike' : ''}>
+                  <td className="muted">{i + 1}</td>
+                  <td>
+                    <a
+                      className="symbol-link"
+                      href={`https://www.tradingview.com/chart/?symbol=BYBIT:${r.symbol.split('/')[0]}USDT.P`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Ver no TradingView"
+                    >
+                      <span className="symbol-name">{r.symbol.split('/')[0]}</span>
+                      <span className="symbol-suffix">/USDT</span>
+                      <span className="tv-icon">↗</span>
+                    </a>
+                  </td>
+                  <td className="mono">{fmt(r.price, 6)}</td>
+                  <td className="mono muted">
+                    {prevPrice != null ? (
+                      <>
+                        {fmt(prevPrice, 6)}
+                        {prevChangePct != null && (
+                          <span className={prevChangePct >= 0 ? 'green' : 'red'} style={{ marginLeft: 6 }}>
+                            ({prevChangePct >= 0 ? '+' : ''}{fmt(prevChangePct)}%)
+                          </span>
+                        )}
+                      </>
+                    ) : '—'}
+                  </td>
+                  <td className={`mono ${(r.changePct ?? r.change_pct) >= 0 ? 'green' : 'red'}`}>
+                    {(r.changePct ?? r.change_pct) >= 0 ? '+' : ''}{fmt(r.changePct ?? r.change_pct)}%
+                  </td>
+                  <td className="mono muted">{fmtVol(r.volume)}</td>
+                  <td className="mono muted">{fmtVol(r.avgVolume10 ?? r.avg_volume_10)}</td>
+                  <td className="mono">{fmt(r.volumeRatio ?? r.volume_ratio, 1)}x</td>
+                  <td>{(r.isSpike ?? r.is_spike) ? <span className="spike-badge">🔥 SPIKE</span> : <span className="muted">—</span>}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -728,7 +745,7 @@ function Volatile50Panel() {
       <div className="page-header">
         <div>
           <div className="page-sub">
-            Os 50 símbolos com maior subida nos últimos 6 meses (já em queda &gt;40% do pico) · vela de 15m com volume ≥5x a média das 10 velas anteriores + fecho acima da abertura · atualiza a cada 15min
+            Os 50 símbolos com maior subida nos últimos 6 meses (já em queda &gt;40% do pico) · mostra só os que estão acima da SMA(50) de 15m e com volume da vela &gt;1x a média das 10 anteriores · 🔥 spike = volume ≥5x + fecho acima da abertura · atualiza a cada 15min
             {state.scannedAt && (
               <span className="scan-time"> · Scan: {new Date(state.scannedAt).toLocaleTimeString('pt-PT')}</span>
             )}
