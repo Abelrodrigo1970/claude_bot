@@ -6,13 +6,9 @@ const {
   getEmaTrendTotalState, startScanEmaTrendTotal,
 } = require('./scanner');
 const trendSurfer         = require('../strategies/trendSurfer');
-const stockSMA            = require('../strategies/stockSMA');
 const ema90TopFade        = require('../strategies/ema90TopFade');
 const stoch50             = require('../strategies/stoch50');
 const stockEma1270Cross   = require('../strategies/stockEma1270Cross');
-const pumpEmaSpread       = require('../strategies/pumpEmaSpread');
-const pumpTrendFlip       = require('../strategies/pumpTrendFlip');
-const pumpEma60Band       = require('../strategies/pumpEma60Band');
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
 // stopLossPct quando o lado específico não está definido, para não mudar o
@@ -60,18 +56,6 @@ const STRATEGIES = [
     timeframe: '1h',
     generateSignal: trendSurfer.generateSignal,
     positionSize: 60,
-    enabled: true,
-  },
-  {
-    name: stockSMA.STRATEGY_NAME,
-    market: 'stock',
-    symbol: null,
-    symbolSource: 'stocks',
-    symbolExclude: ['COIN', 'MSTR', 'HOOD'],
-    timeframe: '2h',
-    generateSignal: stockSMA.generateSignal,
-    positionSize: 60,
-    stopLossPct: 0.05,
     enabled: true,
   },
   {
@@ -190,80 +174,19 @@ const STRATEGIES = [
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
-  {
-    name: pumpEmaSpread.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    symbolSource: 'pump24h',
-    timeframe: '5m',
-    generateSignal: pumpEmaSpread.generateSignal,
-    positionSize: 60,
-    trailingStopPct: 0.10,
-    // Universo: scanner Pump 24h (todos os pares cripto com variação 24h
-    // >= 10%, sem limite de topN — ver scanner.js/startScanPump). LONG
-    // quando EMA12>EMA21 e SHORT quando EMA12<EMA21, mas só entra se o
-    // spread entre as duas EMAs estiver na banda 0.6%-1.5% (nem acabou de
-    // cruzar sem separação, nem já esticado demais). Fecha quando a
-    // direção inverte com >0.6% de confirmação, OU quando o trailing stop
-    // de 10% (a partir do lucro) dispara — ver
-    // src/backtests/backtest-pumpEmaSpread-live.js. Estudo comparativo
-    // (26/08, universo top10-na-entrada): 3% desde a entrada deu -39,77
-    // USDT em 158 trades; 10% a partir do lucro deu -16,64 em 51 trades —
-    // ainda negativo, mas visivelmente melhor. Vale continuar a afinar
-    // (ex: margem mínima antes de armar o trail).
-    //
-    // Corre a cada hora via runAll (não tem cron de 5m dedicado ainda) —
-    // os sinais de papel ficam mais espaçados do que os 5m reais até se
-    // adicionar um cron próprio, se a estratégia for para a frente.
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
-    enabled: false,
-  },
-  {
-    name: pumpTrendFlip.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    symbolSource: 'pump24h',
-    timeframe: '1h',
-    generateSignal: pumpTrendFlip.generateSignal,
-    positionSize: 60,
-    trailingStopPct: 0.10,
-    // "Surfa" a tendência do EMA21/50 no 1h (mais lento que a PumpEmaSpread
-    // de propósito — 5m com EMA12/21 cruza ~350x/mês, ruído demais para
-    // isto). Está sempre no mercado: quando a tendência inverte com
-    // confirmação (>1%), vira long↔short diretamente (flip_to_long/
-    // flip_to_short), sem passar por flat. Sem teto de spread — quer ficar
-    // agarrada a tendências esticadas, ao contrário da PumpEmaSpread. SL
-    // é só o trailing stop de 10% a partir do lucro (ver runner.js). Ver
-    // src/backtests/backtest-pumpTrendFlip-live.js.
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
-    enabled: false,
-  },
-  {
-    name: pumpEma60Band.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    symbolSource: 'pump24h',
-    timeframe: '15m',
-    generateSignal: pumpEma60Band.generateSignal,
-    positionSize: 60,
-    stopLossPct: 0.10,
-    // Regra pedida pelo utilizador (26/08), corrigida (EMA60 — confirmado
-    // contra um gráfico real, "Pivot Boss 4 EMA 12 21 60 200", linha azul —
-    // e timeframe 15m) e depois simplificada com base no estudo. LONG-ONLY:
-    // entra quando o preço está 0-3% acima da EMA60 (banda de entrada). SL
-    // fixo de 10% é a ÚNICA saída — sem sinal de saída próprio (a versão
-    // com saída <-2%/short testada dava pior resultado: só 1 em 28 saídas
-    // por sinal deu lucro). Volta a entrar sempre que a banda 0-3%
-    // reaparecer depois de um SL. Sem TP parcial — testado a vários níveis,
-    // piorou sempre (corta os poucos trades grandes que carregam o
-    // resultado). Estudo comparativo (15m, ~19h de dados reais do
-    // scanner): long+short com flip 84 trades/+197,56 → long-only com saída
-    // <-2% 54 trades/+214,60 → esta versão (só SL) 46 trades/+243,64. Ver
-    // src/backtests/backtest-pumpEma60Band-live.js.
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
-    enabled: false,
-  },
 ];
+// PumpEmaSpread, PumpTrendFlip, PumpEma60Band e StockSMA removidas em 03/09
+// — as 4 estavam com PnL negativo desde 01/06 nos dados reais (ver estudo
+// src/backtests/study-strategies-since.js 2026-06-01): PumpEma60Band
+// -603.26 USDT (0% win rate), PumpTrendFlip -213.11, PumpEmaSpread -130.26,
+// StockSMA -75.62. Os módulos (src/strategies/pumpEmaSpread.js,
+// pumpTrendFlip.js, pumpEma60Band.js, stockSMA.js) continuam no repo, só
+// saíram do registry — podem voltar se um estudo futuro mostrar edge.
+//
+// StockSMA estava enabled:true — tinha 8 posições reais abertas na Bybit no
+// momento da remoção (SPCX, ASTS, HPE short, IWM, ORCL, USAR, QCOM, RKLB).
+// Ficaram abertas sem gestão automática (pedido explícito do utilizador) —
+// precisam de fecho manual quando for oportuno.
 
 // Sinais em memória (fallback quando BD não está configurada)
 const memorySignals = [];
