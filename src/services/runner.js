@@ -193,7 +193,7 @@ const STRATEGIES = [
     // fecha % do que resta nesse momento, não da entrada original): TP1 a
     // +8% fecha 30%, TP2 a +45% fecha mais 30% (~49% da entrada original
     // fica aberto depois dos dois). O que sobra sai quando o preço fecha
-    // abaixo da SMA50 de 15m (sinal da própria estratégia).
+    // abaixo da EMA50 de 15m (sinal da própria estratégia).
     takeProfitTiers: [
       { pct: 0.08, fraction: 0.30 },
       { pct: 0.45, fraction: 0.30 },

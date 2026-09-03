@@ -10,10 +10,10 @@
 // 4%, TP1 8%/30%, TP2 45%/30%) fica em src/services/runner.js
 // (stopLossPct + takeProfitTiers) — este módulo só decide entrada e a saída
 // final do que sobrar depois dos dois TPs: quando o preço fecha abaixo da
-// SMA(50) de 15m (a mesma média usada pelo filtro do scanner Lista 50).
+// EMA(50) de 15m (corrigido em 03/09 — era SMA por engano).
 //
 // Nunca corrida nem testada ao vivo — arranca só em estudo (enabled:false).
-const { SMA } = require('technicalindicators');
+const { EMA } = require('technicalindicators');
 
 const STRATEGY_NAME = 'VolumeSpike3xScaleOut';
 
@@ -32,14 +32,14 @@ function calculateIndicators(candles) {
   const avgVolume10   = priorVolumes.length ? priorVolumes.reduce((a, v) => a + v, 0) / priorVolumes.length : 0;
   const volumeRatio    = avgVolume10 > 0 ? volumes[volumes.length - 1] / avgVolume10 : 0;
 
-  const smaArr = SMA.calculate({ period: MA_PERIOD, values: closes });
-  const sma50  = smaArr[smaArr.length - 1];
-  const belowMa50 = sma50 != null && price < sma50;
+  const emaArr = EMA.calculate({ period: MA_PERIOD, values: closes });
+  const ema50  = emaArr[emaArr.length - 1];
+  const belowMa50 = ema50 != null && price < ema50;
 
   const bullishCandle = price > open;
   const validEntry = volumeRatio >= VOLUME_RATIO_MIN && bullishCandle;
 
-  return { price, open, avgVolume10, volumeRatio, sma50, belowMa50, bullishCandle, validEntry };
+  return { price, open, avgVolume10, volumeRatio, ema50, belowMa50, bullishCandle, validEntry };
 }
 
 function generateSignal(candles, currentPosition = null) {
@@ -66,18 +66,18 @@ function generateSignal(candles, currentPosition = null) {
   }
 
   // Saída do que sobrar depois dos TPs parciais (ver runner.js
-  // takeProfitTiers): fecha quando o preço cai abaixo da SMA50.
+  // takeProfitTiers): fecha quando o preço cai abaixo da EMA50.
   if (currentPosition === 'long' && ind.belowMa50) {
     return {
       signal: 'close_long',
-      reason: `Preço (${ind.price.toFixed(6)}) caiu abaixo da SMA${MA_PERIOD}(${ind.sma50.toFixed(6)}) — fecha o resto da posição`,
+      reason: `Preço (${ind.price.toFixed(6)}) caiu abaixo da EMA${MA_PERIOD}(${ind.ema50.toFixed(6)}) — fecha o resto da posição`,
       indicators: ind,
     };
   }
 
   return {
     signal: 'hold',
-    reason: `Mantém long — preço ${ind.price.toFixed(6)} ${ind.sma50 != null ? (ind.price >= ind.sma50 ? '>=' : '<') : '?'} SMA${MA_PERIOD}=${ind.sma50?.toFixed(6)}`,
+    reason: `Mantém long — preço ${ind.price.toFixed(6)} ${ind.ema50 != null ? (ind.price >= ind.ema50 ? '>=' : '<') : '?'} EMA${MA_PERIOD}=${ind.ema50?.toFixed(6)}`,
     indicators: ind,
   };
 }
