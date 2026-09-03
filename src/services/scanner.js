@@ -661,121 +661,141 @@ const VOLATILE50_SYMBOLS = require('../backtests/data/top50-6month-movers.json')
 const VOLATILE50_SPIKE_RATIO = 5;
 const VOLATILE50_MA_PERIOD = 50;
 const VOLATILE50_CANDLES_NEEDED = VOLATILE50_MA_PERIOD + 6; // 50 p/ SMA + 10 p/ média de volume (sobrepõe-se) + folga + vela em formação
-const VOLATILE50_CACHE_TTL = 10 * 60 * 1000;
 
-let volatile50State = { status: 'idle', progress: 0, total: 0, results: [], scannedAt: null, error: null };
+// Factory — mesma lógica do scanner Lista 50, parametrizada por timeframe
+// (03/09, pedido do utilizador: versão em 4h além da original de 15m).
+// tableName tem de bater com uma tabela já criada em db/migrate.js, com o
+// mesmo esquema de scanner_volatile50.
+function createVolatile50Scanner({ timeframe, tableName, cacheTtl, label }) {
+  let state = { status: 'idle', progress: 0, total: 0, results: [], scannedAt: null, error: null };
 
-async function startScanVolatile50() {
-  if (volatile50State.status === 'scanning') return;
-  if (volatile50State.status === 'done' && volatile50State.scannedAt && Date.now() - volatile50State.scannedAt < VOLATILE50_CACHE_TTL) return;
+  async function startScan() {
+    if (state.status === 'scanning') return;
+    if (state.status === 'done' && state.scannedAt && Date.now() - state.scannedAt < cacheTtl) return;
 
-  // Preços da sessão de scan anterior (antes de sobrescrever results) —
-  // usados para a coluna "preço anterior" / variação entre scans.
-  const previousBySymbol = new Map(volatile50State.results.map(r => [r.symbol, r.price]));
+    // Preços da sessão de scan anterior (antes de sobrescrever results) —
+    // usados para a coluna "preço anterior" / variação entre scans.
+    const previousBySymbol = new Map(state.results.map(r => [r.symbol, r.price]));
 
-  volatile50State = { ...volatile50State, status: 'scanning', progress: 0, total: VOLATILE50_SYMBOLS.length, results: [], error: null };
-
-  try {
-    const results = [];
-
-    for (let i = 0; i < VOLATILE50_SYMBOLS.length; i++) {
-      volatile50State.progress = i + 1;
-      const symbol = VOLATILE50_SYMBOLS[i];
-
-      try {
-        // VOLATILE50_CANDLES_NEEDED velas: as 50 fechadas mais recentes
-        // (p/ SMA50) + folga + a vela em formação (última, descartada).
-        const candles = await bybit.getCandles(symbol, '15m', VOLATILE50_CANDLES_NEEDED);
-        const closed = candles.slice(0, -1); // remove a vela ainda em formação
-        if (closed.length < VOLATILE50_MA_PERIOD) continue;
-
-        const current = closed[closed.length - 1];
-        const prior   = closed.slice(closed.length - 11, closed.length - 1);
-        const last50  = closed.slice(closed.length - VOLATILE50_MA_PERIOD);
-        if (!current || prior.length < 10) continue;
-
-        const avgVolume10 = prior.reduce((a, c) => a + c.volume, 0) / prior.length;
-        const volumeRatio = avgVolume10 > 0 ? current.volume / avgVolume10 : 0;
-        const changePct   = current.open > 0 ? ((current.close - current.open) / current.open) * 100 : 0;
-        const isSpike     = volumeRatio >= VOLATILE50_SPIKE_RATIO && current.close > current.open;
-
-        const sma50     = last50.reduce((a, c) => a + c.close, 0) / last50.length;
-        const aboveMA50 = current.close > sma50;
-
-        // Só entram na lista os símbolos acima da SMA50 e com volume >1x a
-        // média das 10 velas anteriores (pedido do utilizador, 03/09) — o
-        // spike de 5x continua a ser só um destaque dentro deste subconjunto.
-        if (!aboveMA50 || volumeRatio <= 1) continue;
-
-        const previousPrice     = previousBySymbol.get(symbol) ?? null;
-        const prevScanChangePct = previousPrice ? ((current.close - previousPrice) / previousPrice) * 100 : null;
-
-        results.push({
-          symbol,
-          price: current.close,
-          previousPrice,
-          prevScanChangePct,
-          changePct,
-          volume: current.volume,
-          avgVolume10,
-          volumeRatio,
-          sma50,
-          isSpike,
-          candleTime: current.time,
-        });
-      } catch {
-        // símbolo sem dados suficientes no momento, ignora
-      }
-    }
-
-    results.sort((a, b) => b.volumeRatio - a.volumeRatio);
-
-    const scannedAt = new Date();
-    volatile50State.results   = results;
-    volatile50State.scannedAt = scannedAt.getTime();
-    volatile50State.status    = 'done';
-    const spikeResults = results.filter(r => r.isSpike);
-    console.log(`[Scanner Lista50] ${spikeResults.length} spike(s) de volume em ${results.length}/${VOLATILE50_SYMBOLS.length} símbolos`);
-
-    if (spikeResults.length) {
-      const lines = spikeResults.map(r =>
-        `<b>${r.symbol.split('/')[0]}</b> +${r.changePct.toFixed(1)}% na vela · volume ${r.volumeRatio.toFixed(1)}x a média · preço ${r.price}`
-      );
-      const msg = `🔥 <b>Spike na Lista 50</b> (vela de 15m)\n\n${lines.join('\n')}`;
-      telegram.sendMessage(msg); // não bloqueia o scan — falha de envio é só um warning na consola
-    }
+    state = { ...state, status: 'scanning', progress: 0, total: VOLATILE50_SYMBOLS.length, results: [], error: null };
 
     try {
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-        for (let i = 0; i < results.length; i++) {
-          const r = results[i];
-          await client.query(
-            `INSERT INTO scanner_volatile50 (rank, symbol, price, previous_price, prev_scan_change_pct, change_pct, volume, avg_volume_10, volume_ratio, sma50, is_spike, candle_time, scanned_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-            [i + 1, r.symbol, r.price, r.previousPrice, r.prevScanChangePct, r.changePct, r.volume, r.avgVolume10, r.volumeRatio, r.sma50, r.isSpike, r.candleTime, scannedAt]
-          );
+      const results = [];
+
+      for (let i = 0; i < VOLATILE50_SYMBOLS.length; i++) {
+        state.progress = i + 1;
+        const symbol = VOLATILE50_SYMBOLS[i];
+
+        try {
+          // VOLATILE50_CANDLES_NEEDED velas: as 50 fechadas mais recentes
+          // (p/ SMA50) + folga + a vela em formação (última, descartada).
+          const candles = await bybit.getCandles(symbol, timeframe, VOLATILE50_CANDLES_NEEDED);
+          const closed = candles.slice(0, -1); // remove a vela ainda em formação
+          if (closed.length < VOLATILE50_MA_PERIOD) continue;
+
+          const current = closed[closed.length - 1];
+          const prior   = closed.slice(closed.length - 11, closed.length - 1);
+          const last50  = closed.slice(closed.length - VOLATILE50_MA_PERIOD);
+          if (!current || prior.length < 10) continue;
+
+          const avgVolume10 = prior.reduce((a, c) => a + c.volume, 0) / prior.length;
+          const volumeRatio = avgVolume10 > 0 ? current.volume / avgVolume10 : 0;
+          const changePct   = current.open > 0 ? ((current.close - current.open) / current.open) * 100 : 0;
+          const isSpike     = volumeRatio >= VOLATILE50_SPIKE_RATIO && current.close > current.open;
+
+          const sma50     = last50.reduce((a, c) => a + c.close, 0) / last50.length;
+          const aboveMA50 = current.close > sma50;
+
+          // Só entram na lista os símbolos acima da SMA50 e com volume >1x a
+          // média das 10 velas anteriores (pedido do utilizador, 03/09) — o
+          // spike de 5x continua a ser só um destaque dentro deste subconjunto.
+          if (!aboveMA50 || volumeRatio <= 1) continue;
+
+          const previousPrice     = previousBySymbol.get(symbol) ?? null;
+          const prevScanChangePct = previousPrice ? ((current.close - previousPrice) / previousPrice) * 100 : null;
+
+          results.push({
+            symbol,
+            price: current.close,
+            previousPrice,
+            prevScanChangePct,
+            changePct,
+            volume: current.volume,
+            avgVolume10,
+            volumeRatio,
+            sma50,
+            isSpike,
+            candleTime: current.time,
+          });
+        } catch {
+          // símbolo sem dados suficientes no momento, ignora
         }
-        await client.query('COMMIT');
-      } catch (dbErr) {
-        await client.query('ROLLBACK');
-        console.warn('[Scanner Lista50] Erro ao guardar no BD:', dbErr.message);
-      } finally {
-        client.release();
       }
-    } catch {
-      // BD não configurada — continua sem guardar
+
+      results.sort((a, b) => b.volumeRatio - a.volumeRatio);
+
+      const scannedAt = new Date();
+      state.results   = results;
+      state.scannedAt = scannedAt.getTime();
+      state.status    = 'done';
+      const spikeResults = results.filter(r => r.isSpike);
+      console.log(`[Scanner ${label}] ${spikeResults.length} spike(s) de volume em ${results.length}/${VOLATILE50_SYMBOLS.length} símbolos`);
+
+      if (spikeResults.length) {
+        const lines = spikeResults.map(r =>
+          `<b>${r.symbol.split('/')[0]}</b> +${r.changePct.toFixed(1)}% na vela · volume ${r.volumeRatio.toFixed(1)}x a média · preço ${r.price}`
+        );
+        const msg = `🔥 <b>Spike na ${label}</b> (vela de ${timeframe})\n\n${lines.join('\n')}`;
+        telegram.sendMessage(msg); // não bloqueia o scan — falha de envio é só um warning na consola
+      }
+
+      try {
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          for (let i = 0; i < results.length; i++) {
+            const r = results[i];
+            await client.query(
+              `INSERT INTO ${tableName} (rank, symbol, price, previous_price, prev_scan_change_pct, change_pct, volume, avg_volume_10, volume_ratio, sma50, is_spike, candle_time, scanned_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+              [i + 1, r.symbol, r.price, r.previousPrice, r.prevScanChangePct, r.changePct, r.volume, r.avgVolume10, r.volumeRatio, r.sma50, r.isSpike, r.candleTime, scannedAt]
+            );
+          }
+          await client.query('COMMIT');
+        } catch (dbErr) {
+          await client.query('ROLLBACK');
+          console.warn(`[Scanner ${label}] Erro ao guardar no BD:`, dbErr.message);
+        } finally {
+          client.release();
+        }
+      } catch {
+        // BD não configurada — continua sem guardar
+      }
+    } catch (err) {
+      state.status = 'error';
+      state.error  = err.message;
     }
-  } catch (err) {
-    volatile50State.status = 'error';
-    volatile50State.error  = err.message;
   }
+
+  function getState() { return state; }
+
+  return { startScan, getState, tableName };
 }
 
-function getVolatile50State() {
-  return volatile50State;
-}
+// 15m: cache curta (10min) porque corre a cada 15min via cron.
+const volatile50Scanner15m = createVolatile50Scanner({
+  timeframe: '15m', tableName: 'scanner_volatile50', cacheTtl: 10 * 60 * 1000, label: 'Lista50 15m',
+});
+// 4h: cache mais longa (55min) porque a vela só muda a cada 4h — corre a
+// cada hora via cron, não vale a pena recalcular mais vezes que isso.
+const volatile50Scanner4h = createVolatile50Scanner({
+  timeframe: '4h', tableName: 'scanner_volatile50_4h', cacheTtl: 55 * 60 * 1000, label: 'Lista50 4h',
+});
+
+async function startScanVolatile50() { return volatile50Scanner15m.startScan(); }
+function getVolatile50State() { return volatile50Scanner15m.getState(); }
+async function startScanVolatile50_4h() { return volatile50Scanner4h.startScan(); }
+function getVolatile50State4h() { return volatile50Scanner4h.getState(); }
 
 module.exports = {
   startScan, getState,
@@ -785,4 +805,5 @@ module.exports = {
   startScanEmaTrendStocks, getEmaTrendStocksState,
   startScanEmaTrendTotal, getEmaTrendTotalState,
   startScanVolatile50, getVolatile50State,
+  startScanVolatile50_4h, getVolatile50State4h,
 };

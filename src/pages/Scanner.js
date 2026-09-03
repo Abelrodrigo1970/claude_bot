@@ -661,17 +661,17 @@ function Volatile50ResultsTable({ results }) {
   );
 }
 
-function Volatile50HistoryPanel() {
+function Volatile50HistoryPanel({ apiBase = '/api/scanner/volatile50' }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [openIdx, setOpenIdx]   = useState(0);
 
   useEffect(() => {
-    axios.get(`/api/scanner/volatile50/history?sessions=10`)
+    axios.get(`${apiBase}/history?sessions=10`)
       .then(r => setSessions(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [apiBase]);
 
   if (loading) return <div className="loading"><div className="spinner" /></div>;
   if (!sessions.length) return (
@@ -710,7 +710,7 @@ function Volatile50HistoryPanel() {
   );
 }
 
-function Volatile50Panel() {
+function Volatile50Panel({ apiBase = '/api/scanner/volatile50', timeframeLabel = '15m', updateNote = 'a cada 15min' }) {
   const [view, setView]   = useState('scan');
   const [state, setState] = useState({ status: 'idle', progress: 0, total: 0, results: [], scannedAt: null });
   const pollRef = useRef(null);
@@ -719,14 +719,14 @@ function Volatile50Panel() {
 
   const fetchState = useCallback(async () => {
     try {
-      const { data } = await axios.get(`/api/scanner/volatile50`);
+      const { data } = await axios.get(apiBase);
       setState(data);
       if (data.status !== 'scanning') stopPolling();
     } catch { stopPolling(); }
-  }, []);
+  }, [apiBase]);
 
   const startScan = async () => {
-    await axios.post(`/api/scanner/volatile50/start`);
+    await axios.post(`${apiBase}/start`);
     setState(s => ({ ...s, status: 'scanning', progress: 0, results: [] }));
     setView('scan');
     stopPolling();
@@ -745,7 +745,7 @@ function Volatile50Panel() {
       <div className="page-header">
         <div>
           <div className="page-sub">
-            Os 50 símbolos com maior subida nos últimos 6 meses (já em queda &gt;40% do pico) · mostra só os que estão acima da SMA(50) de 15m e com volume da vela &gt;1x a média das 10 anteriores · 🔥 spike = volume ≥5x + fecho acima da abertura · atualiza a cada 15min
+            Os 50 símbolos com maior subida nos últimos 6 meses (já em queda &gt;40% do pico) · mostra só os que estão acima da SMA(50) de {timeframeLabel} e com volume da vela &gt;1x a média das 10 anteriores · 🔥 spike = volume ≥5x + fecho acima da abertura · atualiza {updateNote}
             {state.scannedAt && (
               <span className="scan-time"> · Scan: {new Date(state.scannedAt).toLocaleTimeString('pt-PT')}</span>
             )}
@@ -765,7 +765,7 @@ function Volatile50Panel() {
       </div>
 
       {view === 'history' ? (
-        <Volatile50HistoryPanel />
+        <Volatile50HistoryPanel apiBase={apiBase} />
       ) : (
         <>
           {state.status === 'idle' && (
@@ -838,6 +838,12 @@ export default function Scanner() {
         >
           Lista 50 (spike)
         </button>
+        <button
+          className={`scanner-tab ${tab === 'volatile50-4h' ? 'active' : ''}`}
+          onClick={() => setTab('volatile50-4h')}
+        >
+          Lista 50 4h (spike)
+        </button>
       </div>
 
       {tab === 'pump24h' ? <PumpPanel key="pump24h" />
@@ -850,6 +856,14 @@ export default function Scanner() {
           />
         )
         : tab === 'volatile50' ? <Volatile50Panel key="volatile50" />
+        : tab === 'volatile50-4h' ? (
+          <Volatile50Panel
+            key="volatile50-4h"
+            apiBase="/api/scanner/volatile50-4h"
+            timeframeLabel="4h"
+            updateNote="a cada hora"
+          />
+        )
         : <ScannerPanel key={tab} period={tab} />}
     </div>
   );
