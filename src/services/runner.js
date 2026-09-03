@@ -108,10 +108,36 @@ const STRATEGIES = [
     name: stoch50.STRATEGY_NAME,
     market: 'stock',
     symbol: null,
-    symbolSource: 'stocks',
-    symbolExclude: [
-      'QNTX', 'SKHYNIX', 'IWM', 'ASTS', 'BMNR', 'SPCX', 'EWY', 'ORCL', 'CBRS', 'NVDA',
-      'SPY', 'TSM', 'HOOD', 'META', 'SAMSUNG', 'NOW', 'EWT', 'IBM', 'LLY', 'CSCO',
+    // Lista fixa (whitelist) substituída em 03/09 — troca a abordagem
+    // anterior (symbolSource:'stocks' + symbolExclude) por uma lista curada
+    // das únicas 39 stocks lucrativas, validada em 3 amostras independentes:
+    //   1) src/backtests/study-all-strategies-x-stocks.js (30 dias) — deu a
+    //      lista original de 53 "mantidas", mas tinha um bug de contagem
+    //      (buffer de warmup entrava nas estatísticas, inflava a janela
+    //      real para ~40 dias sem avisar).
+    //   2) src/backtests/validate-stoch50-filter-oos.js (30d IS recalculado
+    //      + 30d OOS, 05/07-04/08, nunca visto pela lista) — 44/73 símbolos
+    //      inverteram de sinal entre as duas janelas (lista instável ao
+    //      nível individual), mas o GRUPO "mantidos" continuou a bater o
+    //      "excluídos" na janela OOS (+0.243 vs +0.113 USDT/trade) — e daí
+    //      saíram os subconjuntos consistentes nas duas janelas: 17
+    //      consistentemente lucrativas, 12 consistentemente negativas.
+    //   3) src/backtests/study-stoch50-60days.js (60 dias, sem o bug de
+    //      contagem) — as 17 lucrativas e as 12 negativas da amostra (2)
+    //      bateram 100% certo com a classificação desta janela maior e
+    //      independente. As 39 stocks abaixo são as lucrativas desta
+    //      janela de 60 dias (PnL/trade +0.305 vs -0.226 das 35 excluídas).
+    // Ainda assim, é uma lista curada com base em backtest histórico, não
+    // uma garantia de edge futuro — a reavaliar periodicamente.
+    symbols: [
+      'AAPL/USDT:USDT', 'ADBE/USDT:USDT', 'ALAB/USDT:USDT', 'AMZN/USDT:USDT', 'ARM/USDT:USDT',
+      'AXTI/USDT:USDT', 'BABA/USDT:USDT', 'BMNR/USDT:USDT', 'CBRS/USDT:USDT', 'CIEN/USDT:USDT',
+      'COHR/USDT:USDT', 'COIN/USDT:USDT', 'CRCL/USDT:USDT', 'CRDO/USDT:USDT', 'CRWV/USDT:USDT',
+      'DELL/USDT:USDT', 'EWJ/USDT:USDT', 'EWT/USDT:USDT', 'EWY/USDT:USDT', 'GOOGL/USDT:USDT',
+      'HPE/USDT:USDT', 'HYUNDAI/USDT:USDT', 'IREN/USDT:USDT', 'KORU/USDT:USDT', 'LITE/USDT:USDT',
+      'LLY/USDT:USDT', 'LRCX/USDT:USDT', 'MRVL/USDT:USDT', 'MSFT/USDT:USDT', 'MU/USDT:USDT',
+      'NBIS/USDT:USDT', 'NVDA/USDT:USDT', 'PLTR/USDT:USDT', 'QQQ/USDT:USDT', 'SMCI/USDT:USDT',
+      'SNDK/USDT:USDT', 'SOXL/USDT:USDT', 'TQQQ/USDT:USDT', 'USAR/USDT:USDT',
     ],
     timeframe: '1h',
     generateSignal: stoch50.generateSignal,
@@ -120,18 +146,18 @@ const STRATEGIES = [
     // filtro. Backtest (74 símbolos, ~70 dias, sem TP): WR 36.9%, +305.71 USDT
     // vs. config antiga (K9/D9, filtro D>20): WR 31.5%, -709.59 USDT. Com TP
     // parcial 50% a +15% (ambos os lados): +448.89 USDT no mesmo backtest —
-    // melhor das 3 variantes testadas (10/15/20%). Excluídos os 20 símbolos
-    // consistentemente piores no backtest (QNTX é o pior, -70 USDT sozinho).
+    // melhor das 3 variantes testadas (10/15/20%).
     //
     // Long-only desde 14/08 — estudo dia-a-dia (05-14/08, dados reais): o
     // short perdia em dias QQQ+ e QQQ- (-59.03 e -46.32 USDT), sem edge em
     // nenhum regime. Long-only teria dado +147.80 USDT no período vs. +42.44
     // real (long+short). generateSignal já não abre short — ver stoch50.js.
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    // Ligada em 03/09 depois da lista de 39 símbolos acima ficar validada
+    // em 3 amostras independentes (ver comentário junto a `symbols`).
     takeProfitPct: 0.15,
     takeProfitCloseFraction: 0.5,
     takeProfitSide: 'long',
-    enabled: false,
+    enabled: true,
   },
   {
     name: stockEma1270Cross.STRATEGY_NAME,

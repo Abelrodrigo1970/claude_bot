@@ -1,0 +1,7691 @@
+{
+  "generatedAt": "2026-09-03T09:05:38.393Z",
+  "results": {
+    "TrendSurfer": {
+      "AAOI": {
+        "trades": 11,
+        "wins": 2,
+        "losses": 9,
+        "winRate": 18.181818181818183,
+        "totalPnl": -12.41395834938954,
+        "pf": 0.07726445981367923,
+        "maxDD": -12.864493927373296,
+        "stillOpen": false
+      },
+      "AAPL": {
+        "trades": 8,
+        "wins": 1,
+        "losses": 7,
+        "winRate": 12.5,
+        "totalPnl": -1.159967645774017,
+        "pf": 0.3226244713945775,
+        "maxDD": -1.3065608365526196,
+        "stillOpen": false
+      },
+      "ADBE": {
+        "trades": 10,
+        "wins": 1,
+        "losses": 9,
+        "winRate": 10,
+        "totalPnl": -4.283097764103468,
+        "pf": 0.022753306518521112,
+        "maxDD": -4.283097764103468,
+        "stillOpen": false
+      },
+      "ALAB": {
+        "trades": 11,
+        "wins": 0,
+        "losses": 11,
+        "winRate": 0,
+        "totalPnl": -8.64646222296333,
+        "pf": 0,
+        "maxDD": -8.64646222296333,
+        "stillOpen": false
+      },
+      "AMAT": {
+        "trades": 6,
+        "wins": 2,
+        "losses": 4,
+        "winRate": 33.33333333333333,
+        "totalPnl": -1.9547649592857945,
+        "pf": 0.18432962181959214,
+        "maxDD": -2.23679507575182,
+        "stillOpen": false
+      },
+      "AMDSTOCK": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": -0.16541017020351412,
+        "pf": 0.958908467417195,
+        "maxDD": -2.5549522483499443,
+        "stillOpen": false
+      },
+      "AMZN": {
+        "trades": 7,
+        "wins": 0,
+        "losses": 7,
+        "winRate": 0,
+        "totalPnl": -3.057609398070373,
+        "pf": 0,
+        "maxDD": -3.057609398070373,
+        "stillOpen": false
+      },
+      "ARM": {
+        "trades": 13,
+        "wins": 3,
+        "losses": 10,
+        "winRate": 23.076923076923077,
+        "totalPnl": -9.233426577711915,
+        "pf": 0.2567626648737899,
+        "maxDD": -9.233426577711915,
+        "stillOpen": false
+      },
+      "ASML": {
+        "trades": 7,
+        "wins": 1,
+        "losses": 6,
+        "winRate": 14.285714285714285,
+        "totalPnl": -2.3615160298744,
+        "pf": 0.17063245795267548,
+        "maxDD": -2.3615160298744,
+        "stillOpen": true
+      },
+      "ASTS": {
+        "trades": 10,
+        "wins": 2,
+        "losses": 8,
+        "winRate": 20,
+        "totalPnl": -5.924924250395112,
+        "pf": 0.07608627020928457,
+        "maxDD": -6.149120586378521,
+        "stillOpen": false
+      },
+      "AVGO": {
+        "trades": 9,
+        "wins": 1,
+        "losses": 8,
+        "winRate": 11.11111111111111,
+        "totalPnl": -2.689660724342107,
+        "pf": 0.010527276075762166,
+        "maxDD": -2.689660724342107,
+        "stillOpen": false
+      },
+      "AXTI": {
+        "trades": 9,
+        "wins": 4,
+        "losses": 5,
+        "winRate": 44.44444444444444,
+        "totalPnl": -3.251344553689111,
+        "pf": 0.6472940985031655,
+        "maxDD": -6.821619652931892,
+        "stillOpen": false
+      },
+      "BABA": {
+        "trades": 7,
+        "wins": 1,
+        "losses": 6,
+        "winRate": 14.285714285714285,
+        "totalPnl": -1.4661931856860084,
+        "pf": 0.6924120343387992,
+        "maxDD": -4.439016832724835,
+        "stillOpen": false
+      },
+      "BBX": {
+        "trades": 7,
+        "wins": 0,
+        "losses": 7,
+        "winRate": 0,
+        "totalPnl": -4.643020671688243,
+        "pf": 0,
+        "maxDD": -4.643020671688243,
+        "stillOpen": false
+      },
+      "BE": {
+        "trades": 11,
+        "wins": 1,
+        "losses": 10,
+        "winRate": 9.090909090909092,
+        "totalPnl": -10.601220688128283,
+        "pf": 0.09043698330187777,
+        "maxDD": -11.111442852257891,
+        "stillOpen": true
+      },
+      "BMNR": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": 2.4000665004011985,
+        "pf": 1.2924762475574454,
+        "maxDD": -4.798809427932039,
+        "stillOpen": false
+      },
+      "CBRS": {
+        "trades": 8,
+        "wins": 1,
+        "losses": 7,
+        "winRate": 12.5,
+        "totalPnl": -2.0104500881770377,
+        "pf": 0.7515374353485329,
+        "maxDD": -6.312303194404874,
+        "stillOpen": false
+      },
+      "CIEN": {
+        "trades": 6,
+        "wins": 0,
+        "losses": 6,
+        "winRate": 0,
+        "totalPnl": -6.845918513413803,
+        "pf": 0,
+        "maxDD": -6.845918513413803,
+        "stillOpen": false
+      },
+      "COHR": {
+        "trades": 5,
+        "wins": 4,
+        "losses": 1,
+        "winRate": 80,
+        "totalPnl": 6.61596142163839,
+        "pf": 24.79394253923927,
+        "maxDD": -0.27805234087322095,
+        "stillOpen": false
+      },
+      "COIN": {
+        "trades": 16,
+        "wins": 0,
+        "losses": 16,
+        "winRate": 0,
+        "totalPnl": -12.082222672252684,
+        "pf": 0,
+        "maxDD": -12.082222672252684,
+        "stillOpen": false
+      },
+      "CRCL": {
+        "trades": 13,
+        "wins": 3,
+        "losses": 10,
+        "winRate": 23.076923076923077,
+        "totalPnl": -6.70403251762902,
+        "pf": 0.3657753202297472,
+        "maxDD": -6.8757867655042455,
+        "stillOpen": false
+      },
+      "CRDO": {
+        "trades": 12,
+        "wins": 1,
+        "losses": 11,
+        "winRate": 8.333333333333332,
+        "totalPnl": -9.372001866868295,
+        "pf": 0.1337538826336852,
+        "maxDD": -9.372001866868295,
+        "stillOpen": false
+      },
+      "CRWV": {
+        "trades": 9,
+        "wins": 1,
+        "losses": 8,
+        "winRate": 11.11111111111111,
+        "totalPnl": -9.112022695332655,
+        "pf": 0.01812000039352675,
+        "maxDD": -9.112022695332655,
+        "stillOpen": false
+      },
+      "CSCO": {
+        "trades": 10,
+        "wins": 2,
+        "losses": 8,
+        "winRate": 20,
+        "totalPnl": -1.1918032651863335,
+        "pf": 0.45849335183598494,
+        "maxDD": -2.0830871876492716,
+        "stillOpen": false
+      },
+      "DELL": {
+        "trades": 11,
+        "wins": 0,
+        "losses": 11,
+        "winRate": 0,
+        "totalPnl": -6.273476128198278,
+        "pf": 0,
+        "maxDD": -6.273476128198278,
+        "stillOpen": true
+      },
+      "DRAM": {
+        "trades": 11,
+        "wins": 4,
+        "losses": 7,
+        "winRate": 36.36363636363637,
+        "totalPnl": -1.602539821037853,
+        "pf": 0.7950360570109664,
+        "maxDD": -3.4651480800118675,
+        "stillOpen": true
+      },
+      "EWJ": {
+        "trades": 10,
+        "wins": 2,
+        "losses": 8,
+        "winRate": 20,
+        "totalPnl": 0.7754953035693246,
+        "pf": 1.4075345755041455,
+        "maxDD": -1.823848272319534,
+        "stillOpen": false
+      },
+      "EWT": {
+        "trades": 12,
+        "wins": 1,
+        "losses": 11,
+        "winRate": 8.333333333333332,
+        "totalPnl": -0.23276341832072148,
+        "pf": 0.9287695531792525,
+        "maxDD": -3.051364304191757,
+        "stillOpen": false
+      },
+      "EWY": {
+        "trades": 11,
+        "wins": 3,
+        "losses": 8,
+        "winRate": 27.27272727272727,
+        "totalPnl": -2.5754607826053113,
+        "pf": 0.5964083258563408,
+        "maxDD": -2.93944654698428,
+        "stillOpen": true
+      },
+      "FLNC": {
+        "trades": 10,
+        "wins": 2,
+        "losses": 8,
+        "winRate": 20,
+        "totalPnl": -4.930825861357652,
+        "pf": 0.1963387330871296,
+        "maxDD": -4.930825861357652,
+        "stillOpen": false
+      },
+      "GLW": {
+        "trades": 7,
+        "wins": 2,
+        "losses": 5,
+        "winRate": 28.57142857142857,
+        "totalPnl": 4.430986058276389,
+        "pf": 2.3384478807953335,
+        "maxDD": -2.4992745390967164,
+        "stillOpen": false
+      },
+      "GOOGL": {
+        "trades": 9,
+        "wins": 1,
+        "losses": 8,
+        "winRate": 11.11111111111111,
+        "totalPnl": 5.119128006578347,
+        "pf": 4.056529723695632,
+        "maxDD": -1.6748170210459596,
+        "stillOpen": false
+      },
+      "HOOD": {
+        "trades": 10,
+        "wins": 1,
+        "losses": 9,
+        "winRate": 10,
+        "totalPnl": -5.680859118227783,
+        "pf": 0.19734940366905823,
+        "maxDD": -5.680859118227783,
+        "stillOpen": false
+      },
+      "HPE": {
+        "trades": 7,
+        "wins": 4,
+        "losses": 3,
+        "winRate": 57.14285714285714,
+        "totalPnl": 5.735150908746589,
+        "pf": 5.469847037863839,
+        "maxDD": -1.1271361720951505,
+        "stillOpen": false
+      },
+      "HYUNDAI": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": 2.8889942658400622,
+        "pf": 1.757191165132847,
+        "maxDD": -2.1523368197613495,
+        "stillOpen": false
+      },
+      "IBM": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": -0.8239613469353637,
+        "pf": 0.7568204719393833,
+        "maxDD": -3.1189011340218937,
+        "stillOpen": false
+      },
+      "INTC": {
+        "trades": 10,
+        "wins": 0,
+        "losses": 10,
+        "winRate": 0,
+        "totalPnl": -7.940969538129319,
+        "pf": 0,
+        "maxDD": -7.940969538129319,
+        "stillOpen": false
+      },
+      "IREN": {
+        "trades": 11,
+        "wins": 1,
+        "losses": 10,
+        "winRate": 9.090909090909092,
+        "totalPnl": -6.917450116151726,
+        "pf": 0.13708732485572037,
+        "maxDD": -6.917450116151726,
+        "stillOpen": false
+      },
+      "IWM": {
+        "trades": 10,
+        "wins": 1,
+        "losses": 9,
+        "winRate": 10,
+        "totalPnl": -2.056515582309786,
+        "pf": 0.0420315154893913,
+        "maxDD": -2.056515582309786,
+        "stillOpen": false
+      },
+      "KLAC": {
+        "trades": 9,
+        "wins": 1,
+        "losses": 8,
+        "winRate": 11.11111111111111,
+        "totalPnl": -4.96002146622063,
+        "pf": 0.26436462983085723,
+        "maxDD": -4.96002146622063,
+        "stillOpen": true
+      },
+      "KORU": {
+        "trades": 10,
+        "wins": 3,
+        "losses": 7,
+        "winRate": 30,
+        "totalPnl": -3.40096500562936,
+        "pf": 0.7697172590999355,
+        "maxDD": -7.703009971447392,
+        "stillOpen": false
+      },
+      "LITE": {
+        "trades": 8,
+        "wins": 2,
+        "losses": 6,
+        "winRate": 25,
+        "totalPnl": -10.149273148143202,
+        "pf": 0.029196514667823196,
+        "maxDD": -10.257710958179592,
+        "stillOpen": false
+      },
+      "LLY": {
+        "trades": 9,
+        "wins": 1,
+        "losses": 8,
+        "winRate": 11.11111111111111,
+        "totalPnl": -1.4758637027728012,
+        "pf": 0.6718006008479982,
+        "maxDD": -3.412195552066509,
+        "stillOpen": true
+      },
+      "LRCX": {
+        "trades": 11,
+        "wins": 2,
+        "losses": 9,
+        "winRate": 18.181818181818183,
+        "totalPnl": -5.518024420686585,
+        "pf": 0.3498851387759382,
+        "maxDD": -5.518024420686585,
+        "stillOpen": false
+      },
+      "META": {
+        "trades": 11,
+        "wins": 2,
+        "losses": 9,
+        "winRate": 18.181818181818183,
+        "totalPnl": 0.5639883915809458,
+        "pf": 1.2083778332929762,
+        "maxDD": -1.7816597999351467,
+        "stillOpen": false
+      },
+      "MRVL": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": 0.48879730972550606,
+        "pf": 1.1454418971413736,
+        "maxDD": -1.7604440014009934,
+        "stillOpen": false
+      },
+      "MSFT": {
+        "trades": 8,
+        "wins": 2,
+        "losses": 6,
+        "winRate": 25,
+        "totalPnl": 15.563428135488804,
+        "pf": 14.704349874601972,
+        "maxDD": -1.135656071094056,
+        "stillOpen": false
+      },
+      "MSTR": {
+        "trades": 13,
+        "wins": 3,
+        "losses": 10,
+        "winRate": 23.076923076923077,
+        "totalPnl": -6.469295821129745,
+        "pf": 0.3868628462927254,
+        "maxDD": -6.469295821129745,
+        "stillOpen": false
+      },
+      "MU": {
+        "trades": 10,
+        "wins": 1,
+        "losses": 9,
+        "winRate": 10,
+        "totalPnl": -2.8508366868775115,
+        "pf": 0.6053526240182006,
+        "maxDD": -4.089563608400358,
+        "stillOpen": false
+      },
+      "NBIS": {
+        "trades": 9,
+        "wins": 0,
+        "losses": 9,
+        "winRate": 0,
+        "totalPnl": -8.982224634952397,
+        "pf": 0,
+        "maxDD": -8.982224634952397,
+        "stillOpen": false
+      },
+      "NOKIA": {
+        "trades": 7,
+        "wins": 2,
+        "losses": 5,
+        "winRate": 28.57142857142857,
+        "totalPnl": -0.5201460728972535,
+        "pf": 0.7046289488415614,
+        "maxDD": -1.0438213093491018,
+        "stillOpen": false
+      },
+      "NOW": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": 3.40483759956257,
+        "pf": 1.8934624057428988,
+        "maxDD": -3.402331258343232,
+        "stillOpen": false
+      },
+      "NVDA": {
+        "trades": 7,
+        "wins": 1,
+        "losses": 6,
+        "winRate": 14.285714285714285,
+        "totalPnl": -2.012628898378732,
+        "pf": 0.32399584119195013,
+        "maxDD": -2.85399419680656,
+        "stillOpen": false
+      },
+      "ONDS": {
+        "trades": 7,
+        "wins": 3,
+        "losses": 4,
+        "winRate": 42.857142857142854,
+        "totalPnl": -0.8840986029691275,
+        "pf": 0.7557353994849556,
+        "maxDD": -3.3429341705564615,
+        "stillOpen": false
+      },
+      "ORCL": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": 3.5081880266547047,
+        "pf": 1.714584444699381,
+        "maxDD": -2.845589774259928,
+        "stillOpen": false
+      },
+      "PLTR": {
+        "trades": 8,
+        "wins": 2,
+        "losses": 6,
+        "winRate": 25,
+        "totalPnl": 14.238876805468953,
+        "pf": 5.4879772441633285,
+        "maxDD": -2.2914141421197076,
+        "stillOpen": false
+      },
+      "QCOM": {
+        "trades": 9,
+        "wins": 1,
+        "losses": 8,
+        "winRate": 11.11111111111111,
+        "totalPnl": -4.015451844173127,
+        "pf": 0.20395623403107943,
+        "maxDD": -4.015451844173127,
+        "stillOpen": false
+      },
+      "QNTX": {
+        "trades": 9,
+        "wins": 1,
+        "losses": 8,
+        "winRate": 11.11111111111111,
+        "totalPnl": -6.099388581685204,
+        "pf": 0.21412118545402214,
+        "maxDD": -7.4048640185849015,
+        "stillOpen": true
+      },
+      "QQQ": {
+        "trades": 7,
+        "wins": 2,
+        "losses": 5,
+        "winRate": 28.57142857142857,
+        "totalPnl": 1.4834696156271556,
+        "pf": 2.5534202926393164,
+        "maxDD": -0.7772051971764498,
+        "stillOpen": true
+      },
+      "SAMSUNG": {
+        "trades": 14,
+        "wins": 2,
+        "losses": 12,
+        "winRate": 14.285714285714285,
+        "totalPnl": -10.951141514931795,
+        "pf": 0.09249459251670175,
+        "maxDD": -10.951141514931795,
+        "stillOpen": false
+      },
+      "SKHYNIX": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": -4.141258022004267,
+        "pf": 0.5238302024815223,
+        "maxDD": -4.753367703332842,
+        "stillOpen": false
+      },
+      "SMCI": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": -0.7148039890616468,
+        "pf": 0.726527839353486,
+        "maxDD": -1.9814039890616493,
+        "stillOpen": false
+      },
+      "SNDK": {
+        "trades": 10,
+        "wins": 1,
+        "losses": 9,
+        "winRate": 10,
+        "totalPnl": -11.725913981272098,
+        "pf": 0.09023722278702538,
+        "maxDD": -11.725913981272098,
+        "stillOpen": false
+      },
+      "SOXL": {
+        "trades": 12,
+        "wins": 3,
+        "losses": 9,
+        "winRate": 25,
+        "totalPnl": -13.75778066774972,
+        "pf": 0.23013232732232608,
+        "maxDD": -15.44606928065295,
+        "stillOpen": true
+      },
+      "SPCX": {
+        "trades": 14,
+        "wins": 2,
+        "losses": 12,
+        "winRate": 14.285714285714285,
+        "totalPnl": -8.406306601085145,
+        "pf": 0.16853833771705526,
+        "maxDD": -9.496450717541629,
+        "stillOpen": false
+      },
+      "SPY": {
+        "trades": 10,
+        "wins": 2,
+        "losses": 8,
+        "winRate": 20,
+        "totalPnl": -0.8410905018418069,
+        "pf": 0.3627580584988806,
+        "maxDD": -1.1033655606345993,
+        "stillOpen": false
+      },
+      "STXX": {
+        "trades": 7,
+        "wins": 1,
+        "losses": 6,
+        "winRate": 14.285714285714285,
+        "totalPnl": 0.3105331359195027,
+        "pf": 1.0459957668936692,
+        "maxDD": -5.4670424270151035,
+        "stillOpen": false
+      },
+      "TQQQ": {
+        "trades": 8,
+        "wins": 1,
+        "losses": 7,
+        "winRate": 12.5,
+        "totalPnl": 2.250645448987739,
+        "pf": 1.571116653209045,
+        "maxDD": -3.6685151595447723,
+        "stillOpen": false
+      },
+      "TSLA": {
+        "trades": 7,
+        "wins": 4,
+        "losses": 3,
+        "winRate": 57.14285714285714,
+        "totalPnl": 0.22973796230368038,
+        "pf": 1.1082532994209213,
+        "maxDD": -1.8381737598159735,
+        "stillOpen": false
+      },
+      "TSM": {
+        "trades": 11,
+        "wins": 3,
+        "losses": 8,
+        "winRate": 27.27272727272727,
+        "totalPnl": -0.8824725828584259,
+        "pf": 0.6612374142450683,
+        "maxDD": -1.523842462294143,
+        "stillOpen": false
+      },
+      "USAR": {
+        "trades": 8,
+        "wins": 2,
+        "losses": 6,
+        "winRate": 25,
+        "totalPnl": -2.281716725620245,
+        "pf": 0.49482727645702956,
+        "maxDD": -3.5193471604028477,
+        "stillOpen": false
+      },
+      "UVXY": {
+        "trades": 7,
+        "wins": 1,
+        "losses": 6,
+        "winRate": 14.285714285714285,
+        "totalPnl": -1.299297003481006,
+        "pf": 0.6007543199695744,
+        "maxDD": -1.8579298394013801,
+        "stillOpen": false
+      },
+      "WDC": {
+        "trades": 6,
+        "wins": 2,
+        "losses": 4,
+        "winRate": 33.33333333333333,
+        "totalPnl": 6.789912169080082,
+        "pf": 2.198511487847639,
+        "maxDD": -4.897158720878463,
+        "stillOpen": false
+      }
+    },
+    "StockSMA": {
+      "AAOI": {
+        "trades": 6,
+        "wins": 2,
+        "losses": 4,
+        "winRate": 33.33333333333333,
+        "totalPnl": -10.30593236426435,
+        "pf": 0.2682814870254808,
+        "maxDD": -10.933332310820392,
+        "stillOpen": false
+      },
+      "AAPL": {
+        "trades": 7,
+        "wins": 4,
+        "losses": 3,
+        "winRate": 57.14285714285714,
+        "totalPnl": 0.2647004896487649,
+        "pf": 1.102506291504759,
+        "maxDD": -1.8080057312455176,
+        "stillOpen": false
+      },
+      "ADBE": {
+        "trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "winRate": 66.66666666666666,
+        "totalPnl": 8.035315690668991,
+        "pf": 23.502989611779316,
+        "maxDD": -0.35707769631031017,
+        "stillOpen": false
+      },
+      "ALAB": {
+        "trades": 10,
+        "wins": 6,
+        "losses": 4,
+        "winRate": 60,
+        "totalPnl": 5.761585836107648,
+        "pf": 1.6242306401528122,
+        "maxDD": -5.599130494097335,
+        "stillOpen": false
+      },
+      "AMAT": {
+        "trades": 8,
+        "wins": 5,
+        "losses": 3,
+        "winRate": 62.5,
+        "totalPnl": 4.133721944744737,
+        "pf": 1.7039051501797415,
+        "maxDD": -2.848798782529892,
+        "stillOpen": false
+      },
+      "AMDSTOCK": {
+        "trades": 9,
+        "wins": 6,
+        "losses": 3,
+        "winRate": 66.66666666666666,
+        "totalPnl": 13.382979038319164,
+        "pf": 4.3472529564368,
+        "maxDD": -3.4118851239134695,
+        "stillOpen": false
+      },
+      "AMZN": {
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "winRate": 50,
+        "totalPnl": -0.8278420241525446,
+        "pf": 0.6491925995733434,
+        "maxDD": -1.698308851896836,
+        "stillOpen": false
+      },
+      "ARM": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": 0.4223081262233551,
+        "pf": 1.0620660874779537,
+        "maxDD": -5.918435712703821,
+        "stillOpen": true
+      },
+      "ASML": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": -0.6125369465643393,
+        "pf": 0.9200603193991731,
+        "maxDD": -7.0747892045435465,
+        "stillOpen": false
+      },
+      "ASTS": {
+        "trades": 8,
+        "wins": 4,
+        "losses": 4,
+        "winRate": 50,
+        "totalPnl": 2.228887528134159,
+        "pf": 1.491603653035953,
+        "maxDD": -4.2836071534096565,
+        "stillOpen": true
+      },
+      "AVGO": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": -3.7565210734870425,
+        "pf": 0.4370024713332511,
+        "maxDD": -4.698917779139535,
+        "stillOpen": false
+      },
+      "AXTI": {
+        "trades": 5,
+        "wins": 2,
+        "losses": 3,
+        "winRate": 40,
+        "totalPnl": 6.087593344562958,
+        "pf": 1.6119200721243052,
+        "maxDD": -6.607987170863404,
+        "stillOpen": false
+      },
+      "BABA": {
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "winRate": 50,
+        "totalPnl": 0.8453222608454862,
+        "pf": 1.304284900104501,
+        "maxDD": -2.7780618116612956,
+        "stillOpen": false
+      },
+      "BBX": {
+        "trades": 9,
+        "wins": 2,
+        "losses": 7,
+        "winRate": 22.22222222222222,
+        "totalPnl": -5.249999253564247,
+        "pf": 0.39438124144540426,
+        "maxDD": -7.353866723443758,
+        "stillOpen": false
+      },
+      "BE": {
+        "trades": 7,
+        "wins": 1,
+        "losses": 6,
+        "winRate": 14.285714285714285,
+        "totalPnl": -5.437651943352695,
+        "pf": 0.5580958329488162,
+        "maxDD": -10.852840376151827,
+        "stillOpen": true
+      },
+      "BMNR": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": -4.562203130836098,
+        "pf": 0.5802491585759306,
+        "maxDD": -6.190858769418608,
+        "stillOpen": false
+      },
+      "CBRS": {
+        "trades": 6,
+        "wins": 5,
+        "losses": 1,
+        "winRate": 83.33333333333334,
+        "totalPnl": 4.0297667745044,
+        "pf": 4.004633935876748,
+        "maxDD": -1.3411839380455244,
+        "stillOpen": false
+      },
+      "CIEN": {
+        "trades": 7,
+        "wins": 3,
+        "losses": 4,
+        "winRate": 42.857142857142854,
+        "totalPnl": -5.177126504664619,
+        "pf": 0.404062562226254,
+        "maxDD": -6.605080221726671,
+        "stillOpen": false
+      },
+      "COHR": {
+        "trades": 7,
+        "wins": 3,
+        "losses": 4,
+        "winRate": 42.857142857142854,
+        "totalPnl": -0.2874234733117571,
+        "pf": 0.9787832347187766,
+        "maxDD": -8.662495679830002,
+        "stillOpen": false
+      },
+      "COIN": {
+        "trades": 6,
+        "wins": 3,
+        "losses": 3,
+        "winRate": 50,
+        "totalPnl": 11.509605656439147,
+        "pf": 2.8299381577665077,
+        "maxDD": -5.037588896973398,
+        "stillOpen": true
+      },
+      "CRCL": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": -5.122036447267652,
+        "pf": 0.4593926568430937,
+        "maxDD": -5.122036447267652,
+        "stillOpen": false
+      },
+      "CRDO": {
+        "trades": 7,
+        "wins": 4,
+        "losses": 3,
+        "winRate": 57.14285714285714,
+        "totalPnl": 2.669576736819669,
+        "pf": 1.3955005680258588,
+        "maxDD": -3.5029592729393473,
+        "stillOpen": true
+      },
+      "CRWV": {
+        "trades": 7,
+        "wins": 3,
+        "losses": 4,
+        "winRate": 42.857142857142854,
+        "totalPnl": 0.20837855263583394,
+        "pf": 1.0349524364533509,
+        "maxDD": -2.600220176536727,
+        "stillOpen": false
+      },
+      "CSCO": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": -3.293221345583592,
+        "pf": 0.39037771352529227,
+        "maxDD": -3.293221345583592,
+        "stillOpen": false
+      },
+      "DELL": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": 0.8732928511183271,
+        "pf": 1.078896639608043,
+        "maxDD": -5.591509509306627,
+        "stillOpen": false
+      },
+      "DRAM": {
+        "trades": 11,
+        "wins": 3,
+        "losses": 8,
+        "winRate": 27.27272727272727,
+        "totalPnl": -5.077292895197347,
+        "pf": 0.6294965436981376,
+        "maxDD": -6.244399475225446,
+        "stillOpen": false
+      },
+      "EWJ": {
+        "trades": 9,
+        "wins": 2,
+        "losses": 7,
+        "winRate": 22.22222222222222,
+        "totalPnl": -1.985824996086849,
+        "pf": 0.456355497396379,
+        "maxDD": -3.53458669707919,
+        "stillOpen": false
+      },
+      "EWT": {
+        "trades": 4,
+        "wins": 0,
+        "losses": 4,
+        "winRate": 0,
+        "totalPnl": -3.391668136971183,
+        "pf": 0,
+        "maxDD": -3.391668136971183,
+        "stillOpen": false
+      },
+      "EWY": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": 3.6319427640265314,
+        "pf": 1.4852110727716201,
+        "maxDD": -5.469475737836037,
+        "stillOpen": false
+      },
+      "FLNC": {
+        "trades": 8,
+        "wins": 2,
+        "losses": 6,
+        "winRate": 25,
+        "totalPnl": -0.7408854523448205,
+        "pf": 0.945675180651048,
+        "maxDD": -7.37781628030582,
+        "stillOpen": true
+      },
+      "GLW": {
+        "trades": 5,
+        "wins": 3,
+        "losses": 2,
+        "winRate": 60,
+        "totalPnl": 3.6522003452564054,
+        "pf": 1.780495180990662,
+        "maxDD": -4.154118634548694,
+        "stillOpen": false
+      },
+      "GOOGL": {
+        "trades": 4,
+        "wins": 1,
+        "losses": 3,
+        "winRate": 25,
+        "totalPnl": -0.47313807238580396,
+        "pf": 0.742699278390765,
+        "maxDD": -1.8388524891289002,
+        "stillOpen": false
+      },
+      "HOOD": {
+        "trades": 13,
+        "wins": 1,
+        "losses": 12,
+        "winRate": 7.6923076923076925,
+        "totalPnl": -20.727515237276293,
+        "pf": 0.02566346651512019,
+        "maxDD": -20.727515237276293,
+        "stillOpen": false
+      },
+      "HPE": {
+        "trades": 7,
+        "wins": 4,
+        "losses": 3,
+        "winRate": 57.14285714285714,
+        "totalPnl": 1.3830679102552907,
+        "pf": 1.2111755240692341,
+        "maxDD": -2.9140369393139873,
+        "stillOpen": true
+      },
+      "HYUNDAI": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -1.5138704729148718,
+        "pf": 0,
+        "maxDD": -1.5138704729148718,
+        "stillOpen": false
+      },
+      "IBM": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": -4.572026284034766,
+        "pf": 0.18553783579287791,
+        "maxDD": -5.294854533561986,
+        "stillOpen": false
+      },
+      "INTC": {
+        "trades": 6,
+        "wins": 2,
+        "losses": 4,
+        "winRate": 33.33333333333333,
+        "totalPnl": -5.953713293063779,
+        "pf": 0.24283520082826363,
+        "maxDD": -5.953713293063779,
+        "stillOpen": false
+      },
+      "IREN": {
+        "trades": 7,
+        "wins": 3,
+        "losses": 4,
+        "winRate": 42.857142857142854,
+        "totalPnl": 2.209486623213064,
+        "pf": 1.1977018445781205,
+        "maxDD": -7.771931898139254,
+        "stillOpen": false
+      },
+      "IWM": {
+        "trades": 6,
+        "wins": 1,
+        "losses": 5,
+        "winRate": 16.666666666666664,
+        "totalPnl": -0.524967685089759,
+        "pf": 0.5241045811678915,
+        "maxDD": -1.0953691840173532,
+        "stillOpen": true
+      },
+      "KLAC": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": 4.15765212701605,
+        "pf": 1.497508295379597,
+        "maxDD": -4.9123167015953335,
+        "stillOpen": false
+      },
+      "KORU": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": -4.30568210528158,
+        "pf": 0.7484390272786826,
+        "maxDD": -15.23159536267842,
+        "stillOpen": false
+      },
+      "LITE": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": -2.7578833657560837,
+        "pf": 0.8225581005501933,
+        "maxDD": -8.373706599911902,
+        "stillOpen": false
+      },
+      "LLY": {
+        "trades": 5,
+        "wins": 2,
+        "losses": 3,
+        "winRate": 40,
+        "totalPnl": 4.165244918536128,
+        "pf": 3.6281961464362276,
+        "maxDD": -1.1131984152383703,
+        "stillOpen": false
+      },
+      "LRCX": {
+        "trades": 10,
+        "wins": 6,
+        "losses": 4,
+        "winRate": 60,
+        "totalPnl": 7.360609531918911,
+        "pf": 1.9398304697422633,
+        "maxDD": -5.499827170678881,
+        "stillOpen": false
+      },
+      "META": {
+        "trades": 5,
+        "wins": 1,
+        "losses": 4,
+        "winRate": 20,
+        "totalPnl": -0.1463717561542015,
+        "pf": 0.9334967666762716,
+        "maxDD": -1.3986215384351142,
+        "stillOpen": false
+      },
+      "MRVL": {
+        "trades": 11,
+        "wins": 6,
+        "losses": 5,
+        "winRate": 54.54545454545454,
+        "totalPnl": 7.190155337116693,
+        "pf": 1.5567687054120147,
+        "maxDD": -5.05643766153409,
+        "stillOpen": true
+      },
+      "MSFT": {
+        "trades": 6,
+        "wins": 3,
+        "losses": 3,
+        "winRate": 50,
+        "totalPnl": 0.2529510926990646,
+        "pf": 1.1550888473302896,
+        "maxDD": -1.5043089870173292,
+        "stillOpen": false
+      },
+      "MSTR": {
+        "trades": 11,
+        "wins": 2,
+        "losses": 9,
+        "winRate": 18.181818181818183,
+        "totalPnl": -8.179477140476969,
+        "pf": 0.589488040348293,
+        "maxDD": -12.691116207362239,
+        "stillOpen": false
+      },
+      "MU": {
+        "trades": 11,
+        "wins": 3,
+        "losses": 8,
+        "winRate": 27.27272727272727,
+        "totalPnl": -6.689451565458873,
+        "pf": 0.5380364559173128,
+        "maxDD": -11.528278764351048,
+        "stillOpen": false
+      },
+      "NBIS": {
+        "trades": 8,
+        "wins": 2,
+        "losses": 6,
+        "winRate": 25,
+        "totalPnl": 1.8443789819858822,
+        "pf": 1.0978854790163775,
+        "maxDD": -9.595112378302968,
+        "stillOpen": false
+      },
+      "NOKIA": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": -3.8543265724548768,
+        "pf": 0.514839207892602,
+        "maxDD": -6.203870610146722,
+        "stillOpen": false
+      },
+      "NOW": {
+        "trades": 7,
+        "wins": 4,
+        "losses": 3,
+        "winRate": 57.14285714285714,
+        "totalPnl": 5.30881173653077,
+        "pf": 2.809652784402957,
+        "maxDD": -1.5102467690062642,
+        "stillOpen": false
+      },
+      "NVDA": {
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "winRate": 50,
+        "totalPnl": -2.621939093614736,
+        "pf": 0.5060758301880972,
+        "maxDD": -4.494789697934128,
+        "stillOpen": false
+      },
+      "ONDS": {
+        "trades": 8,
+        "wins": 5,
+        "losses": 3,
+        "winRate": 62.5,
+        "totalPnl": 3.267441534486552,
+        "pf": 1.828222441970504,
+        "maxDD": -3.3988089337929006,
+        "stillOpen": false
+      },
+      "ORCL": {
+        "trades": 9,
+        "wins": 2,
+        "losses": 7,
+        "winRate": 22.22222222222222,
+        "totalPnl": -8.047473107218384,
+        "pf": 0.24296245736432628,
+        "maxDD": -9.667185973222523,
+        "stillOpen": false
+      },
+      "PLTR": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": 0.5921641395838915,
+        "pf": 1.09838842868704,
+        "maxDD": -4.548574138625009,
+        "stillOpen": true
+      },
+      "QCOM": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": 1.395073873907727,
+        "pf": 1.2040219374089727,
+        "maxDD": -3.330875795255082,
+        "stillOpen": true
+      },
+      "QNTX": {
+        "trades": 8,
+        "wins": 5,
+        "losses": 3,
+        "winRate": 62.5,
+        "totalPnl": 16.756198719563326,
+        "pf": 10.34988620387896,
+        "maxDD": -1.2854687553795832,
+        "stillOpen": false
+      },
+      "QQQ": {
+        "trades": 9,
+        "wins": 7,
+        "losses": 2,
+        "winRate": 77.77777777777779,
+        "totalPnl": 3.800382794202379,
+        "pf": 7.681096949370388,
+        "maxDD": -0.33396282223320606,
+        "stillOpen": false
+      },
+      "RKLB": {
+        "trades": 7,
+        "wins": 4,
+        "losses": 3,
+        "winRate": 57.14285714285714,
+        "totalPnl": -1.3457696952348945,
+        "pf": 0.8206693463514925,
+        "maxDD": -6.438632753407747,
+        "stillOpen": true
+      },
+      "SAMSUNG": {
+        "trades": 11,
+        "wins": 5,
+        "losses": 6,
+        "winRate": 45.45454545454545,
+        "totalPnl": -6.546210149228042,
+        "pf": 0.5372992168658055,
+        "maxDD": -7.465131900150917,
+        "stillOpen": false
+      },
+      "SKHYNIX": {
+        "trades": 8,
+        "wins": 2,
+        "losses": 6,
+        "winRate": 25,
+        "totalPnl": -3.6559346387263947,
+        "pf": 0.7418073571876452,
+        "maxDD": -12.66073338805912,
+        "stillOpen": false
+      },
+      "SMCI": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": -0.6395271169990956,
+        "pf": 0.9170999402015789,
+        "maxDD": -3.64157831357727,
+        "stillOpen": false
+      },
+      "SNDK": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": -0.7180325068128381,
+        "pf": 0.9564448951157143,
+        "maxDD": -7.2468062830628455,
+        "stillOpen": false
+      },
+      "SOXL": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": 8.260537084279102,
+        "pf": 1.5787063057727908,
+        "maxDD": -8.432185316638124,
+        "stillOpen": false
+      },
+      "SPCX": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": -8.41750220633022,
+        "pf": 0.27670493561805914,
+        "maxDD": -8.41750220633022,
+        "stillOpen": false
+      },
+      "SPY": {
+        "trades": 6,
+        "wins": 3,
+        "losses": 3,
+        "winRate": 50,
+        "totalPnl": -0.16811594850243702,
+        "pf": 0.8210217991511477,
+        "maxDD": -0.7334275153643176,
+        "stillOpen": false
+      },
+      "STXX": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": 7.736791937808087,
+        "pf": 1.8196566543099941,
+        "maxDD": -6.955494187680847,
+        "stillOpen": false
+      },
+      "TQQQ": {
+        "trades": 9,
+        "wins": 6,
+        "losses": 3,
+        "winRate": 66.66666666666666,
+        "totalPnl": 9.04451938752692,
+        "pf": 3.2773346717500895,
+        "maxDD": -3.9715372095821024,
+        "stillOpen": false
+      },
+      "TSLA": {
+        "trades": 11,
+        "wins": 2,
+        "losses": 9,
+        "winRate": 18.181818181818183,
+        "totalPnl": -1.967853364295582,
+        "pf": 0.8103047315242508,
+        "maxDD": -4.9977270330003485,
+        "stillOpen": false
+      },
+      "TSM": {
+        "trades": 7,
+        "wins": 3,
+        "losses": 4,
+        "winRate": 42.857142857142854,
+        "totalPnl": 1.1796921431245249,
+        "pf": 1.3004396669325404,
+        "maxDD": -3.1483626023374645,
+        "stillOpen": false
+      },
+      "USAR": {
+        "trades": 9,
+        "wins": 1,
+        "losses": 8,
+        "winRate": 11.11111111111111,
+        "totalPnl": -9.12985487213921,
+        "pf": 0.301258411886378,
+        "maxDD": -11.409380901585974,
+        "stillOpen": true
+      },
+      "UVXY": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": -2.4827003210664045,
+        "pf": 0.6325801788872929,
+        "maxDD": -3.5086434476176596,
+        "stillOpen": false
+      },
+      "WDC": {
+        "trades": 7,
+        "wins": 4,
+        "losses": 3,
+        "winRate": 57.14285714285714,
+        "totalPnl": 1.525744519951473,
+        "pf": 1.2308179131210066,
+        "maxDD": -5.021010001721146,
+        "stillOpen": false
+      }
+    },
+    "Stoch50": {
+      "AAOI": {
+        "trades": 12,
+        "wins": 6,
+        "losses": 6,
+        "winRate": 50,
+        "totalPnl": 1.4834971787560465,
+        "pf": 1.0778998528823422,
+        "maxDD": -15.438760170644596,
+        "stillOpen": true
+      },
+      "AAPL": {
+        "trades": 12,
+        "wins": 5,
+        "losses": 7,
+        "winRate": 41.66666666666667,
+        "totalPnl": 0.8621386709387672,
+        "pf": 1.2991348675261774,
+        "maxDD": -2.2055483460962573,
+        "stillOpen": true
+      },
+      "ADBE": {
+        "trades": 13,
+        "wins": 6,
+        "losses": 7,
+        "winRate": 46.15384615384615,
+        "totalPnl": 5.456155548430683,
+        "pf": 2.185306555962299,
+        "maxDD": -2.627196452151137,
+        "stillOpen": false
+      },
+      "ALAB": {
+        "trades": 16,
+        "wins": 8,
+        "losses": 8,
+        "winRate": 50,
+        "totalPnl": 15.801067044579012,
+        "pf": 2.623272675441087,
+        "maxDD": -7.847377943354301,
+        "stillOpen": false
+      },
+      "AMAT": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": -3.966437633997229,
+        "pf": 0.7721798345795821,
+        "maxDD": -13.854725454391206,
+        "stillOpen": true
+      },
+      "AMDSTOCK": {
+        "trades": 14,
+        "wins": 6,
+        "losses": 8,
+        "winRate": 42.857142857142854,
+        "totalPnl": -0.154075295302185,
+        "pf": 0.9853563698678127,
+        "maxDD": -8.249093388298066,
+        "stillOpen": true
+      },
+      "AMZN": {
+        "trades": 15,
+        "wins": 7,
+        "losses": 8,
+        "winRate": 46.666666666666664,
+        "totalPnl": 9.433487730623051,
+        "pf": 3.6134861296742997,
+        "maxDD": -2.7774385252636105,
+        "stillOpen": true
+      },
+      "ARM": {
+        "trades": 13,
+        "wins": 6,
+        "losses": 7,
+        "winRate": 46.15384615384615,
+        "totalPnl": 3.46419143056446,
+        "pf": 1.3000122488208674,
+        "maxDD": -8.720364621255854,
+        "stillOpen": true
+      },
+      "ASML": {
+        "trades": 21,
+        "wins": 5,
+        "losses": 16,
+        "winRate": 23.809523809523807,
+        "totalPnl": -3.864583333070369,
+        "pf": 0.5426191763026333,
+        "maxDD": -7.420506216025775,
+        "stillOpen": true
+      },
+      "ASTS": {
+        "trades": 12,
+        "wins": 6,
+        "losses": 6,
+        "winRate": 50,
+        "totalPnl": 5.410332156980609,
+        "pf": 1.6082573488133465,
+        "maxDD": -6.452929061505366,
+        "stillOpen": true
+      },
+      "AVGO": {
+        "trades": 21,
+        "wins": 6,
+        "losses": 15,
+        "winRate": 28.57142857142857,
+        "totalPnl": -7.268097412157661,
+        "pf": 0.517439767902195,
+        "maxDD": -7.268097412157661,
+        "stillOpen": true
+      },
+      "AXTI": {
+        "trades": 20,
+        "wins": 10,
+        "losses": 10,
+        "winRate": 50,
+        "totalPnl": 14.534809373000595,
+        "pf": 1.4875279373902988,
+        "maxDD": -20.183753071670967,
+        "stillOpen": true
+      },
+      "BABA": {
+        "trades": 15,
+        "wins": 6,
+        "losses": 9,
+        "winRate": 40,
+        "totalPnl": -1.8323764222271044,
+        "pf": 0.7651807068233465,
+        "maxDD": -5.374449028167106,
+        "stillOpen": true
+      },
+      "BBX": {
+        "trades": 16,
+        "wins": 5,
+        "losses": 11,
+        "winRate": 31.25,
+        "totalPnl": -5.148864467112237,
+        "pf": 0.6238988422772866,
+        "maxDD": -11.003895673325673,
+        "stillOpen": true
+      },
+      "BE": {
+        "trades": 13,
+        "wins": 5,
+        "losses": 8,
+        "winRate": 38.46153846153847,
+        "totalPnl": 7.4592681523114726,
+        "pf": 1.313324174844259,
+        "maxDD": -8.889638409682043,
+        "stillOpen": true
+      },
+      "BMNR": {
+        "trades": 17,
+        "wins": 9,
+        "losses": 8,
+        "winRate": 52.94117647058824,
+        "totalPnl": 7.103674994308163,
+        "pf": 1.6845316431410013,
+        "maxDD": -4.879121325530475,
+        "stillOpen": false
+      },
+      "CBRS": {
+        "trades": 14,
+        "wins": 5,
+        "losses": 9,
+        "winRate": 35.714285714285715,
+        "totalPnl": -6.233722842944946,
+        "pf": 0.7337603739746609,
+        "maxDD": -11.268609245831792,
+        "stillOpen": true
+      },
+      "CIEN": {
+        "trades": 15,
+        "wins": 6,
+        "losses": 9,
+        "winRate": 40,
+        "totalPnl": 8.210444585583401,
+        "pf": 1.5647096933205762,
+        "maxDD": -3.287714013774277,
+        "stillOpen": true
+      },
+      "COHR": {
+        "trades": 18,
+        "wins": 7,
+        "losses": 11,
+        "winRate": 38.88888888888889,
+        "totalPnl": 10.827614282553554,
+        "pf": 1.5972024696680722,
+        "maxDD": -6.444751561036227,
+        "stillOpen": true
+      },
+      "COIN": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": 2.1833818985280846,
+        "pf": 1.211139956527602,
+        "maxDD": -5.932356198988671,
+        "stillOpen": false
+      },
+      "CRCL": {
+        "trades": 19,
+        "wins": 7,
+        "losses": 12,
+        "winRate": 36.84210526315789,
+        "totalPnl": -3.199295844744756,
+        "pf": 0.8423959908712678,
+        "maxDD": -9.197966394563059,
+        "stillOpen": false
+      },
+      "CRDO": {
+        "trades": 14,
+        "wins": 7,
+        "losses": 7,
+        "winRate": 50,
+        "totalPnl": 14.832269168285453,
+        "pf": 2.4200374243006526,
+        "maxDD": -3.214268737535029,
+        "stillOpen": false
+      },
+      "CRWV": {
+        "trades": 17,
+        "wins": 8,
+        "losses": 9,
+        "winRate": 47.05882352941176,
+        "totalPnl": 14.675377746071407,
+        "pf": 2.0889973800185424,
+        "maxDD": -6.590288868313307,
+        "stillOpen": false
+      },
+      "CSCO": {
+        "trades": 15,
+        "wins": 4,
+        "losses": 11,
+        "winRate": 26.666666666666668,
+        "totalPnl": -1.9243892104573233,
+        "pf": 0.6417940083485004,
+        "maxDD": -4.893729879827808,
+        "stillOpen": false
+      },
+      "DELL": {
+        "trades": 15,
+        "wins": 4,
+        "losses": 11,
+        "winRate": 26.666666666666668,
+        "totalPnl": 6.304477974433651,
+        "pf": 1.6114008061304022,
+        "maxDD": -4.488741079638111,
+        "stillOpen": true
+      },
+      "DRAM": {
+        "trades": 13,
+        "wins": 7,
+        "losses": 6,
+        "winRate": 53.84615384615385,
+        "totalPnl": 7.61781715903071,
+        "pf": 2.08708529930054,
+        "maxDD": -5.187876508968302,
+        "stillOpen": false
+      },
+      "EWJ": {
+        "trades": 14,
+        "wins": 6,
+        "losses": 8,
+        "winRate": 42.857142857142854,
+        "totalPnl": 0.8091356231395874,
+        "pf": 1.2580301343552152,
+        "maxDD": -1.6773722552831618,
+        "stillOpen": true
+      },
+      "EWT": {
+        "trades": 11,
+        "wins": 5,
+        "losses": 6,
+        "winRate": 45.45454545454545,
+        "totalPnl": 8.546364646343747,
+        "pf": 3.673515293819028,
+        "maxDD": -1.7456777480999142,
+        "stillOpen": false
+      },
+      "EWY": {
+        "trades": 16,
+        "wins": 7,
+        "losses": 9,
+        "winRate": 43.75,
+        "totalPnl": 6.765276466777329,
+        "pf": 2.360604187718247,
+        "maxDD": -2.504757204769466,
+        "stillOpen": false
+      },
+      "FLNC": {
+        "trades": 19,
+        "wins": 5,
+        "losses": 14,
+        "winRate": 26.31578947368421,
+        "totalPnl": -6.749743916186915,
+        "pf": 0.6755948380015037,
+        "maxDD": -17.893516506348618,
+        "stillOpen": true
+      },
+      "GLW": {
+        "trades": 14,
+        "wins": 8,
+        "losses": 6,
+        "winRate": 57.14285714285714,
+        "totalPnl": 13.94933536080983,
+        "pf": 2.9782507008145167,
+        "maxDD": -3.801858106961488,
+        "stillOpen": true
+      },
+      "GOOGL": {
+        "trades": 16,
+        "wins": 5,
+        "losses": 11,
+        "winRate": 31.25,
+        "totalPnl": 0.6710581581760673,
+        "pf": 1.2233263908457697,
+        "maxDD": -2.6514734839120497,
+        "stillOpen": true
+      },
+      "HOOD": {
+        "trades": 15,
+        "wins": 6,
+        "losses": 9,
+        "winRate": 40,
+        "totalPnl": 1.547160054036464,
+        "pf": 1.1476167402796003,
+        "maxDD": -5.553165831700316,
+        "stillOpen": true
+      },
+      "HPE": {
+        "trades": 12,
+        "wins": 5,
+        "losses": 7,
+        "winRate": 41.66666666666667,
+        "totalPnl": 4.7250127388679335,
+        "pf": 1.6334155134255248,
+        "maxDD": -5.497488364783008,
+        "stillOpen": true
+      },
+      "HYUNDAI": {
+        "trades": 18,
+        "wins": 10,
+        "losses": 8,
+        "winRate": 55.55555555555556,
+        "totalPnl": 7.3641949315724275,
+        "pf": 2.461875915294013,
+        "maxDD": -2.1137999094202877,
+        "stillOpen": false
+      },
+      "IBM": {
+        "trades": 18,
+        "wins": 4,
+        "losses": 14,
+        "winRate": 22.22222222222222,
+        "totalPnl": -6.270384003545322,
+        "pf": 0.22355294284474408,
+        "maxDD": -7.033913381882711,
+        "stillOpen": true
+      },
+      "INTC": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": 0.8057580608028065,
+        "pf": 1.0733027674066309,
+        "maxDD": -8.183905195444872,
+        "stillOpen": true
+      },
+      "IREN": {
+        "trades": 15,
+        "wins": 7,
+        "losses": 8,
+        "winRate": 46.666666666666664,
+        "totalPnl": 18.681796423919266,
+        "pf": 2.5901640792420406,
+        "maxDD": -8.614118002816983,
+        "stillOpen": true
+      },
+      "IWM": {
+        "trades": 13,
+        "wins": 4,
+        "losses": 9,
+        "winRate": 30.76923076923077,
+        "totalPnl": -2.311343344941364,
+        "pf": 0.5989615223327085,
+        "maxDD": -2.835838116049206,
+        "stillOpen": true
+      },
+      "KLAC": {
+        "trades": 16,
+        "wins": 4,
+        "losses": 12,
+        "winRate": 25,
+        "totalPnl": -6.329513657379822,
+        "pf": 0.5783414771965554,
+        "maxDD": -8.899837446208666,
+        "stillOpen": true
+      },
+      "KORU": {
+        "trades": 17,
+        "wins": 9,
+        "losses": 8,
+        "winRate": 52.94117647058824,
+        "totalPnl": 20.913152712742225,
+        "pf": 2.6446121370990068,
+        "maxDD": -6.183965523162989,
+        "stillOpen": true
+      },
+      "LITE": {
+        "trades": 14,
+        "wins": 9,
+        "losses": 5,
+        "winRate": 64.28571428571429,
+        "totalPnl": 14.950681133777348,
+        "pf": 2.655226430471342,
+        "maxDD": -2.602101642627744,
+        "stillOpen": true
+      },
+      "LLY": {
+        "trades": 14,
+        "wins": 4,
+        "losses": 10,
+        "winRate": 28.57142857142857,
+        "totalPnl": 5.017540072922553,
+        "pf": 2.1005358179022062,
+        "maxDD": -1.8532155008931808,
+        "stillOpen": false
+      },
+      "LRCX": {
+        "trades": 13,
+        "wins": 7,
+        "losses": 6,
+        "winRate": 53.84615384615385,
+        "totalPnl": 9.067983680170839,
+        "pf": 2.3544614892274245,
+        "maxDD": -4.479290244973113,
+        "stillOpen": true
+      },
+      "META": {
+        "trades": 14,
+        "wins": 4,
+        "losses": 10,
+        "winRate": 28.57142857142857,
+        "totalPnl": -5.02956160584789,
+        "pf": 0.5662134703526633,
+        "maxDD": -7.67361543053329,
+        "stillOpen": true
+      },
+      "MRVL": {
+        "trades": 14,
+        "wins": 9,
+        "losses": 5,
+        "winRate": 64.28571428571429,
+        "totalPnl": 16.974156473770957,
+        "pf": 2.66660981641925,
+        "maxDD": -4.32260136286201,
+        "stillOpen": true
+      },
+      "MSFT": {
+        "trades": 16,
+        "wins": 4,
+        "losses": 12,
+        "winRate": 25,
+        "totalPnl": 5.286049901443813,
+        "pf": 2.637405455434503,
+        "maxDD": -1.4059497773737863,
+        "stillOpen": true
+      },
+      "MSTR": {
+        "trades": 20,
+        "wins": 8,
+        "losses": 12,
+        "winRate": 40,
+        "totalPnl": -4.085514016064048,
+        "pf": 0.7970620319253922,
+        "maxDD": -11.4420313445766,
+        "stillOpen": false
+      },
+      "MU": {
+        "trades": 20,
+        "wins": 8,
+        "losses": 12,
+        "winRate": 40,
+        "totalPnl": 5.24169785071112,
+        "pf": 1.4829318467238977,
+        "maxDD": -6.494474864103438,
+        "stillOpen": true
+      },
+      "NBIS": {
+        "trades": 19,
+        "wins": 9,
+        "losses": 10,
+        "winRate": 47.368421052631575,
+        "totalPnl": 28.39100424694212,
+        "pf": 2.6827589730207815,
+        "maxDD": -8.312972660631363,
+        "stillOpen": true
+      },
+      "NOKIA": {
+        "trades": 12,
+        "wins": 5,
+        "losses": 7,
+        "winRate": 41.66666666666667,
+        "totalPnl": 7.196341381817998,
+        "pf": 1.8688102920958822,
+        "maxDD": -5.248578330598909,
+        "stillOpen": true
+      },
+      "NOW": {
+        "trades": 12,
+        "wins": 5,
+        "losses": 7,
+        "winRate": 41.66666666666667,
+        "totalPnl": 9.068777861829574,
+        "pf": 1.8984307053599823,
+        "maxDD": -4.365487299997701,
+        "stillOpen": false
+      },
+      "NVDA": {
+        "trades": 12,
+        "wins": 5,
+        "losses": 7,
+        "winRate": 41.66666666666667,
+        "totalPnl": 4.074242487774402,
+        "pf": 2.1983836236383767,
+        "maxDD": -1.2571709379767348,
+        "stillOpen": true
+      },
+      "ONDS": {
+        "trades": 13,
+        "wins": 4,
+        "losses": 9,
+        "winRate": 30.76923076923077,
+        "totalPnl": -5.0288602498021255,
+        "pf": 0.687560328535451,
+        "maxDD": -10.710371163750441,
+        "stillOpen": true
+      },
+      "ORCL": {
+        "trades": 17,
+        "wins": 8,
+        "losses": 9,
+        "winRate": 47.05882352941176,
+        "totalPnl": 4.486965734727009,
+        "pf": 1.7274916359662034,
+        "maxDD": -1.9065956503898212,
+        "stillOpen": true
+      },
+      "PLTR": {
+        "trades": 17,
+        "wins": 6,
+        "losses": 11,
+        "winRate": 35.294117647058826,
+        "totalPnl": 11.283008531702599,
+        "pf": 2.817835529110379,
+        "maxDD": -5.497077610659103,
+        "stillOpen": false
+      },
+      "QCOM": {
+        "trades": 15,
+        "wins": 7,
+        "losses": 8,
+        "winRate": 46.666666666666664,
+        "totalPnl": 3.073319429061704,
+        "pf": 1.4267931575092456,
+        "maxDD": -2.410183663554551,
+        "stillOpen": true
+      },
+      "QNTX": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": 3.105753761305846,
+        "pf": 1.1705818080962396,
+        "maxDD": -6.640690513260552,
+        "stillOpen": true
+      },
+      "QQQ": {
+        "trades": 14,
+        "wins": 4,
+        "losses": 10,
+        "winRate": 28.57142857142857,
+        "totalPnl": 1.2023750734839211,
+        "pf": 1.3063476958537619,
+        "maxDD": -2.1735287875702487,
+        "stillOpen": true
+      },
+      "SAMSUNG": {
+        "trades": 12,
+        "wins": 6,
+        "losses": 6,
+        "winRate": 50,
+        "totalPnl": 7.304739189497053,
+        "pf": 1.7181952381725953,
+        "maxDD": -5.104348206076934,
+        "stillOpen": false
+      },
+      "SKHYNIX": {
+        "trades": 16,
+        "wins": 5,
+        "losses": 11,
+        "winRate": 31.25,
+        "totalPnl": 11.044041898853996,
+        "pf": 1.9155659379245917,
+        "maxDD": -8.332555503197458,
+        "stillOpen": false
+      },
+      "SMCI": {
+        "trades": 13,
+        "wins": 6,
+        "losses": 7,
+        "winRate": 46.15384615384615,
+        "totalPnl": 12.879110493683903,
+        "pf": 3.032275874468946,
+        "maxDD": -4.627591630387414,
+        "stillOpen": true
+      },
+      "SNDK": {
+        "trades": 17,
+        "wins": 8,
+        "losses": 9,
+        "winRate": 47.05882352941176,
+        "totalPnl": 16.19441931623595,
+        "pf": 2.595987368742434,
+        "maxDD": -7.91493758683632,
+        "stillOpen": false
+      },
+      "SOXL": {
+        "trades": 12,
+        "wins": 8,
+        "losses": 4,
+        "winRate": 66.66666666666666,
+        "totalPnl": 17.195167847127152,
+        "pf": 2.4889236454222745,
+        "maxDD": -7.130997539104872,
+        "stillOpen": true
+      },
+      "SPCX": {
+        "trades": 14,
+        "wins": 9,
+        "losses": 5,
+        "winRate": 64.28571428571429,
+        "totalPnl": 18.221060407939493,
+        "pf": 6.098406544316102,
+        "maxDD": -2.1944548624202866,
+        "stillOpen": false
+      },
+      "SPY": {
+        "trades": 16,
+        "wins": 6,
+        "losses": 10,
+        "winRate": 37.5,
+        "totalPnl": -0.3404102005163874,
+        "pf": 0.8936538329760647,
+        "maxDD": -1.6925672388156259,
+        "stillOpen": true
+      },
+      "STXX": {
+        "trades": 16,
+        "wins": 4,
+        "losses": 12,
+        "winRate": 25,
+        "totalPnl": -1.9832035169371305,
+        "pf": 0.8600805746508409,
+        "maxDD": -7.950883431459943,
+        "stillOpen": false
+      },
+      "TQQQ": {
+        "trades": 12,
+        "wins": 6,
+        "losses": 6,
+        "winRate": 50,
+        "totalPnl": 8.292069777999748,
+        "pf": 1.959842400346555,
+        "maxDD": -3.205839909383725,
+        "stillOpen": true
+      },
+      "TSLA": {
+        "trades": 19,
+        "wins": 8,
+        "losses": 11,
+        "winRate": 42.10526315789473,
+        "totalPnl": 2.188030933152178,
+        "pf": 1.3203007021504272,
+        "maxDD": -2.185021554397096,
+        "stillOpen": false
+      },
+      "TSM": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": 3.0727790437172944,
+        "pf": 1.4792562615397677,
+        "maxDD": -2.225600107808405,
+        "stillOpen": true
+      },
+      "USAR": {
+        "trades": 14,
+        "wins": 6,
+        "losses": 8,
+        "winRate": 42.857142857142854,
+        "totalPnl": 10.15001478074314,
+        "pf": 2.190440807280228,
+        "maxDD": -4.846090381324119,
+        "stillOpen": true
+      },
+      "UVXY": {
+        "trades": 21,
+        "wins": 4,
+        "losses": 17,
+        "winRate": 19.047619047619047,
+        "totalPnl": -19.66768232320347,
+        "pf": 0.0907378726255717,
+        "maxDD": -19.66768232320347,
+        "stillOpen": false
+      },
+      "WDC": {
+        "trades": 16,
+        "wins": 8,
+        "losses": 8,
+        "winRate": 50,
+        "totalPnl": -0.3550198327059466,
+        "pf": 0.978570508257946,
+        "maxDD": -9.582950699087727,
+        "stillOpen": true
+      }
+    },
+    "StockEma1270Cross": {
+      "AAOI": {
+        "trades": 17,
+        "wins": 8,
+        "losses": 9,
+        "winRate": 47.05882352941176,
+        "totalPnl": 19.25911661756968,
+        "pf": 1.8943231635458448,
+        "maxDD": -16.68982675489796,
+        "stillOpen": true
+      },
+      "AAPL": {
+        "trades": 13,
+        "wins": 4,
+        "losses": 9,
+        "winRate": 30.76923076923077,
+        "totalPnl": 2.75624481943828,
+        "pf": 1.6575601697176023,
+        "maxDD": -2.2277807563657004,
+        "stillOpen": true
+      },
+      "ADBE": {
+        "trades": 16,
+        "wins": 3,
+        "losses": 13,
+        "winRate": 18.75,
+        "totalPnl": -6.468599218969368,
+        "pf": 0.45397486523104386,
+        "maxDD": -7.504996750794711,
+        "stillOpen": true
+      },
+      "ALAB": {
+        "trades": 25,
+        "wins": 4,
+        "losses": 21,
+        "winRate": 16,
+        "totalPnl": -16.71714001005088,
+        "pf": 0.496170646996207,
+        "maxDD": -23.509427637051935,
+        "stillOpen": true
+      },
+      "AMAT": {
+        "trades": 16,
+        "wins": 2,
+        "losses": 14,
+        "winRate": 12.5,
+        "totalPnl": -15.355487035625586,
+        "pf": 0.16671893181368896,
+        "maxDD": -15.355487035625586,
+        "stillOpen": true
+      },
+      "AMDSTOCK": {
+        "trades": 21,
+        "wins": 3,
+        "losses": 18,
+        "winRate": 14.285714285714285,
+        "totalPnl": -11.71522978752814,
+        "pf": 0.3817822018912636,
+        "maxDD": -16.77553590542534,
+        "stillOpen": true
+      },
+      "AMZN": {
+        "trades": 15,
+        "wins": 3,
+        "losses": 12,
+        "winRate": 20,
+        "totalPnl": 4.555262610012829,
+        "pf": 1.5572296579248466,
+        "maxDD": -6.403342455925843,
+        "stillOpen": true
+      },
+      "ARM": {
+        "trades": 20,
+        "wins": 5,
+        "losses": 15,
+        "winRate": 25,
+        "totalPnl": -7.713027249653347,
+        "pf": 0.7399411697024453,
+        "maxDD": -11.997907643429514,
+        "stillOpen": true
+      },
+      "ASML": {
+        "trades": 11,
+        "wins": 3,
+        "losses": 8,
+        "winRate": 27.27272727272727,
+        "totalPnl": -0.6634681603076775,
+        "pf": 0.9185492139677911,
+        "maxDD": -4.26369737809787,
+        "stillOpen": true
+      },
+      "ASTS": {
+        "trades": 14,
+        "wins": 4,
+        "losses": 10,
+        "winRate": 28.57142857142857,
+        "totalPnl": 10.65485140068368,
+        "pf": 1.909834946466279,
+        "maxDD": -5.256186091206651,
+        "stillOpen": true
+      },
+      "AVGO": {
+        "trades": 14,
+        "wins": 4,
+        "losses": 10,
+        "winRate": 28.57142857142857,
+        "totalPnl": 5.404865914369185,
+        "pf": 1.6516984679810447,
+        "maxDD": -3.896611992196676,
+        "stillOpen": true
+      },
+      "AXTI": {
+        "trades": 14,
+        "wins": 8,
+        "losses": 6,
+        "winRate": 57.14285714285714,
+        "totalPnl": 42.64846785825553,
+        "pf": 3.973258748701765,
+        "maxDD": -10.205803659031197,
+        "stillOpen": true
+      },
+      "BABA": {
+        "trades": 16,
+        "wins": 3,
+        "losses": 13,
+        "winRate": 18.75,
+        "totalPnl": -5.194141970336223,
+        "pf": 0.6658745647043413,
+        "maxDD": -11.458427526067616,
+        "stillOpen": true
+      },
+      "BBX": {
+        "trades": 16,
+        "wins": 6,
+        "losses": 10,
+        "winRate": 37.5,
+        "totalPnl": -3.0382767218612536,
+        "pf": 0.7581380909881132,
+        "maxDD": -8.873531372930172,
+        "stillOpen": true
+      },
+      "BE": {
+        "trades": 13,
+        "wins": 5,
+        "losses": 8,
+        "winRate": 38.46153846153847,
+        "totalPnl": -5.19543063714614,
+        "pf": 0.7413100920551926,
+        "maxDD": -18.07597427416303,
+        "stillOpen": true
+      },
+      "BMNR": {
+        "trades": 21,
+        "wins": 6,
+        "losses": 15,
+        "winRate": 28.57142857142857,
+        "totalPnl": -6.355674807283549,
+        "pf": 0.7465320857745886,
+        "maxDD": -11.333815312618611,
+        "stillOpen": true
+      },
+      "CBRS": {
+        "trades": 20,
+        "wins": 3,
+        "losses": 17,
+        "winRate": 15,
+        "totalPnl": -14.21523437066697,
+        "pf": 0.49761819558118653,
+        "maxDD": -14.21523437066697,
+        "stillOpen": true
+      },
+      "CIEN": {
+        "trades": 12,
+        "wins": 6,
+        "losses": 6,
+        "winRate": 50,
+        "totalPnl": 12.12019182809337,
+        "pf": 3.215313080025328,
+        "maxDD": -2.811124571863574,
+        "stillOpen": true
+      },
+      "COHR": {
+        "trades": 13,
+        "wins": 6,
+        "losses": 7,
+        "winRate": 46.15384615384615,
+        "totalPnl": 18.79265144564375,
+        "pf": 2.917719747645971,
+        "maxDD": -9.451174043789829,
+        "stillOpen": true
+      },
+      "COIN": {
+        "trades": 25,
+        "wins": 3,
+        "losses": 22,
+        "winRate": 12,
+        "totalPnl": -24.821260743784347,
+        "pf": 0.3234986653157818,
+        "maxDD": -27.429716667954967,
+        "stillOpen": true
+      },
+      "CRCL": {
+        "trades": 25,
+        "wins": 4,
+        "losses": 21,
+        "winRate": 16,
+        "totalPnl": -31.30845437452237,
+        "pf": 0.3085911722203005,
+        "maxDD": -31.30845437452237,
+        "stillOpen": true
+      },
+      "CRDO": {
+        "trades": 16,
+        "wins": 5,
+        "losses": 11,
+        "winRate": 31.25,
+        "totalPnl": -7.341561945455836,
+        "pf": 0.6247901434547749,
+        "maxDD": -15.503925018863736,
+        "stillOpen": true
+      },
+      "CRWV": {
+        "trades": 18,
+        "wins": 7,
+        "losses": 11,
+        "winRate": 38.88888888888889,
+        "totalPnl": 2.614590326766895,
+        "pf": 1.1169871096067743,
+        "maxDD": -9.729874950292587,
+        "stillOpen": true
+      },
+      "CSCO": {
+        "trades": 20,
+        "wins": 4,
+        "losses": 16,
+        "winRate": 20,
+        "totalPnl": -7.10000065062254,
+        "pf": 0.4200276470340883,
+        "maxDD": -7.10000065062254,
+        "stillOpen": true
+      },
+      "DELL": {
+        "trades": 14,
+        "wins": 4,
+        "losses": 10,
+        "winRate": 28.57142857142857,
+        "totalPnl": -2.6071762951583777,
+        "pf": 0.8260394012831718,
+        "maxDD": -6.488409531438188,
+        "stillOpen": true
+      },
+      "DRAM": {
+        "trades": 25,
+        "wins": 4,
+        "losses": 21,
+        "winRate": 16,
+        "totalPnl": -12.915557989380563,
+        "pf": 0.42093531260145023,
+        "maxDD": -13.03614073996331,
+        "stillOpen": true
+      },
+      "EWJ": {
+        "trades": 27,
+        "wins": 4,
+        "losses": 23,
+        "winRate": 14.814814814814813,
+        "totalPnl": -2.870410820023035,
+        "pf": 0.6271743394543605,
+        "maxDD": -4.283998881432171,
+        "stillOpen": true
+      },
+      "EWT": {
+        "trades": 18,
+        "wins": 4,
+        "losses": 14,
+        "winRate": 22.22222222222222,
+        "totalPnl": 0.25095335305850075,
+        "pf": 1.0309650483343538,
+        "maxDD": -6.325686996365617,
+        "stillOpen": true
+      },
+      "EWY": {
+        "trades": 23,
+        "wins": 3,
+        "losses": 20,
+        "winRate": 13.043478260869565,
+        "totalPnl": -13.721139565925155,
+        "pf": 0.2916547790731645,
+        "maxDD": -13.721139565925155,
+        "stillOpen": true
+      },
+      "FLNC": {
+        "trades": 12,
+        "wins": 5,
+        "losses": 7,
+        "winRate": 41.66666666666667,
+        "totalPnl": 12.759494525553922,
+        "pf": 2.308066303282608,
+        "maxDD": -5.541762605929723,
+        "stillOpen": true
+      },
+      "GLW": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": 9.556748525178733,
+        "pf": 2.133001735768331,
+        "maxDD": -5.647651388795281,
+        "stillOpen": true
+      },
+      "GOOGL": {
+        "trades": 16,
+        "wins": 2,
+        "losses": 14,
+        "winRate": 12.5,
+        "totalPnl": -4.054761920326564,
+        "pf": 0.34548463219771813,
+        "maxDD": -5.9632571747394945,
+        "stillOpen": true
+      },
+      "HOOD": {
+        "trades": 21,
+        "wins": 5,
+        "losses": 16,
+        "winRate": 23.809523809523807,
+        "totalPnl": -15.173923229168588,
+        "pf": 0.4287183450188479,
+        "maxDD": -19.739923859884442,
+        "stillOpen": true
+      },
+      "HPE": {
+        "trades": 9,
+        "wins": 5,
+        "losses": 4,
+        "winRate": 55.55555555555556,
+        "totalPnl": 12.745734695591773,
+        "pf": 3.443407540228905,
+        "maxDD": -5.039736697201269,
+        "stillOpen": true
+      },
+      "HYUNDAI": {
+        "trades": 14,
+        "wins": 5,
+        "losses": 9,
+        "winRate": 35.714285714285715,
+        "totalPnl": 5.008922266299332,
+        "pf": 1.4678111157244553,
+        "maxDD": -9.061508182395407,
+        "stillOpen": true
+      },
+      "IBM": {
+        "trades": 20,
+        "wins": 3,
+        "losses": 17,
+        "winRate": 15,
+        "totalPnl": -8.157904055372862,
+        "pf": 0.32635356395429865,
+        "maxDD": -10.963094590546767,
+        "stillOpen": true
+      },
+      "INTC": {
+        "trades": 18,
+        "wins": 3,
+        "losses": 15,
+        "winRate": 16.666666666666664,
+        "totalPnl": -8.14211432341779,
+        "pf": 0.5819156881216948,
+        "maxDD": -8.976946972234334,
+        "stillOpen": true
+      },
+      "IREN": {
+        "trades": 18,
+        "wins": 4,
+        "losses": 14,
+        "winRate": 22.22222222222222,
+        "totalPnl": -22.85941330017115,
+        "pf": 0.28290430242371983,
+        "maxDD": -22.85941330017115,
+        "stillOpen": true
+      },
+      "IWM": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": -2.8420931041733746,
+        "pf": 0.439758452781205,
+        "maxDD": -3.219776520750048,
+        "stillOpen": true
+      },
+      "KLAC": {
+        "trades": 13,
+        "wins": 3,
+        "losses": 10,
+        "winRate": 23.076923076923077,
+        "totalPnl": -7.134539613913674,
+        "pf": 0.5229892268802269,
+        "maxDD": -7.134539613913674,
+        "stillOpen": true
+      },
+      "KORU": {
+        "trades": 24,
+        "wins": 5,
+        "losses": 19,
+        "winRate": 20.833333333333336,
+        "totalPnl": -29.976989404487945,
+        "pf": 0.33607207500537545,
+        "maxDD": -29.976989404487945,
+        "stillOpen": true
+      },
+      "LITE": {
+        "trades": 16,
+        "wins": 6,
+        "losses": 10,
+        "winRate": 37.5,
+        "totalPnl": -8.83373581196552,
+        "pf": 0.6156923824018941,
+        "maxDD": -11.090548895794997,
+        "stillOpen": true
+      },
+      "LLY": {
+        "trades": 14,
+        "wins": 5,
+        "losses": 9,
+        "winRate": 35.714285714285715,
+        "totalPnl": 5.335228352520747,
+        "pf": 2.296148736193697,
+        "maxDD": -2.565310326024102,
+        "stillOpen": true
+      },
+      "LRCX": {
+        "trades": 15,
+        "wins": 3,
+        "losses": 12,
+        "winRate": 20,
+        "totalPnl": -8.63741685785729,
+        "pf": 0.43122227897470317,
+        "maxDD": -11.691042842635147,
+        "stillOpen": true
+      },
+      "META": {
+        "trades": 13,
+        "wins": 4,
+        "losses": 9,
+        "winRate": 30.76923076923077,
+        "totalPnl": 8.09783317997007,
+        "pf": 2.878258459522883,
+        "maxDD": -1.7537236614307279,
+        "stillOpen": true
+      },
+      "MRVL": {
+        "trades": 11,
+        "wins": 4,
+        "losses": 7,
+        "winRate": 36.36363636363637,
+        "totalPnl": -6.710927810378704,
+        "pf": 0.5456197932674779,
+        "maxDD": -9.496146383242294,
+        "stillOpen": true
+      },
+      "MSFT": {
+        "trades": 6,
+        "wins": 3,
+        "losses": 3,
+        "winRate": 50,
+        "totalPnl": 3.5552403209473606,
+        "pf": 4.639167173118961,
+        "maxDD": -0.9769378959033443,
+        "stillOpen": true
+      },
+      "MSTR": {
+        "trades": 17,
+        "wins": 4,
+        "losses": 13,
+        "winRate": 23.52941176470588,
+        "totalPnl": -7.4110879717174125,
+        "pf": 0.7111851796076454,
+        "maxDD": -14.0923638249877,
+        "stillOpen": true
+      },
+      "MU": {
+        "trades": 24,
+        "wins": 3,
+        "losses": 21,
+        "winRate": 12.5,
+        "totalPnl": -22.048690825795813,
+        "pf": 0.21012825958430756,
+        "maxDD": -22.048690825795813,
+        "stillOpen": true
+      },
+      "NBIS": {
+        "trades": 11,
+        "wins": 8,
+        "losses": 3,
+        "winRate": 72.72727272727273,
+        "totalPnl": 34.187390011504384,
+        "pf": 5.354528171869029,
+        "maxDD": -7.850997550632588,
+        "stillOpen": true
+      },
+      "NOKIA": {
+        "trades": 16,
+        "wins": 3,
+        "losses": 13,
+        "winRate": 18.75,
+        "totalPnl": -9.806641219734104,
+        "pf": 0.5246778043493276,
+        "maxDD": -16.4129906755719,
+        "stillOpen": true
+      },
+      "NOW": {
+        "trades": 14,
+        "wins": 4,
+        "losses": 10,
+        "winRate": 28.57142857142857,
+        "totalPnl": -1.2801921174573172,
+        "pf": 0.8902042442441285,
+        "maxDD": -8.033489902565366,
+        "stillOpen": true
+      },
+      "NVDA": {
+        "trades": 12,
+        "wins": 3,
+        "losses": 9,
+        "winRate": 25,
+        "totalPnl": 0.9275325986902803,
+        "pf": 1.1226274342873108,
+        "maxDD": -5.862271582682057,
+        "stillOpen": true
+      },
+      "ONDS": {
+        "trades": 12,
+        "wins": 6,
+        "losses": 6,
+        "winRate": 50,
+        "totalPnl": 7.936190217407466,
+        "pf": 1.6935657170388776,
+        "maxDD": -5.23947105709436,
+        "stillOpen": true
+      },
+      "ORCL": {
+        "trades": 12,
+        "wins": 5,
+        "losses": 7,
+        "winRate": 41.66666666666667,
+        "totalPnl": 6.02481961624836,
+        "pf": 1.737140168172227,
+        "maxDD": -5.234570933268755,
+        "stillOpen": true
+      },
+      "PLTR": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": 13.132450154943854,
+        "pf": 2.836419526913897,
+        "maxDD": -4.190360251269764,
+        "stillOpen": true
+      },
+      "QCOM": {
+        "trades": 25,
+        "wins": 5,
+        "losses": 20,
+        "winRate": 20,
+        "totalPnl": -2.6339991488480106,
+        "pf": 0.8133795068760097,
+        "maxDD": -12.614733842020646,
+        "stillOpen": true
+      },
+      "QNTX": {
+        "trades": 15,
+        "wins": 4,
+        "losses": 11,
+        "winRate": 26.666666666666668,
+        "totalPnl": -0.6890944925170155,
+        "pf": 0.9572206301741257,
+        "maxDD": -14.296107124229746,
+        "stillOpen": true
+      },
+      "QQQ": {
+        "trades": 20,
+        "wins": 4,
+        "losses": 16,
+        "winRate": 20,
+        "totalPnl": 0.6171252450792826,
+        "pf": 1.1381650916922144,
+        "maxDD": -2.6293095720353756,
+        "stillOpen": true
+      },
+      "SAMSUNG": {
+        "trades": 24,
+        "wins": 2,
+        "losses": 22,
+        "winRate": 8.333333333333332,
+        "totalPnl": -23.35752908442861,
+        "pf": 0.2811053379358343,
+        "maxDD": -23.35752908442861,
+        "stillOpen": true
+      },
+      "SKHYNIX": {
+        "trades": 20,
+        "wins": 4,
+        "losses": 16,
+        "winRate": 20,
+        "totalPnl": -10.055012142753858,
+        "pf": 0.592995129599337,
+        "maxDD": -12.299551158461789,
+        "stillOpen": true
+      },
+      "SMCI": {
+        "trades": 20,
+        "wins": 5,
+        "losses": 15,
+        "winRate": 25,
+        "totalPnl": -8.087815908234944,
+        "pf": 0.6348107026629617,
+        "maxDD": -11.51788380877843,
+        "stillOpen": true
+      },
+      "SNDK": {
+        "trades": 15,
+        "wins": 4,
+        "losses": 11,
+        "winRate": 26.666666666666668,
+        "totalPnl": -8.308512021717302,
+        "pf": 0.6670269353646539,
+        "maxDD": -14.52006818197583,
+        "stillOpen": true
+      },
+      "SOXL": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": -0.398314909728695,
+        "pf": 0.9823021793857641,
+        "maxDD": -12.909264608939662,
+        "stillOpen": true
+      },
+      "SPCX": {
+        "trades": 21,
+        "wins": 7,
+        "losses": 14,
+        "winRate": 33.33333333333333,
+        "totalPnl": -2.2138642087480553,
+        "pf": 0.8859074531068099,
+        "maxDD": -13.877478866571833,
+        "stillOpen": true
+      },
+      "SPY": {
+        "trades": 9,
+        "wins": 4,
+        "losses": 5,
+        "winRate": 44.44444444444444,
+        "totalPnl": 1.3468966588376314,
+        "pf": 1.8018641400572852,
+        "maxDD": -1.370171973458398,
+        "stillOpen": true
+      },
+      "STXX": {
+        "trades": 13,
+        "wins": 3,
+        "losses": 10,
+        "winRate": 23.076923076923077,
+        "totalPnl": -13.285120981063802,
+        "pf": 0.5614211593780345,
+        "maxDD": -29.775887097453342,
+        "stillOpen": true
+      },
+      "TQQQ": {
+        "trades": 17,
+        "wins": 5,
+        "losses": 12,
+        "winRate": 29.411764705882355,
+        "totalPnl": 6.060996056259489,
+        "pf": 1.5703288479841395,
+        "maxDD": -6.846677185723339,
+        "stillOpen": true
+      },
+      "TSLA": {
+        "trades": 17,
+        "wins": 5,
+        "losses": 12,
+        "winRate": 29.411764705882355,
+        "totalPnl": -9.051497649020506,
+        "pf": 0.3227574570835429,
+        "maxDD": -9.158789488512351,
+        "stillOpen": true
+      },
+      "TSM": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": -2.288219821040375,
+        "pf": 0.4643763799763838,
+        "maxDD": -2.288219821040375,
+        "stillOpen": true
+      },
+      "USAR": {
+        "trades": 16,
+        "wins": 5,
+        "losses": 11,
+        "winRate": 31.25,
+        "totalPnl": 1.0389805389306748,
+        "pf": 1.0573971615622264,
+        "maxDD": -14.457149284421625,
+        "stillOpen": true
+      },
+      "UVXY": {
+        "trades": 13,
+        "wins": 3,
+        "losses": 10,
+        "winRate": 23.076923076923077,
+        "totalPnl": -1.3366122036928423,
+        "pf": 0.9144486919676166,
+        "maxDD": -7.081129114214371,
+        "stillOpen": true
+      },
+      "WDC": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": -0.9866400479494084,
+        "pf": 0.9474131437585247,
+        "maxDD": -16.147610009928925,
+        "stillOpen": true
+      }
+    },
+    "PullbackTrend": {
+      "AAOI": {
+        "trades": 16,
+        "wins": 5,
+        "losses": 11,
+        "winRate": 31.25,
+        "totalPnl": 0.7811940384962747,
+        "pf": 1.0433236869946512,
+        "maxDD": -13.271164626415587,
+        "stillOpen": false
+      },
+      "AAPL": {
+        "trades": 19,
+        "wins": 3,
+        "losses": 16,
+        "winRate": 15.789473684210526,
+        "totalPnl": -2.5387265332653044,
+        "pf": 0.49002474691974557,
+        "maxDD": -4.398493834305767,
+        "stillOpen": true
+      },
+      "ADBE": {
+        "trades": 16,
+        "wins": 6,
+        "losses": 10,
+        "winRate": 37.5,
+        "totalPnl": 0.6196367802359389,
+        "pf": 1.0942437420133029,
+        "maxDD": -3.197426102181013,
+        "stillOpen": false
+      },
+      "ALAB": {
+        "trades": 19,
+        "wins": 6,
+        "losses": 13,
+        "winRate": 31.57894736842105,
+        "totalPnl": -0.5776586597964937,
+        "pf": 0.9434369836802412,
+        "maxDD": -8.304032315572258,
+        "stillOpen": false
+      },
+      "AMAT": {
+        "trades": 10,
+        "wins": 2,
+        "losses": 8,
+        "winRate": 20,
+        "totalPnl": -5.2138918010236495,
+        "pf": 0.30816623537605775,
+        "maxDD": -5.2138918010236495,
+        "stillOpen": false
+      },
+      "AMDSTOCK": {
+        "trades": 12,
+        "wins": 1,
+        "losses": 11,
+        "winRate": 8.333333333333332,
+        "totalPnl": -3.58984299619794,
+        "pf": 0.4747953147676608,
+        "maxDD": -3.747524711439088,
+        "stillOpen": false
+      },
+      "AMZN": {
+        "trades": 13,
+        "wins": 1,
+        "losses": 12,
+        "winRate": 7.6923076923076925,
+        "totalPnl": 6.755849162662382,
+        "pf": 2.7144468038216125,
+        "maxDD": -3.94054172319792,
+        "stillOpen": false
+      },
+      "ARM": {
+        "trades": 13,
+        "wins": 2,
+        "losses": 11,
+        "winRate": 15.384615384615385,
+        "totalPnl": 3.9783342833183006,
+        "pf": 1.6374004728773712,
+        "maxDD": -5.078136458986252,
+        "stillOpen": false
+      },
+      "ASML": {
+        "trades": 13,
+        "wins": 4,
+        "losses": 9,
+        "winRate": 30.76923076923077,
+        "totalPnl": 1.285339001598842,
+        "pf": 1.2859719767610038,
+        "maxDD": -2.8617161862490295,
+        "stillOpen": false
+      },
+      "ASTS": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": 4.066661504589296,
+        "pf": 1.7039718520151643,
+        "maxDD": -2.1892581708715584,
+        "stillOpen": true
+      },
+      "AVGO": {
+        "trades": 11,
+        "wins": 4,
+        "losses": 7,
+        "winRate": 36.36363636363637,
+        "totalPnl": 3.9335140566412243,
+        "pf": 2.6591225256809823,
+        "maxDD": -1.355784147179953,
+        "stillOpen": false
+      },
+      "AXTI": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": 11.680337617896807,
+        "pf": 1.913149458041898,
+        "maxDD": -7.9326616428841366,
+        "stillOpen": false
+      },
+      "BABA": {
+        "trades": 15,
+        "wins": 3,
+        "losses": 12,
+        "winRate": 20,
+        "totalPnl": -1.8541918364278291,
+        "pf": 0.7453813252535396,
+        "maxDD": -6.510907743039298,
+        "stillOpen": false
+      },
+      "BBX": {
+        "trades": 20,
+        "wins": 3,
+        "losses": 17,
+        "winRate": 15,
+        "totalPnl": -3.991943455147589,
+        "pf": 0.5939949429080901,
+        "maxDD": -5.404292041314219,
+        "stillOpen": false
+      },
+      "BE": {
+        "trades": 13,
+        "wins": 3,
+        "losses": 10,
+        "winRate": 23.076923076923077,
+        "totalPnl": -9.97550698354631,
+        "pf": 0.3714271999065362,
+        "maxDD": -10.988633216690676,
+        "stillOpen": true
+      },
+      "BMNR": {
+        "trades": 17,
+        "wins": 5,
+        "losses": 12,
+        "winRate": 29.411764705882355,
+        "totalPnl": 1.6173951441331422,
+        "pf": 1.0937210662828134,
+        "maxDD": -12.149775675477605,
+        "stillOpen": false
+      },
+      "CBRS": {
+        "trades": 9,
+        "wins": 2,
+        "losses": 7,
+        "winRate": 22.22222222222222,
+        "totalPnl": -2.371546210452028,
+        "pf": 0.6352500707185064,
+        "maxDD": -4.553507188650169,
+        "stillOpen": false
+      },
+      "CIEN": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": 0.7350209111822359,
+        "pf": 1.1914372761027823,
+        "maxDD": -3.407206704756989,
+        "stillOpen": false
+      },
+      "COHR": {
+        "trades": 10,
+        "wins": 3,
+        "losses": 7,
+        "winRate": 30,
+        "totalPnl": 13.085697005819638,
+        "pf": 3.158962893113049,
+        "maxDD": -6.061103248954467,
+        "stillOpen": false
+      },
+      "COIN": {
+        "trades": 24,
+        "wins": 3,
+        "losses": 21,
+        "winRate": 12.5,
+        "totalPnl": -7.549552913641332,
+        "pf": 0.5380481820754568,
+        "maxDD": -10.676975400744931,
+        "stillOpen": false
+      },
+      "CRCL": {
+        "trades": 25,
+        "wins": 6,
+        "losses": 19,
+        "winRate": 24,
+        "totalPnl": -7.8098013421922365,
+        "pf": 0.5935308360420348,
+        "maxDD": -10.359729003716625,
+        "stillOpen": false
+      },
+      "CRDO": {
+        "trades": 13,
+        "wins": 4,
+        "losses": 9,
+        "winRate": 30.76923076923077,
+        "totalPnl": -0.2740209267757433,
+        "pf": 0.9738409569350873,
+        "maxDD": -6.6113084720475355,
+        "stillOpen": false
+      },
+      "CRWV": {
+        "trades": 13,
+        "wins": 4,
+        "losses": 9,
+        "winRate": 30.76923076923077,
+        "totalPnl": 4.083888566327675,
+        "pf": 1.8167390276640722,
+        "maxDD": -5.000236829636841,
+        "stillOpen": false
+      },
+      "CSCO": {
+        "trades": 22,
+        "wins": 4,
+        "losses": 18,
+        "winRate": 18.181818181818183,
+        "totalPnl": -5.855655491608855,
+        "pf": 0.2811708877762109,
+        "maxDD": -6.717912046440493,
+        "stillOpen": false
+      },
+      "DELL": {
+        "trades": 16,
+        "wins": 4,
+        "losses": 12,
+        "winRate": 25,
+        "totalPnl": -0.6470529702385266,
+        "pf": 0.9350531012435326,
+        "maxDD": -5.761762560734715,
+        "stillOpen": true
+      },
+      "DRAM": {
+        "trades": 17,
+        "wins": 4,
+        "losses": 13,
+        "winRate": 23.52941176470588,
+        "totalPnl": -2.423817294420092,
+        "pf": 0.8006280926132563,
+        "maxDD": -5.999327910023146,
+        "stillOpen": false
+      },
+      "EWJ": {
+        "trades": 24,
+        "wins": 5,
+        "losses": 19,
+        "winRate": 20.833333333333336,
+        "totalPnl": -2.5263169071883684,
+        "pf": 0.47254989213509707,
+        "maxDD": -4.126096425387591,
+        "stillOpen": false
+      },
+      "EWT": {
+        "trades": 27,
+        "wins": 6,
+        "losses": 21,
+        "winRate": 22.22222222222222,
+        "totalPnl": -2.2297863324277434,
+        "pf": 0.7261717969453019,
+        "maxDD": -2.8514676542672603,
+        "stillOpen": false
+      },
+      "EWY": {
+        "trades": 18,
+        "wins": 3,
+        "losses": 15,
+        "winRate": 16.666666666666664,
+        "totalPnl": -1.0102097257120661,
+        "pf": 0.8759814673677929,
+        "maxDD": -4.930355639797626,
+        "stillOpen": false
+      },
+      "FLNC": {
+        "trades": 20,
+        "wins": 2,
+        "losses": 18,
+        "winRate": 10,
+        "totalPnl": -7.060571738280206,
+        "pf": 0.41314003388858705,
+        "maxDD": -11.586096447452078,
+        "stillOpen": false
+      },
+      "GLW": {
+        "trades": 7,
+        "wins": 5,
+        "losses": 2,
+        "winRate": 71.42857142857143,
+        "totalPnl": 6.794428255511486,
+        "pf": 4.36309942330693,
+        "maxDD": -1.8309659372026692,
+        "stillOpen": false
+      },
+      "GOOGL": {
+        "trades": 20,
+        "wins": 2,
+        "losses": 18,
+        "winRate": 10,
+        "totalPnl": 1.9787435785475629,
+        "pf": 1.4605987280849062,
+        "maxDD": -3.722859030104232,
+        "stillOpen": false
+      },
+      "HOOD": {
+        "trades": 21,
+        "wins": 3,
+        "losses": 18,
+        "winRate": 14.285714285714285,
+        "totalPnl": -1.8096305121216403,
+        "pf": 0.8432525942998984,
+        "maxDD": -6.633125232808942,
+        "stillOpen": true
+      },
+      "HPE": {
+        "trades": 22,
+        "wins": 6,
+        "losses": 16,
+        "winRate": 27.27272727272727,
+        "totalPnl": -2.6750346468248765,
+        "pf": 0.7676040099470952,
+        "maxDD": -7.782564237296711,
+        "stillOpen": false
+      },
+      "HYUNDAI": {
+        "trades": 15,
+        "wins": 3,
+        "losses": 12,
+        "winRate": 20,
+        "totalPnl": 2.8674541637232767,
+        "pf": 1.4059309120811765,
+        "maxDD": -3.447428172105869,
+        "stillOpen": false
+      },
+      "IBM": {
+        "trades": 19,
+        "wins": 6,
+        "losses": 13,
+        "winRate": 31.57894736842105,
+        "totalPnl": -0.2934702884089353,
+        "pf": 0.9379698523587638,
+        "maxDD": -3.2164926947968944,
+        "stillOpen": false
+      },
+      "INTC": {
+        "trades": 11,
+        "wins": 2,
+        "losses": 9,
+        "winRate": 18.181818181818183,
+        "totalPnl": -0.8117121969679157,
+        "pf": 0.8612376929778985,
+        "maxDD": -2.9635002660831344,
+        "stillOpen": true
+      },
+      "IREN": {
+        "trades": 17,
+        "wins": 4,
+        "losses": 13,
+        "winRate": 23.52941176470588,
+        "totalPnl": -12.264842865517267,
+        "pf": 0.2136964974053815,
+        "maxDD": -12.264842865517267,
+        "stillOpen": true
+      },
+      "IWM": {
+        "trades": 17,
+        "wins": 2,
+        "losses": 15,
+        "winRate": 11.76470588235294,
+        "totalPnl": -0.9749592394324151,
+        "pf": 0.6641955542933883,
+        "maxDD": -1.3616757759268425,
+        "stillOpen": false
+      },
+      "KLAC": {
+        "trades": 14,
+        "wins": 3,
+        "losses": 11,
+        "winRate": 21.428571428571427,
+        "totalPnl": -5.553736673532612,
+        "pf": 0.4722161511787038,
+        "maxDD": -6.918439555207922,
+        "stillOpen": false
+      },
+      "KORU": {
+        "trades": 17,
+        "wins": 3,
+        "losses": 14,
+        "winRate": 17.647058823529413,
+        "totalPnl": 4.95245721701662,
+        "pf": 1.3116608257821745,
+        "maxDD": -10.68576244128517,
+        "stillOpen": false
+      },
+      "LITE": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": 3.798102059767504,
+        "pf": 1.5341179539336334,
+        "maxDD": -4.92597393747097,
+        "stillOpen": false
+      },
+      "LLY": {
+        "trades": 14,
+        "wins": 4,
+        "losses": 10,
+        "winRate": 28.57142857142857,
+        "totalPnl": 1.1124217286471099,
+        "pf": 1.2795181791403818,
+        "maxDD": -1.6770964283682546,
+        "stillOpen": false
+      },
+      "LRCX": {
+        "trades": 23,
+        "wins": 3,
+        "losses": 20,
+        "winRate": 13.043478260869565,
+        "totalPnl": -7.710757301047133,
+        "pf": 0.41089785927202654,
+        "maxDD": -7.710757301047133,
+        "stillOpen": false
+      },
+      "META": {
+        "trades": 19,
+        "wins": 5,
+        "losses": 14,
+        "winRate": 26.31578947368421,
+        "totalPnl": 1.3160482928427117,
+        "pf": 1.4033935755179743,
+        "maxDD": -2.381670713688125,
+        "stillOpen": true
+      },
+      "MRVL": {
+        "trades": 18,
+        "wins": 5,
+        "losses": 13,
+        "winRate": 27.77777777777778,
+        "totalPnl": 0.009539487992628937,
+        "pf": 1.001168086270184,
+        "maxDD": -5.829750342150289,
+        "stillOpen": false
+      },
+      "MSFT": {
+        "trades": 20,
+        "wins": 5,
+        "losses": 15,
+        "winRate": 25,
+        "totalPnl": 11.261552551703032,
+        "pf": 3.8846204246387672,
+        "maxDD": -2.572923471481161,
+        "stillOpen": false
+      },
+      "MSTR": {
+        "trades": 23,
+        "wins": 5,
+        "losses": 18,
+        "winRate": 21.73913043478261,
+        "totalPnl": -8.245570791733543,
+        "pf": 0.5782806559454392,
+        "maxDD": -8.692626671189299,
+        "stillOpen": false
+      },
+      "MU": {
+        "trades": 16,
+        "wins": 3,
+        "losses": 13,
+        "winRate": 18.75,
+        "totalPnl": 0.2716368656654493,
+        "pf": 1.031992107430164,
+        "maxDD": -4.373753255241253,
+        "stillOpen": true
+      },
+      "NBIS": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": 1.561587658790062,
+        "pf": 1.2063405700196568,
+        "maxDD": -7.160400336952632,
+        "stillOpen": true
+      },
+      "NOKIA": {
+        "trades": 11,
+        "wins": 3,
+        "losses": 8,
+        "winRate": 27.27272727272727,
+        "totalPnl": -4.717952673623018,
+        "pf": 0.45630118720725804,
+        "maxDD": -4.717952673623018,
+        "stillOpen": false
+      },
+      "NOW": {
+        "trades": 11,
+        "wins": 6,
+        "losses": 5,
+        "winRate": 54.54545454545454,
+        "totalPnl": 8.30239487261154,
+        "pf": 4.383418984308061,
+        "maxDD": -1.8703280141894836,
+        "stillOpen": false
+      },
+      "NVDA": {
+        "trades": 8,
+        "wins": 4,
+        "losses": 4,
+        "winRate": 50,
+        "totalPnl": 5.2208651992197845,
+        "pf": 3.824808399423938,
+        "maxDD": -0.7712612258175522,
+        "stillOpen": true
+      },
+      "ONDS": {
+        "trades": 12,
+        "wins": 3,
+        "losses": 9,
+        "winRate": 25,
+        "totalPnl": 2.182451176358936,
+        "pf": 1.3017197709960204,
+        "maxDD": -3.3572209105848545,
+        "stillOpen": false
+      },
+      "ORCL": {
+        "trades": 16,
+        "wins": 4,
+        "losses": 12,
+        "winRate": 25,
+        "totalPnl": 3.0268018172965796,
+        "pf": 1.328848116466023,
+        "maxDD": -6.030207097296804,
+        "stillOpen": false
+      },
+      "PLTR": {
+        "trades": 12,
+        "wins": 4,
+        "losses": 8,
+        "winRate": 33.33333333333333,
+        "totalPnl": 19.683946303674606,
+        "pf": 6.336157770335784,
+        "maxDD": -2.9262476340492896,
+        "stillOpen": false
+      },
+      "QCOM": {
+        "trades": 20,
+        "wins": 2,
+        "losses": 18,
+        "winRate": 10,
+        "totalPnl": -4.054856714200883,
+        "pf": 0.5405471321179585,
+        "maxDD": -8.040095591571108,
+        "stillOpen": true
+      },
+      "QNTX": {
+        "trades": 19,
+        "wins": 3,
+        "losses": 16,
+        "winRate": 15.789473684210526,
+        "totalPnl": -2.456520800623389,
+        "pf": 0.7526268396185871,
+        "maxDD": -5.391758758041378,
+        "stillOpen": false
+      },
+      "QQQ": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": 0.8642645854488444,
+        "pf": 1.3816999744177914,
+        "maxDD": -0.7561025539377968,
+        "stillOpen": false
+      },
+      "SAMSUNG": {
+        "trades": 18,
+        "wins": 5,
+        "losses": 13,
+        "winRate": 27.77777777777778,
+        "totalPnl": -9.648500407444965,
+        "pf": 0.14648198802751813,
+        "maxDD": -9.724086132108964,
+        "stillOpen": false
+      },
+      "SKHYNIX": {
+        "trades": 12,
+        "wins": 4,
+        "losses": 8,
+        "winRate": 33.33333333333333,
+        "totalPnl": -4.951830275670413,
+        "pf": 0.5051386768543178,
+        "maxDD": -5.669120746938653,
+        "stillOpen": false
+      },
+      "SMCI": {
+        "trades": 23,
+        "wins": 4,
+        "losses": 19,
+        "winRate": 17.391304347826086,
+        "totalPnl": -0.10085993730291509,
+        "pf": 0.992344870271407,
+        "maxDD": -9.619848459443418,
+        "stillOpen": false
+      },
+      "SNDK": {
+        "trades": 7,
+        "wins": 2,
+        "losses": 5,
+        "winRate": 28.57142857142857,
+        "totalPnl": 19.109410471526193,
+        "pf": 4.03584042942551,
+        "maxDD": -5.833693614757429,
+        "stillOpen": true
+      },
+      "SOXL": {
+        "trades": 18,
+        "wins": 6,
+        "losses": 12,
+        "winRate": 33.33333333333333,
+        "totalPnl": -0.17524130456764042,
+        "pf": 0.984520803754693,
+        "maxDD": -7.703917774356014,
+        "stillOpen": false
+      },
+      "SPCX": {
+        "trades": 23,
+        "wins": 4,
+        "losses": 19,
+        "winRate": 17.391304347826086,
+        "totalPnl": -18.703436033346335,
+        "pf": 0.131709194522673,
+        "maxDD": -18.703436033346335,
+        "stillOpen": false
+      },
+      "SPY": {
+        "trades": 24,
+        "wins": 4,
+        "losses": 20,
+        "winRate": 16.666666666666664,
+        "totalPnl": -0.39291695510257185,
+        "pf": 0.860046158254746,
+        "maxDD": -1.8539829260622926,
+        "stillOpen": true
+      },
+      "STXX": {
+        "trades": 11,
+        "wins": 1,
+        "losses": 10,
+        "winRate": 9.090909090909092,
+        "totalPnl": -4.693395115279096,
+        "pf": 0.7099311827014952,
+        "maxDD": -15.027316107029236,
+        "stillOpen": false
+      },
+      "TQQQ": {
+        "trades": 12,
+        "wins": 6,
+        "losses": 6,
+        "winRate": 50,
+        "totalPnl": 5.950346895641878,
+        "pf": 2.8303255607571582,
+        "maxDD": -1.083890612650082,
+        "stillOpen": false
+      },
+      "TSLA": {
+        "trades": 13,
+        "wins": 5,
+        "losses": 8,
+        "winRate": 38.46153846153847,
+        "totalPnl": -1.0511387875553375,
+        "pf": 0.804434035111725,
+        "maxDD": -2.1230265549008864,
+        "stillOpen": true
+      },
+      "TSM": {
+        "trades": 20,
+        "wins": 4,
+        "losses": 16,
+        "winRate": 20,
+        "totalPnl": -2.6100117002980943,
+        "pf": 0.43390806471731863,
+        "maxDD": -3.7228983717956416,
+        "stillOpen": false
+      },
+      "USAR": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": 12.483743501865444,
+        "pf": 4.905879288072388,
+        "maxDD": -2.8848778538422746,
+        "stillOpen": false
+      },
+      "UVXY": {
+        "trades": 11,
+        "wins": 2,
+        "losses": 9,
+        "winRate": 18.181818181818183,
+        "totalPnl": -11.833738340575835,
+        "pf": 0.04183471046940714,
+        "maxDD": -11.833738340575835,
+        "stillOpen": false
+      },
+      "WDC": {
+        "trades": 10,
+        "wins": 3,
+        "losses": 7,
+        "winRate": 30,
+        "totalPnl": 4.256410076372721,
+        "pf": 1.6464314824706092,
+        "maxDD": -3.907026692751527,
+        "stillOpen": false
+      }
+    },
+    "PumpEmaSpread": {
+      "AAOI": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -2.140790554760502,
+        "pf": 0,
+        "maxDD": -2.140790554760502,
+        "stillOpen": true
+      },
+      "AAPL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "ADBE": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "ALAB": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "AMAT": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "AMDSTOCK": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "AMZN": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "ARM": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -4.779936488984748,
+        "pf": 0,
+        "maxDD": -4.779936488984748,
+        "stillOpen": false
+      },
+      "ASML": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "ASTS": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "AVGO": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "AXTI": {
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "winRate": 50,
+        "totalPnl": -4.073006202653859,
+        "pf": 0.5297769772272771,
+        "maxDD": -8.661860447914526,
+        "stillOpen": true
+      },
+      "BABA": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "BBX": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 1.7270332225913512,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "BE": {
+        "trades": 2,
+        "wins": 1,
+        "losses": 1,
+        "winRate": 50,
+        "totalPnl": 1.027689800106428,
+        "pf": 1.716781213375174,
+        "maxDD": -1.433756606520489,
+        "stillOpen": true
+      },
+      "BMNR": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -4.299908600917434,
+        "pf": 0,
+        "maxDD": -4.299908600917434,
+        "stillOpen": true
+      },
+      "CBRS": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 0.9687097466960338,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "CIEN": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "COHR": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -2.2343827930174527,
+        "pf": 0,
+        "maxDD": -2.2343827930174527,
+        "stillOpen": true
+      },
+      "COIN": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -3.7016910153396654,
+        "pf": 0,
+        "maxDD": -3.7016910153396654,
+        "stillOpen": true
+      },
+      "CRCL": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -5.96747661052523,
+        "pf": 0,
+        "maxDD": -5.96747661052523,
+        "stillOpen": false
+      },
+      "CRDO": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -4.656946922715026,
+        "pf": 0,
+        "maxDD": -4.656946922715026,
+        "stillOpen": true
+      },
+      "CRWV": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -2.7867189442687295,
+        "pf": 0,
+        "maxDD": -2.7867189442687295,
+        "stillOpen": true
+      },
+      "CSCO": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "DELL": {
+        "trades": 4,
+        "wins": 0,
+        "losses": 4,
+        "winRate": 0,
+        "totalPnl": -16.33687177306195,
+        "pf": 0,
+        "maxDD": -16.33687177306195,
+        "stillOpen": true
+      },
+      "DRAM": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -2.3321947674418544,
+        "pf": 0,
+        "maxDD": -2.3321947674418544,
+        "stillOpen": true
+      },
+      "EWJ": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "EWT": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "EWY": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "FLNC": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "GLW": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "GOOGL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "HOOD": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -3.3553982624148464,
+        "pf": 0,
+        "maxDD": -3.3553982624148464,
+        "stillOpen": true
+      },
+      "HPE": {
+        "trades": 3,
+        "wins": 0,
+        "losses": 3,
+        "winRate": 0,
+        "totalPnl": -7.803170694679245,
+        "pf": 0,
+        "maxDD": -7.803170694679245,
+        "stillOpen": true
+      },
+      "HYUNDAI": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "IBM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "INTC": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "IREN": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 3.3718785950623564,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "IWM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "KLAC": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "KORU": {
+        "trades": 5,
+        "wins": 2,
+        "losses": 3,
+        "winRate": 40,
+        "totalPnl": -1.0707383098042011,
+        "pf": 0.7858706734059517,
+        "maxDD": -2.9993328290468955,
+        "stillOpen": true
+      },
+      "LITE": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 0.02151089083224482,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "LLY": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "LRCX": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "META": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "MRVL": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -2.6456057748968806,
+        "pf": 0,
+        "maxDD": -2.6456057748968806,
+        "stillOpen": true
+      },
+      "MSFT": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "MSTR": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -2.0909413746630685,
+        "pf": 0,
+        "maxDD": -2.0909413746630685,
+        "stillOpen": true
+      },
+      "MU": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -2.709508415233412,
+        "pf": 0,
+        "maxDD": -2.709508415233412,
+        "stillOpen": true
+      },
+      "NBIS": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -4.395254353067235,
+        "pf": 0,
+        "maxDD": -4.395254353067235,
+        "stillOpen": false
+      },
+      "NOKIA": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "NOW": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "NVDA": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "ONDS": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 6.663021333011936,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "ORCL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "PLTR": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -4.961331688001739,
+        "pf": 0,
+        "maxDD": -4.961331688001739,
+        "stillOpen": true
+      },
+      "QCOM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "QNTX": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "QQQ": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "RKLB": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "SAMSUNG": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -4.616192095588239,
+        "pf": 0,
+        "maxDD": -4.616192095588239,
+        "stillOpen": true
+      },
+      "SKHYNIX": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -4.07565432618927,
+        "pf": 0,
+        "maxDD": -4.07565432618927,
+        "stillOpen": true
+      },
+      "SMCI": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "SNDK": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -3.4222164248051934,
+        "pf": 0,
+        "maxDD": -3.4222164248051934,
+        "stillOpen": true
+      },
+      "SOXL": {
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "winRate": 50,
+        "totalPnl": 0.5481947949875634,
+        "pf": 1.1651319631053039,
+        "maxDD": -2.7048406239107763,
+        "stillOpen": true
+      },
+      "SPCX": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "SPY": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "STXX": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "TQQQ": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "TSLA": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "TSM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "USAR": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "UVXY": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "WDC": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -2.642234023556084,
+        "pf": 0,
+        "maxDD": -2.642234023556084,
+        "stillOpen": true
+      }
+    },
+    "PumpTrendFlip": {
+      "AAOI": {
+        "trades": 12,
+        "wins": 4,
+        "losses": 8,
+        "winRate": 33.33333333333333,
+        "totalPnl": -0.5903254581040902,
+        "pf": 0.9826292886679272,
+        "maxDD": -24.958171853073353,
+        "stillOpen": true
+      },
+      "AAPL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "ADBE": {
+        "trades": 2,
+        "wins": 1,
+        "losses": 1,
+        "winRate": 50,
+        "totalPnl": 0.49272095572094665,
+        "pf": 1.1291537678884915,
+        "maxDD": -3.814994821880466,
+        "stillOpen": true
+      },
+      "ALAB": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": -12.549843817511816,
+        "pf": 0.45802025221904336,
+        "maxDD": -21.962207739422503,
+        "stillOpen": true
+      },
+      "AMAT": {
+        "trades": 5,
+        "wins": 1,
+        "losses": 4,
+        "winRate": 20,
+        "totalPnl": -10.38084172607006,
+        "pf": 0.09106114209044651,
+        "maxDD": -11.42083610546116,
+        "stillOpen": true
+      },
+      "AMDSTOCK": {
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "winRate": 50,
+        "totalPnl": -0.9860123296833931,
+        "pf": 0.7182836470381894,
+        "maxDD": -3.5000180831428582,
+        "stillOpen": true
+      },
+      "AMZN": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 0.3600992815922814,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "ARM": {
+        "trades": 6,
+        "wins": 2,
+        "losses": 4,
+        "winRate": 33.33333333333333,
+        "totalPnl": -12.62108219182974,
+        "pf": 0.16336515206711988,
+        "maxDD": -12.62108219182974,
+        "stillOpen": true
+      },
+      "ASML": {
+        "trades": 2,
+        "wins": 1,
+        "losses": 1,
+        "winRate": 50,
+        "totalPnl": 2.6045419414399076,
+        "pf": 2.6209002929025322,
+        "maxDD": -1.6068489547719045,
+        "stillOpen": true
+      },
+      "ASTS": {
+        "trades": 7,
+        "wins": 2,
+        "losses": 5,
+        "winRate": 28.57142857142857,
+        "totalPnl": -11.662211717918115,
+        "pf": 0.4444324453766769,
+        "maxDD": -15.816095176037777,
+        "stillOpen": true
+      },
+      "AVGO": {
+        "trades": 2,
+        "wins": 1,
+        "losses": 1,
+        "winRate": 50,
+        "totalPnl": 1.9145872074823898,
+        "pf": 4.814242827461009,
+        "maxDD": -0.5019573462124998,
+        "stillOpen": true
+      },
+      "AXTI": {
+        "trades": 14,
+        "wins": 6,
+        "losses": 8,
+        "winRate": 42.857142857142854,
+        "totalPnl": -16.084542568797396,
+        "pf": 0.7106843342192739,
+        "maxDD": -27.42247245112786,
+        "stillOpen": true
+      },
+      "BABA": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 2.307745696465699,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "BBX": {
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "winRate": 50,
+        "totalPnl": -4.011087543926694,
+        "pf": 0.273492273850684,
+        "maxDD": -4.011087543926694,
+        "stillOpen": true
+      },
+      "BE": {
+        "trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "winRate": 40,
+        "totalPnl": -4.547265742726889,
+        "pf": 0.6916627099633698,
+        "maxDD": -9.347538472239036,
+        "stillOpen": true
+      },
+      "BMNR": {
+        "trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "winRate": 66.66666666666666,
+        "totalPnl": 19.082543827865802,
+        "pf": 9.343959761874036,
+        "maxDD": -2.2869889563776975,
+        "stillOpen": true
+      },
+      "CBRS": {
+        "trades": 9,
+        "wins": 3,
+        "losses": 6,
+        "winRate": 33.33333333333333,
+        "totalPnl": -5.558799581512295,
+        "pf": 0.7417739904704355,
+        "maxDD": -17.52575161172091,
+        "stillOpen": true
+      },
+      "CIEN": {
+        "trades": 7,
+        "wins": 2,
+        "losses": 5,
+        "winRate": 28.57142857142857,
+        "totalPnl": -15.254097639643474,
+        "pf": 0.190900970574454,
+        "maxDD": -17.113136916961942,
+        "stillOpen": true
+      },
+      "COHR": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": -2.1665575816110785,
+        "pf": 0.9186138048865047,
+        "maxDD": -18.785558118420504,
+        "stillOpen": true
+      },
+      "COIN": {
+        "trades": 5,
+        "wins": 2,
+        "losses": 3,
+        "winRate": 40,
+        "totalPnl": -1.9472747917148991,
+        "pf": 0.8292224944058582,
+        "maxDD": -7.137068362382574,
+        "stillOpen": true
+      },
+      "CRCL": {
+        "trades": 3,
+        "wins": 1,
+        "losses": 2,
+        "winRate": 33.33333333333333,
+        "totalPnl": 13.507984246696568,
+        "pf": 2.6386551764005715,
+        "maxDD": -6.2090403318737,
+        "stillOpen": true
+      },
+      "CRDO": {
+        "trades": 8,
+        "wins": 4,
+        "losses": 4,
+        "winRate": 50,
+        "totalPnl": -8.868632211777538,
+        "pf": 0.40580021832903634,
+        "maxDD": -10.425066431306421,
+        "stillOpen": true
+      },
+      "CRWV": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": 3.945678056207888,
+        "pf": 1.2491691445470183,
+        "maxDD": -9.646128590785352,
+        "stillOpen": true
+      },
+      "CSCO": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -2.5089179508196713,
+        "pf": 0,
+        "maxDD": -2.5089179508196713,
+        "stillOpen": true
+      },
+      "DELL": {
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "winRate": 37.5,
+        "totalPnl": -7.072744464467867,
+        "pf": 0.5205569695488875,
+        "maxDD": -13.325423896746436,
+        "stillOpen": true
+      },
+      "DRAM": {
+        "trades": 10,
+        "wins": 3,
+        "losses": 7,
+        "winRate": 30,
+        "totalPnl": -20.32146344175677,
+        "pf": 0.22346343295633056,
+        "maxDD": -20.32146344175677,
+        "stillOpen": true
+      },
+      "EWJ": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "EWT": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -2.2586090408638597,
+        "pf": 0,
+        "maxDD": -2.2586090408638597,
+        "stillOpen": true
+      },
+      "EWY": {
+        "trades": 2,
+        "wins": 2,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 5.699558220384927,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "FLNC": {
+        "trades": 5,
+        "wins": 2,
+        "losses": 3,
+        "winRate": 40,
+        "totalPnl": -6.986893392766817,
+        "pf": 0.5215702863936751,
+        "maxDD": -10.49933103982564,
+        "stillOpen": true
+      },
+      "GLW": {
+        "trades": 6,
+        "wins": 3,
+        "losses": 3,
+        "winRate": 50,
+        "totalPnl": 3.769168724975874,
+        "pf": 1.3391983375535914,
+        "maxDD": -6.155987662714656,
+        "stillOpen": true
+      },
+      "GOOGL": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 3.9298963423707605,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "HOOD": {
+        "trades": 5,
+        "wins": 1,
+        "losses": 4,
+        "winRate": 20,
+        "totalPnl": -5.112841187806554,
+        "pf": 0.40362768486243156,
+        "maxDD": -5.184547198880699,
+        "stillOpen": true
+      },
+      "HPE": {
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "winRate": 50,
+        "totalPnl": 3.553850888949846,
+        "pf": 1.402388531707448,
+        "maxDD": -4.681846672661873,
+        "stillOpen": true
+      },
+      "HYUNDAI": {
+        "trades": 2,
+        "wins": 1,
+        "losses": 1,
+        "winRate": 50,
+        "totalPnl": 7.2742009105007,
+        "pf": 4.723270639294082,
+        "maxDD": -1.953712640099636,
+        "stillOpen": true
+      },
+      "IBM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "INTC": {
+        "trades": 4,
+        "wins": 1,
+        "losses": 3,
+        "winRate": 25,
+        "totalPnl": -5.916091341231327,
+        "pf": 0.4142562140944338,
+        "maxDD": -8.581398323922988,
+        "stillOpen": true
+      },
+      "IREN": {
+        "trades": 10,
+        "wins": 5,
+        "losses": 5,
+        "winRate": 50,
+        "totalPnl": -1.0944496498435292,
+        "pf": 0.9406508566382572,
+        "maxDD": -12.195052130964887,
+        "stillOpen": true
+      },
+      "IWM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "KLAC": {
+        "trades": 3,
+        "wins": 1,
+        "losses": 2,
+        "winRate": 33.33333333333333,
+        "totalPnl": 0.7595415780296917,
+        "pf": 1.1961497609319465,
+        "maxDD": -3.8722533966952546,
+        "stillOpen": true
+      },
+      "KORU": {
+        "trades": 22,
+        "wins": 5,
+        "losses": 17,
+        "winRate": 22.727272727272727,
+        "totalPnl": -58.78763856871487,
+        "pf": 0.3312489252680564,
+        "maxDD": -66.77687524228213,
+        "stillOpen": true
+      },
+      "LITE": {
+        "trades": 7,
+        "wins": 3,
+        "losses": 4,
+        "winRate": 42.857142857142854,
+        "totalPnl": 6.0522836451071935,
+        "pf": 1.660204067346764,
+        "maxDD": -7.69957161095203,
+        "stillOpen": true
+      },
+      "LLY": {
+        "trades": 2,
+        "wins": 1,
+        "losses": 1,
+        "winRate": 50,
+        "totalPnl": -0.12297905604956594,
+        "pf": 0.8388896955103432,
+        "maxDD": -0.7633221005889238,
+        "stillOpen": true
+      },
+      "LRCX": {
+        "trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "winRate": 66.66666666666666,
+        "totalPnl": -0.39951139739935115,
+        "pf": 0.9450502586821697,
+        "maxDD": -7.270487318376452,
+        "stillOpen": true
+      },
+      "META": {
+        "trades": 3,
+        "wins": 0,
+        "losses": 3,
+        "winRate": 0,
+        "totalPnl": -11.937626512415516,
+        "pf": 0,
+        "maxDD": -11.937626512415516,
+        "stillOpen": true
+      },
+      "MRVL": {
+        "trades": 9,
+        "wins": 2,
+        "losses": 7,
+        "winRate": 22.22222222222222,
+        "totalPnl": -24.751339725603145,
+        "pf": 0.21288784442298325,
+        "maxDD": -27.216004250272842,
+        "stillOpen": true
+      },
+      "MSFT": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "MSTR": {
+        "trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "winRate": 66.66666666666666,
+        "totalPnl": 16.519161410464836,
+        "pf": 70.38866335702127,
+        "maxDD": -0.23806715119254857,
+        "stillOpen": true
+      },
+      "MU": {
+        "trades": 5,
+        "wins": 2,
+        "losses": 3,
+        "winRate": 40,
+        "totalPnl": 1.2886817983710528,
+        "pf": 1.1138448775405403,
+        "maxDD": -9.076276477383662,
+        "stillOpen": true
+      },
+      "NBIS": {
+        "trades": 10,
+        "wins": 3,
+        "losses": 7,
+        "winRate": 30,
+        "totalPnl": 6.106997351738926,
+        "pf": 1.2428730665747338,
+        "maxDD": -15.889660375420483,
+        "stillOpen": true
+      },
+      "NOKIA": {
+        "trades": 4,
+        "wins": 1,
+        "losses": 3,
+        "winRate": 25,
+        "totalPnl": -4.624753893406284,
+        "pf": 0.5967374925592704,
+        "maxDD": -10.244078411856703,
+        "stillOpen": true
+      },
+      "NOW": {
+        "trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "winRate": 66.66666666666666,
+        "totalPnl": 7.471338963994856,
+        "pf": 2.29212318588448,
+        "maxDD": -5.782218789674143,
+        "stillOpen": true
+      },
+      "NVDA": {
+        "trades": 3,
+        "wins": 1,
+        "losses": 2,
+        "winRate": 33.33333333333333,
+        "totalPnl": -6.377818126042106,
+        "pf": 0.07091588711154023,
+        "maxDD": -6.377818126042106,
+        "stillOpen": true
+      },
+      "ONDS": {
+        "trades": 5,
+        "wins": 2,
+        "losses": 3,
+        "winRate": 40,
+        "totalPnl": 2.2610203342383377,
+        "pf": 1.2334368592463392,
+        "maxDD": -6.138091743119273,
+        "stillOpen": true
+      },
+      "ORCL": {
+        "trades": 3,
+        "wins": 1,
+        "losses": 2,
+        "winRate": 33.33333333333333,
+        "totalPnl": 4.777831445226604,
+        "pf": 1.6620741954493854,
+        "maxDD": -7.216459239864547,
+        "stillOpen": true
+      },
+      "PLTR": {
+        "trades": 3,
+        "wins": 1,
+        "losses": 2,
+        "winRate": 33.33333333333333,
+        "totalPnl": 10.641568687082007,
+        "pf": 2.4533824904148855,
+        "maxDD": -7.321932634570437,
+        "stillOpen": true
+      },
+      "QCOM": {
+        "trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "winRate": 66.66666666666666,
+        "totalPnl": -3.1914897632844146,
+        "pf": 0.29232277440408433,
+        "maxDD": -4.509809907471515,
+        "stillOpen": true
+      },
+      "QNTX": {
+        "trades": 7,
+        "wins": 1,
+        "losses": 6,
+        "winRate": 14.285714285714285,
+        "totalPnl": -23.064894802125515,
+        "pf": 0.11759219938000197,
+        "maxDD": -23.064894802125515,
+        "stillOpen": true
+      },
+      "QQQ": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "SAMSUNG": {
+        "trades": 9,
+        "wins": 2,
+        "losses": 7,
+        "winRate": 22.22222222222222,
+        "totalPnl": -22.720551146103304,
+        "pf": 0.11560912845891004,
+        "maxDD": -22.720551146103304,
+        "stillOpen": true
+      },
+      "SKHYNIX": {
+        "trades": 11,
+        "wins": 2,
+        "losses": 9,
+        "winRate": 18.181818181818183,
+        "totalPnl": -29.50855948431759,
+        "pf": 0.23072092385599277,
+        "maxDD": -30.708881695136327,
+        "stillOpen": true
+      },
+      "SMCI": {
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "winRate": 50,
+        "totalPnl": 21.29504914326231,
+        "pf": 11.074667849808755,
+        "maxDD": -1.921800862688712,
+        "stillOpen": true
+      },
+      "SNDK": {
+        "trades": 11,
+        "wins": 4,
+        "losses": 7,
+        "winRate": 36.36363636363637,
+        "totalPnl": 1.3746962593369396,
+        "pf": 1.0525105858221118,
+        "maxDD": -9.239033333110934,
+        "stillOpen": true
+      },
+      "SOXL": {
+        "trades": 15,
+        "wins": 2,
+        "losses": 13,
+        "winRate": 13.333333333333334,
+        "totalPnl": -43.18130431506598,
+        "pf": 0.22504832239212477,
+        "maxDD": -45.04113646785146,
+        "stillOpen": true
+      },
+      "SPCX": {
+        "trades": 5,
+        "wins": 1,
+        "losses": 4,
+        "winRate": 20,
+        "totalPnl": -12.96363126754579,
+        "pf": 0.2009918795678678,
+        "maxDD": -12.96363126754579,
+        "stillOpen": false
+      },
+      "SPY": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "STXX": {
+        "trades": 9,
+        "wins": 2,
+        "losses": 7,
+        "winRate": 22.22222222222222,
+        "totalPnl": -19.91623542982886,
+        "pf": 0.23109015121287443,
+        "maxDD": -20.008045446237155,
+        "stillOpen": false
+      },
+      "TQQQ": {
+        "trades": 5,
+        "wins": 2,
+        "losses": 3,
+        "winRate": 40,
+        "totalPnl": 0.17191384727628334,
+        "pf": 1.0206780830577253,
+        "maxDD": -4.9758510075587035,
+        "stillOpen": true
+      },
+      "TSLA": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "TSM": {
+        "trades": 2,
+        "wins": 1,
+        "losses": 1,
+        "winRate": 50,
+        "totalPnl": -2.3248672959453818,
+        "pf": 0.09463743453324074,
+        "maxDD": -2.56788538053459,
+        "stillOpen": true
+      },
+      "USAR": {
+        "trades": 10,
+        "wins": 2,
+        "losses": 8,
+        "winRate": 20,
+        "totalPnl": -19.971343346771754,
+        "pf": 0.3834158655431923,
+        "maxDD": -23.402409542347634,
+        "stillOpen": true
+      },
+      "UVXY": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -11.634002146544356,
+        "pf": 0,
+        "maxDD": -11.634002146544356,
+        "stillOpen": true
+      },
+      "WDC": {
+        "trades": 9,
+        "wins": 4,
+        "losses": 5,
+        "winRate": 44.44444444444444,
+        "totalPnl": -16.458334182759042,
+        "pf": 0.3409155204948528,
+        "maxDD": -18.29984638811745,
+        "stillOpen": true
+      }
+    },
+    "PumpEma60Band": {
+      "AAOI": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -13.17310260615682,
+        "pf": 0,
+        "maxDD": -13.17310260615682,
+        "stillOpen": true
+      },
+      "AAPL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "ADBE": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "ALAB": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -13.230398198517836,
+        "pf": 0,
+        "maxDD": -13.230398198517836,
+        "stillOpen": true
+      },
+      "AMAT": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.167917474319537,
+        "pf": 0,
+        "maxDD": -6.167917474319537,
+        "stillOpen": true
+      },
+      "AMDSTOCK": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.20552769813052,
+        "pf": 0,
+        "maxDD": -6.20552769813052,
+        "stillOpen": true
+      },
+      "AMZN": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "ARM": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.206757958230188,
+        "pf": 0,
+        "maxDD": -6.206757958230188,
+        "stillOpen": true
+      },
+      "ASML": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.1310144613313176,
+        "pf": 0,
+        "maxDD": -6.1310144613313176,
+        "stillOpen": true
+      },
+      "ASTS": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.565193713027,
+        "pf": 0,
+        "maxDD": -12.565193713027,
+        "stillOpen": true
+      },
+      "AVGO": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.11079383458647,
+        "pf": 0,
+        "maxDD": -6.11079383458647,
+        "stillOpen": true
+      },
+      "AXTI": {
+        "trades": 3,
+        "wins": 0,
+        "losses": 3,
+        "winRate": 0,
+        "totalPnl": -21.94587064948326,
+        "pf": 0,
+        "maxDD": -21.94587064948326,
+        "stillOpen": true
+      },
+      "BABA": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.26700789914625,
+        "pf": 0,
+        "maxDD": -6.26700789914625,
+        "stillOpen": true
+      },
+      "BBX": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.137843253524285,
+        "pf": 0,
+        "maxDD": -6.137843253524285,
+        "stillOpen": true
+      },
+      "BE": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -13.307697888765642,
+        "pf": 0,
+        "maxDD": -13.307697888765642,
+        "stillOpen": true
+      },
+      "BMNR": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "CBRS": {
+        "trades": 3,
+        "wins": 0,
+        "losses": 3,
+        "winRate": 0,
+        "totalPnl": -19.609814682812406,
+        "pf": 0,
+        "maxDD": -19.609814682812406,
+        "stillOpen": true
+      },
+      "CIEN": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.339608426611473,
+        "pf": 0,
+        "maxDD": -12.339608426611473,
+        "stillOpen": true
+      },
+      "COHR": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.884041286403093,
+        "pf": 0,
+        "maxDD": -12.884041286403093,
+        "stillOpen": true
+      },
+      "COIN": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "CRCL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "CRDO": {
+        "trades": 4,
+        "wins": 0,
+        "losses": 4,
+        "winRate": 0,
+        "totalPnl": -29.54559375100619,
+        "pf": 0,
+        "maxDD": -29.54559375100619,
+        "stillOpen": false
+      },
+      "CRWV": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.876108726617488,
+        "pf": 0,
+        "maxDD": -12.876108726617488,
+        "stillOpen": true
+      },
+      "CSCO": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "DELL": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.3853897098201,
+        "pf": 0,
+        "maxDD": -6.3853897098201,
+        "stillOpen": true
+      },
+      "DRAM": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.356870235333117,
+        "pf": 0,
+        "maxDD": -6.356870235333117,
+        "stillOpen": true
+      },
+      "EWJ": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "EWT": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "EWY": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "FLNC": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.906371687729322,
+        "pf": 0,
+        "maxDD": -12.906371687729322,
+        "stillOpen": true
+      },
+      "GLW": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.320205558468801,
+        "pf": 0,
+        "maxDD": -6.320205558468801,
+        "stillOpen": true
+      },
+      "GOOGL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "HOOD": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "HPE": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.2611461448009385,
+        "pf": 0,
+        "maxDD": -6.2611461448009385,
+        "stillOpen": true
+      },
+      "HYUNDAI": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.175665648948179,
+        "pf": 0,
+        "maxDD": -6.175665648948179,
+        "stillOpen": true
+      },
+      "IBM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "INTC": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.686217448540482,
+        "pf": 0,
+        "maxDD": -12.686217448540482,
+        "stillOpen": true
+      },
+      "IREN": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.407377433556128,
+        "pf": 0,
+        "maxDD": -12.407377433556128,
+        "stillOpen": true
+      },
+      "IWM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "KLAC": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.367036272250694,
+        "pf": 0,
+        "maxDD": -12.367036272250694,
+        "stillOpen": true
+      },
+      "KORU": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.456982380747745,
+        "pf": 0,
+        "maxDD": -6.456982380747745,
+        "stillOpen": true
+      },
+      "LITE": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.175895311990061,
+        "pf": 0,
+        "maxDD": -6.175895311990061,
+        "stillOpen": true
+      },
+      "LLY": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "LRCX": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.307878730627304,
+        "pf": 0,
+        "maxDD": -6.307878730627304,
+        "stillOpen": true
+      },
+      "META": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "MRVL": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.289853668105139,
+        "pf": 0,
+        "maxDD": -6.289853668105139,
+        "stillOpen": true
+      },
+      "MSFT": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "MSTR": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "MU": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.325255870662057,
+        "pf": 0,
+        "maxDD": -6.325255870662057,
+        "stillOpen": true
+      },
+      "NBIS": {
+        "trades": 3,
+        "wins": 0,
+        "losses": 3,
+        "winRate": 0,
+        "totalPnl": -20.719889865682326,
+        "pf": 0,
+        "maxDD": -20.719889865682326,
+        "stillOpen": true
+      },
+      "NOKIA": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.079204678899082,
+        "pf": 0,
+        "maxDD": -6.079204678899082,
+        "stillOpen": true
+      },
+      "NOW": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "NVDA": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "ONDS": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -13.250365357032907,
+        "pf": 0,
+        "maxDD": -13.250365357032907,
+        "stillOpen": true
+      },
+      "ORCL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "PLTR": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "QCOM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "QNTX": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.928914309085425,
+        "pf": 0,
+        "maxDD": -12.928914309085425,
+        "stillOpen": true
+      },
+      "QQQ": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "RKLB": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.185065731320586,
+        "pf": 0,
+        "maxDD": -12.185065731320586,
+        "stillOpen": true
+      },
+      "SAMSUNG": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.1286905180644204,
+        "pf": 0,
+        "maxDD": -6.1286905180644204,
+        "stillOpen": true
+      },
+      "SKHYNIX": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.084872474840227,
+        "pf": 0,
+        "maxDD": -6.084872474840227,
+        "stillOpen": true
+      },
+      "SMCI": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "SNDK": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.78358890985595,
+        "pf": 0,
+        "maxDD": -12.78358890985595,
+        "stillOpen": true
+      },
+      "SOXL": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -12.415775200282564,
+        "pf": 0,
+        "maxDD": -12.415775200282564,
+        "stillOpen": true
+      },
+      "SPCX": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "SPY": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "STXX": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -13.600592150631819,
+        "pf": 0,
+        "maxDD": -13.600592150631819,
+        "stillOpen": true
+      },
+      "TQQQ": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.2999270259889935,
+        "pf": 0,
+        "maxDD": -6.2999270259889935,
+        "stillOpen": true
+      },
+      "TSLA": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "TSM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "USAR": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.098009322865557,
+        "pf": 0,
+        "maxDD": -6.098009322865557,
+        "stillOpen": true
+      },
+      "UVXY": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -6.140115193644486,
+        "pf": 0,
+        "maxDD": -6.140115193644486,
+        "stillOpen": true
+      },
+      "WDC": {
+        "trades": 2,
+        "wins": 0,
+        "losses": 2,
+        "winRate": 0,
+        "totalPnl": -13.51912068086598,
+        "pf": 0,
+        "maxDD": -13.51912068086598,
+        "stillOpen": true
+      }
+    },
+    "EMA90TopFade": {
+      "AAPL": {
+        "trades": 6,
+        "wins": 6,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 11.53450318082381,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "AMZN": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -2.283761849442371,
+        "pf": 0,
+        "maxDD": -2.283761849442371,
+        "stillOpen": true
+      },
+      "ARM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "AVGO": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 1.660529051701976,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "BABA": {
+        "trades": 3,
+        "wins": 3,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 9.191408766672295,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "BMNR": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -18.046131570247933,
+        "pf": 0,
+        "maxDD": -18.046131570247933,
+        "stillOpen": true
+      },
+      "CBRS": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 8.418239867135904,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "COIN": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "CRCL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "CRWV": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 7.089529631045688,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "CSCO": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "DRAM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "EWJ": {
+        "trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "winRate": 66.66666666666666,
+        "totalPnl": 0.4556836160253601,
+        "pf": 1.4599814999250733,
+        "maxDD": -0.9906563983542527,
+        "stillOpen": true
+      },
+      "EWY": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "GOOGL": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 0.873708839615271,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "HOOD": {
+        "trades": 6,
+        "wins": 6,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 19.890968670821632,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "INTC": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "IWM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "LITE": {
+        "trades": 5,
+        "wins": 5,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 25.145488797843317,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "LLY": {
+        "trades": 3,
+        "wins": 3,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 5.339704977798703,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "META": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "MRVL": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 2.794902312278443,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "MSFT": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "MSTR": {
+        "trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "winRate": 66.66666666666666,
+        "totalPnl": 1.9138210634564226,
+        "pf": 2.4359538847024607,
+        "maxDD": -1.3327872739123368,
+        "stillOpen": true
+      },
+      "MU": {
+        "trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "winRate": 66.66666666666666,
+        "totalPnl": 6.110367526174683,
+        "pf": 11.889014824972893,
+        "maxDD": -0.5611497113734432,
+        "stillOpen": true
+      },
+      "NBIS": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "NVDA": {
+        "trades": 5,
+        "wins": 3,
+        "losses": 2,
+        "winRate": 60,
+        "totalPnl": 0.4638582872465596,
+        "pf": 1.247429452185925,
+        "maxDD": -1.8747092682321604,
+        "stillOpen": true
+      },
+      "ORCL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "PLTR": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -16.705649160389736,
+        "pf": 0,
+        "maxDD": -16.705649160389736,
+        "stillOpen": true
+      },
+      "QCOM": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "QQQ": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -0.43088628664631456,
+        "pf": 0,
+        "maxDD": -0.43088628664631456,
+        "stillOpen": true
+      },
+      "RKLB": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "SNDK": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 1.8201452968774468,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      },
+      "SOXL": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "SPY": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "winRate": 0,
+        "totalPnl": -0.3131491590343527,
+        "pf": 0,
+        "maxDD": -0.3131491590343527,
+        "stillOpen": true
+      },
+      "TSLA": {
+        "trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "winRate": 0,
+        "totalPnl": 0,
+        "pf": 0,
+        "maxDD": 0,
+        "stillOpen": false
+      },
+      "TSM": {
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "winRate": 100,
+        "totalPnl": 1.388404092673168,
+        "pf": null,
+        "maxDD": 0,
+        "stillOpen": true
+      }
+    },
+    "StochRSITop4Flip": {
+      "AAOI": {
+        "trades": 17,
+        "wins": 2,
+        "losses": 15,
+        "winRate": 11.76470588235294,
+        "totalPnl": -19.560262732013165,
+        "pf": 0.24985887609781754,
+        "maxDD": -19.560262732013165,
+        "stillOpen": true
+      },
+      "AAPL": {
+        "trades": 15,
+        "wins": 6,
+        "losses": 9,
+        "winRate": 40,
+        "totalPnl": 0.055358954588707876,
+        "pf": 1.0104569107965455,
+        "maxDD": -4.844177256279532,
+        "stillOpen": false
+      },
+      "ADBE": {
+        "trades": 16,
+        "wins": 7,
+        "losses": 9,
+        "winRate": 43.75,
+        "totalPnl": 6.186522117734165,
+        "pf": 2.2642193304462404,
+        "maxDD": -3.1551179120830044,
+        "stillOpen": true
+      },
+      "ALAB": {
+        "trades": 16,
+        "wins": 5,
+        "losses": 11,
+        "winRate": 31.25,
+        "totalPnl": -1.581473963530811,
+        "pf": 0.8828066981317529,
+        "maxDD": -8.835893487671834,
+        "stillOpen": true
+      },
+      "AMAT": {
+        "trades": 25,
+        "wins": 3,
+        "losses": 22,
+        "winRate": 12,
+        "totalPnl": -17.744689852744603,
+        "pf": 0.2780123664734214,
+        "maxDD": -17.798711065751615,
+        "stillOpen": true
+      },
+      "AMDSTOCK": {
+        "trades": 17,
+        "wins": 5,
+        "losses": 12,
+        "winRate": 29.411764705882355,
+        "totalPnl": -7.225315769783803,
+        "pf": 0.2795825436306444,
+        "maxDD": -7.341676872578519,
+        "stillOpen": true
+      },
+      "AMZN": {
+        "trades": 17,
+        "wins": 8,
+        "losses": 9,
+        "winRate": 47.05882352941176,
+        "totalPnl": 0.7347541160595952,
+        "pf": 1.1858297671631548,
+        "maxDD": -3.0079224811788645,
+        "stillOpen": true
+      },
+      "ARM": {
+        "trades": 23,
+        "wins": 8,
+        "losses": 15,
+        "winRate": 34.78260869565217,
+        "totalPnl": 4.520883326418497,
+        "pf": 1.2437444062221221,
+        "maxDD": -10.097651669192711,
+        "stillOpen": true
+      },
+      "ASML": {
+        "trades": 15,
+        "wins": 6,
+        "losses": 9,
+        "winRate": 40,
+        "totalPnl": -2.5388383323437367,
+        "pf": 0.5441771266067718,
+        "maxDD": -4.060511834083883,
+        "stillOpen": true
+      },
+      "ASTS": {
+        "trades": 16,
+        "wins": 8,
+        "losses": 8,
+        "winRate": 50,
+        "totalPnl": 7.578632937449583,
+        "pf": 1.6240750002466458,
+        "maxDD": -11.489845089891869,
+        "stillOpen": true
+      },
+      "AVGO": {
+        "trades": 16,
+        "wins": 2,
+        "losses": 14,
+        "winRate": 12.5,
+        "totalPnl": -5.132189837862348,
+        "pf": 0.43411114574893167,
+        "maxDD": -6.723518867740422,
+        "stillOpen": true
+      },
+      "AXTI": {
+        "trades": 16,
+        "wins": 6,
+        "losses": 10,
+        "winRate": 37.5,
+        "totalPnl": 20.934815425395485,
+        "pf": 2.0460640469484357,
+        "maxDD": -10.734504609336723,
+        "stillOpen": true
+      },
+      "BABA": {
+        "trades": 13,
+        "wins": 5,
+        "losses": 8,
+        "winRate": 38.46153846153847,
+        "totalPnl": 2.578704315413098,
+        "pf": 1.3359257969162306,
+        "maxDD": -3.4043013404670224,
+        "stillOpen": true
+      },
+      "BBX": {
+        "trades": 20,
+        "wins": 7,
+        "losses": 13,
+        "winRate": 35,
+        "totalPnl": -7.761654790406256,
+        "pf": 0.5923833758336843,
+        "maxDD": -12.72482498722332,
+        "stillOpen": true
+      },
+      "BE": {
+        "trades": 19,
+        "wins": 6,
+        "losses": 13,
+        "winRate": 31.57894736842105,
+        "totalPnl": -4.86240598635629,
+        "pf": 0.777064377186111,
+        "maxDD": -13.390945251600908,
+        "stillOpen": true
+      },
+      "BMNR": {
+        "trades": 20,
+        "wins": 6,
+        "losses": 14,
+        "winRate": 30,
+        "totalPnl": 2.5351888803869658,
+        "pf": 1.1444936991924803,
+        "maxDD": -10.916328340880963,
+        "stillOpen": true
+      },
+      "CBRS": {
+        "trades": 12,
+        "wins": 6,
+        "losses": 6,
+        "winRate": 50,
+        "totalPnl": 7.126460695457401,
+        "pf": 1.5557940726181876,
+        "maxDD": -7.279849317633189,
+        "stillOpen": true
+      },
+      "CIEN": {
+        "trades": 13,
+        "wins": 5,
+        "losses": 8,
+        "winRate": 38.46153846153847,
+        "totalPnl": 13.774296313023303,
+        "pf": 2.689067312249413,
+        "maxDD": -3.7897350745026377,
+        "stillOpen": true
+      },
+      "COHR": {
+        "trades": 19,
+        "wins": 7,
+        "losses": 12,
+        "winRate": 36.84210526315789,
+        "totalPnl": 1.3083589480554607,
+        "pf": 1.0619215150150605,
+        "maxDD": -5.79495442518465,
+        "stillOpen": true
+      },
+      "COIN": {
+        "trades": 16,
+        "wins": 6,
+        "losses": 10,
+        "winRate": 37.5,
+        "totalPnl": -0.9373359188893695,
+        "pf": 0.9380888843961683,
+        "maxDD": -9.115929385173516,
+        "stillOpen": true
+      },
+      "CRCL": {
+        "trades": 16,
+        "wins": 8,
+        "losses": 8,
+        "winRate": 50,
+        "totalPnl": -4.50274987005797,
+        "pf": 0.7811456172555035,
+        "maxDD": -8.717786752434463,
+        "stillOpen": true
+      },
+      "CRDO": {
+        "trades": 20,
+        "wins": 10,
+        "losses": 10,
+        "winRate": 50,
+        "totalPnl": 6.86735025715603,
+        "pf": 1.2814073502068102,
+        "maxDD": -13.108763650934907,
+        "stillOpen": true
+      },
+      "CRWV": {
+        "trades": 16,
+        "wins": 6,
+        "losses": 10,
+        "winRate": 37.5,
+        "totalPnl": 16.222493417411897,
+        "pf": 2.3090075830124785,
+        "maxDD": -11.494237202270682,
+        "stillOpen": true
+      },
+      "CSCO": {
+        "trades": 17,
+        "wins": 6,
+        "losses": 11,
+        "winRate": 35.294117647058826,
+        "totalPnl": 1.4664649128364107,
+        "pf": 1.3069397203892348,
+        "maxDD": -2.0936576444769552,
+        "stillOpen": false
+      },
+      "DELL": {
+        "trades": 13,
+        "wins": 5,
+        "losses": 8,
+        "winRate": 38.46153846153847,
+        "totalPnl": 4.71461593258962,
+        "pf": 1.3554952743722921,
+        "maxDD": -8.437274844112398,
+        "stillOpen": true
+      },
+      "DRAM": {
+        "trades": 23,
+        "wins": 10,
+        "losses": 13,
+        "winRate": 43.47826086956522,
+        "totalPnl": -2.2600601036298427,
+        "pf": 0.8548628779050932,
+        "maxDD": -8.194602641239861,
+        "stillOpen": false
+      },
+      "EWJ": {
+        "trades": 15,
+        "wins": 6,
+        "losses": 9,
+        "winRate": 40,
+        "totalPnl": -0.11754133518497423,
+        "pf": 0.9567369909243729,
+        "maxDD": -1.6805033850156095,
+        "stillOpen": true
+      },
+      "EWT": {
+        "trades": 13,
+        "wins": 5,
+        "losses": 8,
+        "winRate": 38.46153846153847,
+        "totalPnl": 5.9271894678186685,
+        "pf": 3.1299177921894508,
+        "maxDD": -1.1047411630433368,
+        "stillOpen": false
+      },
+      "EWY": {
+        "trades": 15,
+        "wins": 7,
+        "losses": 8,
+        "winRate": 46.666666666666664,
+        "totalPnl": 1.9231559803236986,
+        "pf": 1.2329866882665856,
+        "maxDD": -6.573478385508897,
+        "stillOpen": true
+      },
+      "FLNC": {
+        "trades": 14,
+        "wins": 3,
+        "losses": 11,
+        "winRate": 21.428571428571427,
+        "totalPnl": 1.253554566503258,
+        "pf": 1.1009955351496712,
+        "maxDD": -11.653376526821788,
+        "stillOpen": true
+      },
+      "GLW": {
+        "trades": 18,
+        "wins": 9,
+        "losses": 9,
+        "winRate": 50,
+        "totalPnl": 3.104943457546294,
+        "pf": 1.281774539914228,
+        "maxDD": -4.80707141310394,
+        "stillOpen": true
+      },
+      "GOOGL": {
+        "trades": 15,
+        "wins": 7,
+        "losses": 8,
+        "winRate": 46.666666666666664,
+        "totalPnl": 3.939624983117504,
+        "pf": 3.1641016572083958,
+        "maxDD": -1.4262282939006257,
+        "stillOpen": true
+      },
+      "HOOD": {
+        "trades": 16,
+        "wins": 7,
+        "losses": 9,
+        "winRate": 43.75,
+        "totalPnl": -4.874996194070562,
+        "pf": 0.5906930087815477,
+        "maxDD": -7.4672042196026,
+        "stillOpen": true
+      },
+      "HPE": {
+        "trades": 14,
+        "wins": 5,
+        "losses": 9,
+        "winRate": 35.714285714285715,
+        "totalPnl": 2.6842416339923583,
+        "pf": 1.2332620969915367,
+        "maxDD": -4.983612789755013,
+        "stillOpen": true
+      },
+      "HYUNDAI": {
+        "trades": 18,
+        "wins": 8,
+        "losses": 10,
+        "winRate": 44.44444444444444,
+        "totalPnl": -0.7088584057498236,
+        "pf": 0.9213562389274064,
+        "maxDD": -6.461070873981159,
+        "stillOpen": true
+      },
+      "IBM": {
+        "trades": 18,
+        "wins": 3,
+        "losses": 15,
+        "winRate": 16.666666666666664,
+        "totalPnl": -8.21466315191772,
+        "pf": 0.14334225134895007,
+        "maxDD": -8.75532464281895,
+        "stillOpen": true
+      },
+      "INTC": {
+        "trades": 13,
+        "wins": 5,
+        "losses": 8,
+        "winRate": 38.46153846153847,
+        "totalPnl": 1.187758104596112,
+        "pf": 1.1671079080187374,
+        "maxDD": -6.229220271194583,
+        "stillOpen": true
+      },
+      "IREN": {
+        "trades": 17,
+        "wins": 6,
+        "losses": 11,
+        "winRate": 35.294117647058826,
+        "totalPnl": -5.374306329598361,
+        "pf": 0.7280627263289048,
+        "maxDD": -10.625172403752021,
+        "stillOpen": true
+      },
+      "IWM": {
+        "trades": 12,
+        "wins": 5,
+        "losses": 7,
+        "winRate": 41.66666666666667,
+        "totalPnl": 0.8738203174489254,
+        "pf": 1.3544391394435327,
+        "maxDD": -2.0560267314448684,
+        "stillOpen": true
+      },
+      "KLAC": {
+        "trades": 19,
+        "wins": 5,
+        "losses": 14,
+        "winRate": 26.31578947368421,
+        "totalPnl": -9.894479193600638,
+        "pf": 0.3582978345380635,
+        "maxDD": -10.369348266658681,
+        "stillOpen": true
+      },
+      "KORU": {
+        "trades": 14,
+        "wins": 5,
+        "losses": 9,
+        "winRate": 35.714285714285715,
+        "totalPnl": -13.666072535491196,
+        "pf": 0.530966550268735,
+        "maxDD": -15.522078084314295,
+        "stillOpen": false
+      },
+      "LITE": {
+        "trades": 17,
+        "wins": 8,
+        "losses": 9,
+        "winRate": 47.05882352941176,
+        "totalPnl": 6.71399398814813,
+        "pf": 1.5102458222926378,
+        "maxDD": -5.035514192631197,
+        "stillOpen": true
+      },
+      "LLY": {
+        "trades": 12,
+        "wins": 7,
+        "losses": 5,
+        "winRate": 58.333333333333336,
+        "totalPnl": 4.841152563561855,
+        "pf": 2.8034000674808413,
+        "maxDD": -1.4069622351958668,
+        "stillOpen": false
+      },
+      "LRCX": {
+        "trades": 14,
+        "wins": 7,
+        "losses": 7,
+        "winRate": 50,
+        "totalPnl": 5.12150235470938,
+        "pf": 2.1080890807534995,
+        "maxDD": -2.256844244343232,
+        "stillOpen": true
+      },
+      "META": {
+        "trades": 15,
+        "wins": 6,
+        "losses": 9,
+        "winRate": 40,
+        "totalPnl": -3.4858379860655604,
+        "pf": 0.45752667962313315,
+        "maxDD": -5.04861760588193,
+        "stillOpen": true
+      },
+      "MRVL": {
+        "trades": 14,
+        "wins": 8,
+        "losses": 6,
+        "winRate": 57.14285714285714,
+        "totalPnl": -0.6693632036779961,
+        "pf": 0.940609670875501,
+        "maxDD": -4.951884914873959,
+        "stillOpen": true
+      },
+      "MSFT": {
+        "trades": 16,
+        "wins": 5,
+        "losses": 11,
+        "winRate": 31.25,
+        "totalPnl": 2.2872159043641043,
+        "pf": 1.9460713602162076,
+        "maxDD": -2.3996174692482404,
+        "stillOpen": true
+      },
+      "MSTR": {
+        "trades": 19,
+        "wins": 6,
+        "losses": 13,
+        "winRate": 31.57894736842105,
+        "totalPnl": 5.925272003341269,
+        "pf": 1.3387298464584054,
+        "maxDD": -7.808501175066198,
+        "stillOpen": true
+      },
+      "MU": {
+        "trades": 18,
+        "wins": 7,
+        "losses": 11,
+        "winRate": 38.88888888888889,
+        "totalPnl": -3.6123533444050397,
+        "pf": 0.7401739951306701,
+        "maxDD": -8.2902163834594,
+        "stillOpen": true
+      },
+      "NBIS": {
+        "trades": 25,
+        "wins": 4,
+        "losses": 21,
+        "winRate": 16,
+        "totalPnl": -12.845441569301043,
+        "pf": 0.6712984005691267,
+        "maxDD": -28.843124981723285,
+        "stillOpen": true
+      },
+      "NOKIA": {
+        "trades": 24,
+        "wins": 5,
+        "losses": 19,
+        "winRate": 20.833333333333336,
+        "totalPnl": -4.92315087435683,
+        "pf": 0.7234098099893285,
+        "maxDD": -11.732649160697216,
+        "stillOpen": true
+      },
+      "NOW": {
+        "trades": 18,
+        "wins": 9,
+        "losses": 9,
+        "winRate": 50,
+        "totalPnl": 4.220017885383919,
+        "pf": 1.2939442227127027,
+        "maxDD": -7.202024284542498,
+        "stillOpen": true
+      },
+      "NVDA": {
+        "trades": 15,
+        "wins": 5,
+        "losses": 10,
+        "winRate": 33.33333333333333,
+        "totalPnl": 4.820353365576802,
+        "pf": 2.6198228417822476,
+        "maxDD": -1.2327002117548813,
+        "stillOpen": true
+      },
+      "ONDS": {
+        "trades": 15,
+        "wins": 9,
+        "losses": 6,
+        "winRate": 60,
+        "totalPnl": 10.946343647710126,
+        "pf": 2.0431959956781633,
+        "maxDD": -5.991325761305899,
+        "stillOpen": true
+      },
+      "ORCL": {
+        "trades": 14,
+        "wins": 5,
+        "losses": 9,
+        "winRate": 35.714285714285715,
+        "totalPnl": -0.03221670533171106,
+        "pf": 0.9964372493584404,
+        "maxDD": -4.126848008696282,
+        "stillOpen": true
+      },
+      "PLTR": {
+        "trades": 17,
+        "wins": 6,
+        "losses": 11,
+        "winRate": 35.294117647058826,
+        "totalPnl": 3.037891867424113,
+        "pf": 1.3817214568191212,
+        "maxDD": -5.1978617807409755,
+        "stillOpen": true
+      },
+      "QCOM": {
+        "trades": 14,
+        "wins": 8,
+        "losses": 6,
+        "winRate": 57.14285714285714,
+        "totalPnl": 6.247105036120206,
+        "pf": 2.7559825599252723,
+        "maxDD": -1.5849720288115243,
+        "stillOpen": true
+      },
+      "QNTX": {
+        "trades": 14,
+        "wins": 4,
+        "losses": 10,
+        "winRate": 28.57142857142857,
+        "totalPnl": 17.271204983767934,
+        "pf": 2.7162715172978262,
+        "maxDD": -7.626941288457262,
+        "stillOpen": true
+      },
+      "QQQ": {
+        "trades": 17,
+        "wins": 6,
+        "losses": 11,
+        "winRate": 35.294117647058826,
+        "totalPnl": 0.710198667078105,
+        "pf": 1.2146661183771812,
+        "maxDD": -2.2191574007909294,
+        "stillOpen": true
+      },
+      "SAMSUNG": {
+        "trades": 19,
+        "wins": 7,
+        "losses": 12,
+        "winRate": 36.84210526315789,
+        "totalPnl": -0.15606572108958527,
+        "pf": 0.9922432490538122,
+        "maxDD": -10.712043904013433,
+        "stillOpen": true
+      },
+      "SKHYNIX": {
+        "trades": 19,
+        "wins": 5,
+        "losses": 14,
+        "winRate": 26.31578947368421,
+        "totalPnl": -5.2708660671909096,
+        "pf": 0.7449167465520287,
+        "maxDD": -8.840960187242494,
+        "stillOpen": false
+      },
+      "SMCI": {
+        "trades": 13,
+        "wins": 7,
+        "losses": 6,
+        "winRate": 53.84615384615385,
+        "totalPnl": 14.411496985698758,
+        "pf": 3.981614839659529,
+        "maxDD": -3.0068760268857346,
+        "stillOpen": true
+      },
+      "SNDK": {
+        "trades": 19,
+        "wins": 7,
+        "losses": 12,
+        "winRate": 36.84210526315789,
+        "totalPnl": -5.718556463873556,
+        "pf": 0.7100446590810897,
+        "maxDD": -8.875864959355749,
+        "stillOpen": false
+      },
+      "SOXL": {
+        "trades": 17,
+        "wins": 5,
+        "losses": 12,
+        "winRate": 29.411764705882355,
+        "totalPnl": -23.094350783703476,
+        "pf": 0.3111525411600706,
+        "maxDD": -24.395252608924714,
+        "stillOpen": true
+      },
+      "SPCX": {
+        "trades": 18,
+        "wins": 8,
+        "losses": 10,
+        "winRate": 44.44444444444444,
+        "totalPnl": 12.430824672214793,
+        "pf": 2.2679828470074135,
+        "maxDD": -3.9112718616913575,
+        "stillOpen": false
+      },
+      "SPY": {
+        "trades": 18,
+        "wins": 5,
+        "losses": 13,
+        "winRate": 27.77777777777778,
+        "totalPnl": -1.1427131144105418,
+        "pf": 0.6448524159040847,
+        "maxDD": -2.719010767200844,
+        "stillOpen": true
+      },
+      "STXX": {
+        "trades": 25,
+        "wins": 5,
+        "losses": 20,
+        "winRate": 20,
+        "totalPnl": -25.101843974418635,
+        "pf": 0.16949543862941904,
+        "maxDD": -25.101843974418635,
+        "stillOpen": true
+      },
+      "TQQQ": {
+        "trades": 20,
+        "wins": 8,
+        "losses": 12,
+        "winRate": 40,
+        "totalPnl": 7.067546304240796,
+        "pf": 1.829778212922901,
+        "maxDD": -4.52933692821699,
+        "stillOpen": true
+      },
+      "TSLA": {
+        "trades": 15,
+        "wins": 4,
+        "losses": 11,
+        "winRate": 26.666666666666668,
+        "totalPnl": -0.8854065372669608,
+        "pf": 0.8975082183829921,
+        "maxDD": -5.335910989268806,
+        "stillOpen": false
+      },
+      "TSM": {
+        "trades": 20,
+        "wins": 8,
+        "losses": 12,
+        "winRate": 40,
+        "totalPnl": 1.119060740505814,
+        "pf": 1.2416445968598593,
+        "maxDD": -2.3491835542059336,
+        "stillOpen": true
+      },
+      "USAR": {
+        "trades": 16,
+        "wins": 5,
+        "losses": 11,
+        "winRate": 31.25,
+        "totalPnl": 2.6652908067645464,
+        "pf": 1.1404528554269246,
+        "maxDD": -13.355188677849966,
+        "stillOpen": true
+      },
+      "UVXY": {
+        "trades": 23,
+        "wins": 5,
+        "losses": 18,
+        "winRate": 21.73913043478261,
+        "totalPnl": -12.886931204733932,
+        "pf": 0.19910653597375327,
+        "maxDD": -12.886931204733932,
+        "stillOpen": true
+      },
+      "WDC": {
+        "trades": 19,
+        "wins": 7,
+        "losses": 12,
+        "winRate": 36.84210526315789,
+        "totalPnl": -15.96259900669522,
+        "pf": 0.30677159940816084,
+        "maxDD": -16.101831992009085,
+        "stillOpen": true
+      }
+    }
+  },
+  "perStockBest": [
+    {
+      "stock": "AXTI",
+      "melhor": "StockEma1270Cross",
+      "trades": 14,
+      "pnl": 42.64846785825553,
+      "winRate": 57.14285714285714,
+      "pf": 3.973258748701765
+    },
+    {
+      "stock": "NBIS",
+      "melhor": "StockEma1270Cross",
+      "trades": 11,
+      "pnl": 34.187390011504384,
+      "winRate": 72.72727272727273,
+      "pf": 5.354528171869029
+    },
+    {
+      "stock": "LITE",
+      "melhor": "EMA90TopFade",
+      "trades": 5,
+      "pnl": 25.145488797843317,
+      "winRate": 100,
+      "pf": 999
+    },
+    {
+      "stock": "SMCI",
+      "melhor": "PumpTrendFlip",
+      "trades": 4,
+      "pnl": 21.29504914326231,
+      "winRate": 50,
+      "pf": 11.074667849808755
+    },
+    {
+      "stock": "KORU",
+      "melhor": "Stoch50",
+      "trades": 17,
+      "pnl": 20.913152712742225,
+      "winRate": 52.94117647058824,
+      "pf": 2.6446121370990068
+    },
+    {
+      "stock": "HOOD",
+      "melhor": "EMA90TopFade",
+      "trades": 6,
+      "pnl": 19.890968670821632,
+      "winRate": 100,
+      "pf": 999
+    },
+    {
+      "stock": "PLTR",
+      "melhor": "PullbackTrend",
+      "trades": 12,
+      "pnl": 19.683946303674606,
+      "winRate": 33.33333333333333,
+      "pf": 6.336157770335784
+    },
+    {
+      "stock": "AAOI",
+      "melhor": "StockEma1270Cross",
+      "trades": 17,
+      "pnl": 19.25911661756968,
+      "winRate": 47.05882352941176,
+      "pf": 1.8943231635458448
+    },
+    {
+      "stock": "SNDK",
+      "melhor": "PullbackTrend",
+      "trades": 7,
+      "pnl": 19.109410471526193,
+      "winRate": 28.57142857142857,
+      "pf": 4.03584042942551
+    },
+    {
+      "stock": "BMNR",
+      "melhor": "PumpTrendFlip",
+      "trades": 3,
+      "pnl": 19.082543827865802,
+      "winRate": 66.66666666666666,
+      "pf": 9.343959761874036
+    },
+    {
+      "stock": "COHR",
+      "melhor": "StockEma1270Cross",
+      "trades": 13,
+      "pnl": 18.79265144564375,
+      "winRate": 46.15384615384615,
+      "pf": 2.917719747645971
+    },
+    {
+      "stock": "IREN",
+      "melhor": "Stoch50",
+      "trades": 15,
+      "pnl": 18.681796423919266,
+      "winRate": 46.666666666666664,
+      "pf": 2.5901640792420406
+    },
+    {
+      "stock": "SPCX",
+      "melhor": "Stoch50",
+      "trades": 14,
+      "pnl": 18.221060407939493,
+      "winRate": 64.28571428571429,
+      "pf": 6.098406544316102
+    },
+    {
+      "stock": "QNTX",
+      "melhor": "StochRSITop4Flip",
+      "trades": 14,
+      "pnl": 17.271204983767934,
+      "winRate": 28.57142857142857,
+      "pf": 2.7162715172978262
+    },
+    {
+      "stock": "SOXL",
+      "melhor": "Stoch50",
+      "trades": 12,
+      "pnl": 17.195167847127152,
+      "winRate": 66.66666666666666,
+      "pf": 2.4889236454222745
+    },
+    {
+      "stock": "MRVL",
+      "melhor": "Stoch50",
+      "trades": 14,
+      "pnl": 16.974156473770957,
+      "winRate": 64.28571428571429,
+      "pf": 2.66660981641925
+    },
+    {
+      "stock": "MSTR",
+      "melhor": "PumpTrendFlip",
+      "trades": 3,
+      "pnl": 16.519161410464836,
+      "winRate": 66.66666666666666,
+      "pf": 70.38866335702127
+    },
+    {
+      "stock": "CRWV",
+      "melhor": "StochRSITop4Flip",
+      "trades": 16,
+      "pnl": 16.222493417411897,
+      "winRate": 37.5,
+      "pf": 2.3090075830124785
+    },
+    {
+      "stock": "ALAB",
+      "melhor": "Stoch50",
+      "trades": 16,
+      "pnl": 15.801067044579012,
+      "winRate": 50,
+      "pf": 2.623272675441087
+    },
+    {
+      "stock": "MSFT",
+      "melhor": "TrendSurfer",
+      "trades": 8,
+      "pnl": 15.563428135488804,
+      "winRate": 25,
+      "pf": 14.704349874601972
+    },
+    {
+      "stock": "CRDO",
+      "melhor": "Stoch50",
+      "trades": 14,
+      "pnl": 14.832269168285453,
+      "winRate": 50,
+      "pf": 2.4200374243006526
+    },
+    {
+      "stock": "GLW",
+      "melhor": "Stoch50",
+      "trades": 14,
+      "pnl": 13.94933536080983,
+      "winRate": 57.14285714285714,
+      "pf": 2.9782507008145167
+    },
+    {
+      "stock": "CIEN",
+      "melhor": "StochRSITop4Flip",
+      "trades": 13,
+      "pnl": 13.774296313023303,
+      "winRate": 38.46153846153847,
+      "pf": 2.689067312249413
+    },
+    {
+      "stock": "CRCL",
+      "melhor": "PumpTrendFlip",
+      "trades": 3,
+      "pnl": 13.507984246696568,
+      "winRate": 33.33333333333333,
+      "pf": 2.6386551764005715
+    },
+    {
+      "stock": "AMDSTOCK",
+      "melhor": "StockSMA",
+      "trades": 9,
+      "pnl": 13.382979038319164,
+      "winRate": 66.66666666666666,
+      "pf": 4.3472529564368
+    },
+    {
+      "stock": "FLNC",
+      "melhor": "StockEma1270Cross",
+      "trades": 12,
+      "pnl": 12.759494525553922,
+      "winRate": 41.66666666666667,
+      "pf": 2.308066303282608
+    },
+    {
+      "stock": "HPE",
+      "melhor": "StockEma1270Cross",
+      "trades": 9,
+      "pnl": 12.745734695591773,
+      "winRate": 55.55555555555556,
+      "pf": 3.443407540228905
+    },
+    {
+      "stock": "USAR",
+      "melhor": "PullbackTrend",
+      "trades": 10,
+      "pnl": 12.483743501865444,
+      "winRate": 40,
+      "pf": 4.905879288072388
+    },
+    {
+      "stock": "AAPL",
+      "melhor": "EMA90TopFade",
+      "trades": 6,
+      "pnl": 11.53450318082381,
+      "winRate": 100,
+      "pf": 999
+    },
+    {
+      "stock": "COIN",
+      "melhor": "StockSMA",
+      "trades": 6,
+      "pnl": 11.509605656439147,
+      "winRate": 50,
+      "pf": 2.8299381577665077
+    },
+    {
+      "stock": "SKHYNIX",
+      "melhor": "Stoch50",
+      "trades": 16,
+      "pnl": 11.044041898853996,
+      "winRate": 31.25,
+      "pf": 1.9155659379245917
+    },
+    {
+      "stock": "ONDS",
+      "melhor": "StochRSITop4Flip",
+      "trades": 15,
+      "pnl": 10.946343647710126,
+      "winRate": 60,
+      "pf": 2.0431959956781633
+    },
+    {
+      "stock": "ASTS",
+      "melhor": "StockEma1270Cross",
+      "trades": 14,
+      "pnl": 10.65485140068368,
+      "winRate": 28.57142857142857,
+      "pf": 1.909834946466279
+    },
+    {
+      "stock": "AMZN",
+      "melhor": "Stoch50",
+      "trades": 15,
+      "pnl": 9.433487730623051,
+      "winRate": 46.666666666666664,
+      "pf": 3.6134861296742997
+    },
+    {
+      "stock": "BABA",
+      "melhor": "EMA90TopFade",
+      "trades": 3,
+      "pnl": 9.191408766672295,
+      "winRate": 100,
+      "pf": 999
+    },
+    {
+      "stock": "NOW",
+      "melhor": "Stoch50",
+      "trades": 12,
+      "pnl": 9.068777861829574,
+      "winRate": 41.66666666666667,
+      "pf": 1.8984307053599823
+    },
+    {
+      "stock": "LRCX",
+      "melhor": "Stoch50",
+      "trades": 13,
+      "pnl": 9.067983680170839,
+      "winRate": 53.84615384615385,
+      "pf": 2.3544614892274245
+    },
+    {
+      "stock": "TQQQ",
+      "melhor": "StockSMA",
+      "trades": 9,
+      "pnl": 9.04451938752692,
+      "winRate": 66.66666666666666,
+      "pf": 3.2773346717500895
+    },
+    {
+      "stock": "EWT",
+      "melhor": "Stoch50",
+      "trades": 11,
+      "pnl": 8.546364646343747,
+      "winRate": 45.45454545454545,
+      "pf": 3.673515293819028
+    },
+    {
+      "stock": "META",
+      "melhor": "StockEma1270Cross",
+      "trades": 13,
+      "pnl": 8.09783317997007,
+      "winRate": 30.76923076923077,
+      "pf": 2.878258459522883
+    },
+    {
+      "stock": "ADBE",
+      "melhor": "StockSMA",
+      "trades": 3,
+      "pnl": 8.035315690668991,
+      "winRate": 66.66666666666666,
+      "pf": 23.502989611779316
+    },
+    {
+      "stock": "STXX",
+      "melhor": "StockSMA",
+      "trades": 9,
+      "pnl": 7.736791937808087,
+      "winRate": 33.33333333333333,
+      "pf": 1.8196566543099941
+    },
+    {
+      "stock": "DRAM",
+      "melhor": "Stoch50",
+      "trades": 13,
+      "pnl": 7.61781715903071,
+      "winRate": 53.84615384615385,
+      "pf": 2.08708529930054
+    },
+    {
+      "stock": "BE",
+      "melhor": "Stoch50",
+      "trades": 13,
+      "pnl": 7.4592681523114726,
+      "winRate": 38.46153846153847,
+      "pf": 1.313324174844259
+    },
+    {
+      "stock": "HYUNDAI",
+      "melhor": "Stoch50",
+      "trades": 18,
+      "pnl": 7.3641949315724275,
+      "winRate": 55.55555555555556,
+      "pf": 2.461875915294013
+    },
+    {
+      "stock": "SAMSUNG",
+      "melhor": "Stoch50",
+      "trades": 12,
+      "pnl": 7.304739189497053,
+      "winRate": 50,
+      "pf": 1.7181952381725953
+    },
+    {
+      "stock": "NOKIA",
+      "melhor": "Stoch50",
+      "trades": 12,
+      "pnl": 7.196341381817998,
+      "winRate": 41.66666666666667,
+      "pf": 1.8688102920958822
+    },
+    {
+      "stock": "CBRS",
+      "melhor": "StochRSITop4Flip",
+      "trades": 12,
+      "pnl": 7.126460695457401,
+      "winRate": 50,
+      "pf": 1.5557940726181876
+    },
+    {
+      "stock": "WDC",
+      "melhor": "TrendSurfer",
+      "trades": 6,
+      "pnl": 6.789912169080082,
+      "winRate": 33.33333333333333,
+      "pf": 2.198511487847639
+    },
+    {
+      "stock": "EWY",
+      "melhor": "Stoch50",
+      "trades": 16,
+      "pnl": 6.765276466777329,
+      "winRate": 43.75,
+      "pf": 2.360604187718247
+    },
+    {
+      "stock": "DELL",
+      "melhor": "Stoch50",
+      "trades": 15,
+      "pnl": 6.304477974433651,
+      "winRate": 26.666666666666668,
+      "pf": 1.6114008061304022
+    },
+    {
+      "stock": "QCOM",
+      "melhor": "StochRSITop4Flip",
+      "trades": 14,
+      "pnl": 6.247105036120206,
+      "winRate": 57.14285714285714,
+      "pf": 2.7559825599252723
+    },
+    {
+      "stock": "MU",
+      "melhor": "EMA90TopFade",
+      "trades": 3,
+      "pnl": 6.110367526174683,
+      "winRate": 66.66666666666666,
+      "pf": 11.889014824972893
+    },
+    {
+      "stock": "ORCL",
+      "melhor": "StockEma1270Cross",
+      "trades": 12,
+      "pnl": 6.02481961624836,
+      "winRate": 41.66666666666667,
+      "pf": 1.737140168172227
+    },
+    {
+      "stock": "AVGO",
+      "melhor": "StockEma1270Cross",
+      "trades": 14,
+      "pnl": 5.404865914369185,
+      "winRate": 28.57142857142857,
+      "pf": 1.6516984679810447
+    },
+    {
+      "stock": "LLY",
+      "melhor": "EMA90TopFade",
+      "trades": 3,
+      "pnl": 5.339704977798703,
+      "winRate": 100,
+      "pf": 999
+    },
+    {
+      "stock": "NVDA",
+      "melhor": "PullbackTrend",
+      "trades": 8,
+      "pnl": 5.2208651992197845,
+      "winRate": 50,
+      "pf": 3.824808399423938
+    },
+    {
+      "stock": "GOOGL",
+      "melhor": "TrendSurfer",
+      "trades": 9,
+      "pnl": 5.119128006578347,
+      "winRate": 11.11111111111111,
+      "pf": 4.056529723695632
+    },
+    {
+      "stock": "ARM",
+      "melhor": "StochRSITop4Flip",
+      "trades": 23,
+      "pnl": 4.520883326418497,
+      "winRate": 34.78260869565217,
+      "pf": 1.2437444062221221
+    },
+    {
+      "stock": "KLAC",
+      "melhor": "StockSMA",
+      "trades": 8,
+      "pnl": 4.15765212701605,
+      "winRate": 37.5,
+      "pf": 1.497508295379597
+    },
+    {
+      "stock": "AMAT",
+      "melhor": "StockSMA",
+      "trades": 8,
+      "pnl": 4.133721944744737,
+      "winRate": 62.5,
+      "pf": 1.7039051501797415
+    },
+    {
+      "stock": "QQQ",
+      "melhor": "StockSMA",
+      "trades": 9,
+      "pnl": 3.800382794202379,
+      "winRate": 77.77777777777779,
+      "pf": 7.681096949370388
+    },
+    {
+      "stock": "TSM",
+      "melhor": "Stoch50",
+      "trades": 15,
+      "pnl": 3.0727790437172944,
+      "winRate": 33.33333333333333,
+      "pf": 1.4792562615397677
+    },
+    {
+      "stock": "TSLA",
+      "melhor": "Stoch50",
+      "trades": 19,
+      "pnl": 2.188030933152178,
+      "winRate": 42.10526315789473,
+      "pf": 1.3203007021504272
+    },
+    {
+      "stock": "CSCO",
+      "melhor": "StochRSITop4Flip",
+      "trades": 17,
+      "pnl": 1.4664649128364107,
+      "winRate": 35.294117647058826,
+      "pf": 1.3069397203892348
+    },
+    {
+      "stock": "SPY",
+      "melhor": "StockEma1270Cross",
+      "trades": 9,
+      "pnl": 1.3468966588376314,
+      "winRate": 44.44444444444444,
+      "pf": 1.8018641400572852
+    },
+    {
+      "stock": "ASML",
+      "melhor": "PullbackTrend",
+      "trades": 13,
+      "pnl": 1.285339001598842,
+      "winRate": 30.76923076923077,
+      "pf": 1.2859719767610038
+    },
+    {
+      "stock": "INTC",
+      "melhor": "StochRSITop4Flip",
+      "trades": 13,
+      "pnl": 1.187758104596112,
+      "winRate": 38.46153846153847,
+      "pf": 1.1671079080187374
+    },
+    {
+      "stock": "IWM",
+      "melhor": "StochRSITop4Flip",
+      "trades": 12,
+      "pnl": 0.8738203174489254,
+      "winRate": 41.66666666666667,
+      "pf": 1.3544391394435327
+    },
+    {
+      "stock": "EWJ",
+      "melhor": "Stoch50",
+      "trades": 14,
+      "pnl": 0.8091356231395874,
+      "winRate": 42.857142857142854,
+      "pf": 1.2580301343552152
+    },
+    {
+      "stock": "IBM",
+      "melhor": "PullbackTrend",
+      "trades": 19,
+      "pnl": -0.2934702884089353,
+      "winRate": 31.57894736842105,
+      "pf": 0.9379698523587638
+    },
+    {
+      "stock": "UVXY",
+      "melhor": "TrendSurfer",
+      "trades": 7,
+      "pnl": -1.299297003481006,
+      "winRate": 14.285714285714285,
+      "pf": 0.6007543199695744
+    },
+    {
+      "stock": "RKLB",
+      "melhor": "StockSMA",
+      "trades": 7,
+      "pnl": -1.3457696952348945,
+      "winRate": 57.14285714285714,
+      "pf": 0.8206693463514925
+    },
+    {
+      "stock": "BBX",
+      "melhor": "StockEma1270Cross",
+      "trades": 16,
+      "pnl": -3.0382767218612536,
+      "winRate": 37.5,
+      "pf": 0.7581380909881132
+    }
+  ],
+  "stratSummary": [
+    {
+      "key": "Stoch50",
+      "timeframe": "1h",
+      "totalTrades": 1113,
+      "totalPnl": 363.6565024534144,
+      "winRate": 40.521114106019766,
+      "symbolsWithTrades": 73,
+      "symbolsProfitable": 53,
+      "pnlPerTrade": 0.3267354020246311
+    },
+    {
+      "key": "EMA90TopFade",
+      "timeframe": "1d",
+      "totalTrades": 49,
+      "totalPnl": 66.31168595242997,
+      "winRate": 79.59183673469387,
+      "symbolsWithTrades": 21,
+      "symbolsProfitable": 16,
+      "pnlPerTrade": 1.3532997133148974
+    },
+    {
+      "key": "PullbackTrend",
+      "timeframe": "1h",
+      "totalTrades": 1143,
+      "totalPnl": -3.602732846393418,
+      "winRate": 23.972003499562554,
+      "symbolsWithTrades": 73,
+      "symbolsProfitable": 33,
+      "pnlPerTrade": -0.0031519972409391234
+    },
+    {
+      "key": "StochRSITop4Flip",
+      "timeframe": "1h",
+      "totalTrades": 1236,
+      "totalPnl": -5.40993002181877,
+      "winRate": 36.084142394822,
+      "symbolsWithTrades": 73,
+      "symbolsProfitable": 40,
+      "pnlPerTrade": -0.004376966037070202
+    },
+    {
+      "key": "StockSMA",
+      "timeframe": "2h",
+      "totalTrades": 577,
+      "totalPnl": -6.099420224403813,
+      "winRate": 39.86135181975737,
+      "symbolsWithTrades": 74,
+      "symbolsProfitable": 35,
+      "pnlPerTrade": -0.010570918933108861
+    },
+    {
+      "key": "PumpEmaSpread",
+      "timeframe": "5m",
+      "totalTrades": 49,
+      "totalPnl": -82.77013203329795,
+      "winRate": 24.489795918367346,
+      "symbolsWithTrades": 30,
+      "symbolsProfitable": 7,
+      "pnlPerTrade": -1.689186368026489
+    },
+    {
+      "key": "StockEma1270Cross",
+      "timeframe": "1h",
+      "totalTrades": 1201,
+      "totalPnl": -193.69115740212783,
+      "winRate": 26.39467110741049,
+      "symbolsWithTrades": 73,
+      "symbolsProfitable": 26,
+      "pnlPerTrade": -0.1612749020833704
+    },
+    {
+      "key": "TrendSurfer",
+      "timeframe": "1h",
+      "totalTrades": 678,
+      "totalPnl": -193.74765393441072,
+      "winRate": 19.76401179941003,
+      "symbolsWithTrades": 73,
+      "symbolsProfitable": 18,
+      "pnlPerTrade": -0.2857635013781869
+    },
+    {
+      "key": "PumpTrendFlip",
+      "timeframe": "1h",
+      "totalTrades": 378,
+      "totalPnl": -323.27480506752397,
+      "winRate": 34.65608465608466,
+      "symbolsWithTrades": 65,
+      "symbolsProfitable": 25,
+      "pnlPerTrade": -0.8552243520304867
+    },
+    {
+      "key": "PumpEma60Band",
+      "timeframe": "15m",
+      "totalTrades": 72,
+      "totalPnl": -466.3605700293101,
+      "winRate": 0,
+      "symbolsWithTrades": 45,
+      "symbolsProfitable": 0,
+      "pnlPerTrade": -6.4772301392959735
+    }
+  ]
+}
