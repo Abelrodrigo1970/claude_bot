@@ -9,7 +9,7 @@
 //     maxDD -739.07->-558.46) — a alavanca que mais reduziu o drawdown sem
 //     sacrificar retorno. Esta versão combina os 3 ajustes.
 //
-// Entrada LONG (qualquer uma das duas condições de preço, E as duas outras):
+// Entrada LONG (qualquer uma das duas condições de preço, E as três outras):
 //   1) Preço acima da EMA50 mas a menos de 3% dela (banda de entrada), OU
 //   2) Preço estava abaixo da EMA50 e acabou de cruzar para cima.
 //   E a vela de entrada não teve um movimento (open->close) > 20% — evita
@@ -18,6 +18,13 @@
 //   calculado no runner.js — ver getBtcBullish) — só bloqueia se soubermos
 //   ao certo que o BTC está em baixa; sem dados (context.btcBullish
 //   undefined, ex: chamadas de estudo sem context) não bloqueia.
+//   E o símbolo está no top 30 do ranking do scanner EMA90 (context.rank,
+//   1-indexed, calculado no runner.js — pedido do utilizador, 04/09, ver
+//   study-ema50BandCrossScaleOut-scanner-rank.js: cortar no top 30 reduz o
+//   drawdown ~5x — -631 -> -114 em 80 dias — sem piorar o profit factor).
+//   Só se aplica quando o runner passa 'rank' no context; chamadas sem
+//   ranking nenhum (ex: testes unitários sem context) não bloqueiam. Um
+//   símbolo fora do top 50 do scan chega aqui com rank null -> bloqueado.
 //
 // Saída (gestão de posição de SL/TP fica em src/services/runner.js —
 // stopLossPct + takeProfitTiers; este módulo só decide entrada e as duas
@@ -39,6 +46,7 @@ const BAND_MAX_PCT = 3;          // banda de entrada: até 3% acima da EMA50
 const EXIT_BAND_PCT = 2;         // saída: 2% abaixo da EMA50
 const RSI_EXIT_MAX = 87;
 const ENTRY_CANDLE_MAX_MOVE_PCT = 20; // ignora entradas em velas com |open->close| > 20%
+const SCANNER_TOP_N = 30;        // só entra se o rank no scanner EMA90 for <= 30
 
 function calculateIndicators(candles) {
   const closes = candles.map(c => c.close);
@@ -83,14 +91,20 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   // Só bloqueia se soubermos mesmo que o BTC está em baixa — sem dados
   // (undefined, ex: chamadas sem context) não trava a entrada.
   const btcOk = context.btcBullish !== false;
-  const validEntry = ind.priceSignalOk && ind.entryCandleOk && btcOk;
+  // Filtro de ranking do scanner EMA90 (top 30). Só se aplica quando o runner
+  // passa 'rank' no context — chamadas sem ranking nenhum não bloqueiam.
+  // rank null (símbolo fora do top 50 do scan) => fora do top 30 => bloqueado.
+  const rank = context.rank ?? null;
+  const rankOk = !('rank' in context) || (rank != null && rank <= SCANNER_TOP_N);
+  const validEntry = ind.priceSignalOk && ind.entryCandleOk && btcOk && rankOk;
 
   if (!currentPosition) {
     if (validEntry) {
       const why = ind.crossUpEma50 ? 'cruzou para cima da EMA50' : `${ind.distPct50.toFixed(2)}% acima da EMA50 (banda <${BAND_MAX_PCT}%)`;
+      const rankNote = rank != null ? ` — top ${SCANNER_TOP_N} do scanner (rank ${rank})` : '';
       return {
         signal: 'long',
-        reason: `Preço ${ind.price.toFixed(6)} — ${why} — entra long`,
+        reason: `Preço ${ind.price.toFixed(6)} — ${why}${rankNote} — entra long`,
         indicators: ind,
       };
     }
@@ -98,6 +112,7 @@ function generateSignal(candles, currentPosition = null, context = {}) {
     if (!ind.priceSignalOk) missing.push(`fora da banda de entrada (${ind.distPct50 != null ? ind.distPct50.toFixed(2) : '?'}%)`);
     if (!ind.entryCandleOk) missing.push(`vela de entrada com ${ind.entryCandleMovePct.toFixed(1)}% de movimento (>${ENTRY_CANDLE_MAX_MOVE_PCT}%)`);
     if (!btcOk) missing.push('BTC em baixa (abaixo da própria EMA50)');
+    if (!rankOk) missing.push(`fora do top ${SCANNER_TOP_N} do scanner EMA90 (rank ${rank ?? 'fora do top 50'})`);
     return {
       signal: 'hold',
       reason: `Sem entrada — ${missing.join(' · ')}`,
@@ -120,6 +135,6 @@ function generateSignal(candles, currentPosition = null, context = {}) {
 }
 
 module.exports = {
-  STRATEGY_NAME, EMA_PERIOD, RSI_PERIOD, BAND_MAX_PCT, EXIT_BAND_PCT, RSI_EXIT_MAX, ENTRY_CANDLE_MAX_MOVE_PCT,
+  STRATEGY_NAME, EMA_PERIOD, RSI_PERIOD, BAND_MAX_PCT, EXIT_BAND_PCT, RSI_EXIT_MAX, ENTRY_CANDLE_MAX_MOVE_PCT, SCANNER_TOP_N,
   generateSignal, calculateIndicators,
 };

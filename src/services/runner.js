@@ -232,6 +232,7 @@ const STRATEGIES = [
     market: 'crypto',
     symbol: null,
     scannerPeriod: 90, // universo do Scanner EMA90 (mesmo do TrendSurfer/EMA90TopFade)
+    topN: ema50BandCrossScaleOut.SCANNER_TOP_N, // só os 30 primeiros do ranking (pedido do utilizador, 04/09)
     timeframe: '4h',
     generateSignal: ema50BandCrossScaleOut.generateSignal,
     positionSize: 60,
@@ -246,6 +247,12 @@ const STRATEGIES = [
     // +48% fecha mais 30% (~49% da entrada original fica aberto depois dos
     // dois). O que sobra sai quando o preço cai 2% abaixo da EMA50
     // (tendência invalidada) OU RSI(14) > 87 (exaustão).
+    //
+    // 04/09: filtro adicional — só entra se o símbolo estiver no top 30 do
+    // ranking do scanner EMA90 (topN acima + guarda em generateSignal via
+    // context.rank). Ver src/backtests/study-ema50BandCrossScaleOut-scanner-rank.js:
+    // cortar no top 30 baixa o maxDD de ~-631 para ~-114 em 80 dias sem
+    // piorar o profit factor (1.40 vs 1.44 sem filtro).
     //
     // Percurso do estudo (90 dias, universo EMA90 atual, ver
     // src/backtests/backtest-ema50BandCrossScaleOut*.js):
@@ -795,6 +802,9 @@ function resolveSymbols(strategy) {
   } else {
     const scan = getScannerState(strategy.scannerPeriod);
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
+    // results já vem ordenado por pct_above desc — topN restringe ao topo do ranking
+    // (a estratégia volta a validar o rank em generateSignal via context.rank).
+    if (strategy.topN) symbols = symbols.slice(0, strategy.topN);
   }
 
   // Garante que um símbolo com posição aberta continua a ser avaliado mesmo que
