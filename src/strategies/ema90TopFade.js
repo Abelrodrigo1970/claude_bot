@@ -30,10 +30,22 @@ const RSI_SHORT_MAX = 72;
 // tem edge quando o mercado de ações está em queda — bloqueia só a entrada
 // nova (e a reentrada via flip_to_short); não fecha shorts já abertos nem
 // mexe no lado long.
+//
+// Filtro BTC diário adicionado em 07/09 — mesma ideia, com o BTC. Estudo
+// sobre 248 shorts reais (src/backtests/study-ema90TopFade-btc-filter.js):
+// shorts abertos em dias de BTC a subir somam -202.60 USDT; os abertos em
+// dias de BTC a cair somam +8.42 USDT. context.btcDailyPositive vem do runner
+// (getBtcDailyPositive: close da vela diária em curso vs close de ontem).
+// Também só bloqueia entrada nova / flip_to_short.
 function generateSignal(candles, currentPosition = null, context = {}) {
   const rank = context.rank ?? null;
   const inTopN = rank != null && rank <= TOP_N;
   const qqqBlocksShort = context.qqqPositive === true;
+  const btcBlocksShort = context.btcDailyPositive === true;
+  const marketBlocksShort = qqqBlocksShort || btcBlocksShort;
+  const blockReason = qqqBlocksShort && btcBlocksShort ? 'QQQ e BTC em alta hoje'
+    : qqqBlocksShort ? 'QQQ está em alta hoje'
+    : 'BTC está em alta hoje';
 
   const closes = candles.map(c => c.close);
   const rsiArr = RSI.calculate({ period: RSI_PERIOD, values: closes });
@@ -42,10 +54,10 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   const rsiLabel = rsi != null ? rsi.toFixed(1) : 'n/a';
 
   if (!currentPosition) {
-    if (inTopN && qqqBlocksShort) {
+    if (inTopN && marketBlocksShort) {
       return {
         signal: 'hold',
-        reason: `Top ${TOP_N} (rank ${rank}) mas QQQ está em alta hoje — short bloqueado (só tem edge com o Nasdaq a cair)`,
+        reason: `Top ${TOP_N} (rank ${rank}) mas ${blockReason} — short bloqueado (só tem edge com o mercado a cair)`,
         indicators: { rank, rsi },
       };
     }
@@ -75,10 +87,10 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   }
 
   if (currentPosition === 'long' && inTopN) {
-    if (qqqBlocksShort) {
+    if (marketBlocksShort) {
       return {
         signal: 'hold',
-        reason: `Reentrou no top ${TOP_N} (rank ${rank}) mas QQQ em alta — mantém long, não inverte para short`,
+        reason: `Reentrou no top ${TOP_N} (rank ${rank}) mas ${blockReason} — mantém long, não inverte para short`,
         indicators: { rank, rsi },
       };
     }

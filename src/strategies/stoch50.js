@@ -29,41 +29,54 @@ function calculateIndicators(candles) {
   };
 }
 
-// Compra quando %K cruza acima de %D, fecha quando cruza abaixo — sem filtro,
-// qualquer cruzamento de entrada é válido. Sem cruzamento mantém o que já
-// estiver aberto.
+// Compra quando %K cruza acima de %D; o cruzamento para baixo fecha o long e,
+// só se o QQQ estiver negativo nesse momento, abre um short. Sem cruzamento
+// mantém o que já estiver aberto.
 //
-// Long-only desde 14/08 — estudo dia-a-dia comparando com o QQQ (Nasdaq):
-// o short perdia dinheiro tanto em dias QQQ+ (-59.03 USDT) como QQQ- (-46.32
-// USDT), ou seja, não era um problema de regime de mercado como na
-// EMA90TopFade — o lado short desta estratégia não tem edge. No mesmo
-// período, long-only teria dado +147.80 USDT vs. +42.44 real (long+short) e
-// +101.47 com um filtro QQQ testado — desligar o short de vez é a melhor das
-// três opções.
-function generateSignal(candles, currentPosition = null) {
+// Long-only entre 14/08 e 07/09 — o estudo original (janela de 10 dias) dizia
+// que o short não tinha edge em regime nenhum. O reestudo de 07/09 sobre 90
+// dias (src/backtests/study-stoch50-qqq-directional.js) mostrou o contrário:
+// os shorts limitados às horas de QQQ negativo somam +305 USDT (PF 1.55). A
+// melhor variante testada — "long sempre + short só em QQQ- na hora" — deu
+// +682 vs +377 do long-only (PF 1.44 vs 1.38, drawdown -129 vs -151).
+// context.qqqPositive vem do runner (getQqqPositive: preço do QQQ na hora vs
+// fecho da véspera); qqqPositive === false => QQQ negativo => short permitido.
+// Sem esse dado (chamadas de estudo sem context) o short fica bloqueado —
+// comporta-se como long-only.
+function generateSignal(candles, currentPosition = null, context = {}) {
   const minCandles = K_LENGTH + K_SMOOTH + D_SMOOTH + 5;
   if (candles.length < minCandles) {
     return { signal: 'none', reason: `Candles insuficientes (mínimo ${minCandles})`, indicators: {} };
   }
 
   const ind = calculateIndicators(candles);
+  const kL = ind.k?.toFixed(1), dL = ind.d?.toFixed(1);
+  const qqqNegative = context.qqqPositive === false; // short só é permitido com o QQQ a cair na hora
 
   if (!currentPosition) {
     if (ind.crossUp) {
-      return {
-        signal: 'long',
-        reason: `%K(${ind.k.toFixed(1)}) cruzou acima de %D(${ind.d.toFixed(1)})`,
-        indicators: ind,
-      };
+      return { signal: 'long', reason: `%K(${kL}) cruzou acima de %D(${dL}) — entra long`, indicators: ind };
     }
-    return { signal: 'hold', reason: `Sem cruzamento de entrada (long-only) — %K=${ind.k?.toFixed(1)}, %D=${ind.d?.toFixed(1)}`, indicators: ind };
+    if (ind.crossDown && qqqNegative) {
+      return { signal: 'short', reason: `%K(${kL}) cruzou abaixo de %D(${dL}) · QQQ negativo na hora — entra short`, indicators: ind };
+    }
+    if (ind.crossDown) {
+      return { signal: 'hold', reason: `%K cruzou abaixo de %D mas QQQ não está negativo — sem short`, indicators: ind };
+    }
+    return { signal: 'hold', reason: `Sem cruzamento de entrada — %K=${kL}, %D=${dL}`, indicators: ind };
   }
 
-  if (ind.crossDown) {
-    return { signal: 'close_long', reason: `%K cruzou abaixo de %D(${ind.d.toFixed(1)}) — fecha long (estratégia é long-only)`, indicators: ind };
+  if (currentPosition === 'long' && ind.crossDown) {
+    return qqqNegative
+      ? { signal: 'flip_to_short', reason: `%K cruzou abaixo de %D(${dL}) · QQQ negativo — fecha long e inverte para short`, indicators: ind }
+      : { signal: 'close_long', reason: `%K cruzou abaixo de %D(${dL}) — fecha long`, indicators: ind };
   }
 
-  return { signal: 'hold', reason: `Mantém long — %K=${ind.k?.toFixed(1)}, %D=${ind.d?.toFixed(1)}`, indicators: ind };
+  if (currentPosition === 'short' && ind.crossUp) {
+    return { signal: 'flip_to_long', reason: `%K(${kL}) cruzou acima de %D(${dL}) — fecha short e inverte para long`, indicators: ind };
+  }
+
+  return { signal: 'hold', reason: `Mantém ${currentPosition} — %K=${kL}, %D=${dL}`, indicators: ind };
 }
 
 module.exports = { STRATEGY_NAME, generateSignal, calculateIndicators };

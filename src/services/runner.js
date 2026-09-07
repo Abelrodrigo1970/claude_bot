@@ -48,6 +48,29 @@ async function getQqqPositive() {
   return qqqRegimeCache.positive;
 }
 
+// Regime BTC diário — opt-in via strategy.btcDailyShortFilter (ver
+// EMA90TopFade). Mesma ideia do filtro QQQ acima, mas com o BTC: compara o
+// close da vela diária em curso com o close do dia anterior. Estudo 07/09
+// (248 shorts reais da EMA90TopFade): shorts abertos em dias de BTC a subir
+// somam -202.60 USDT; os abertos em dias de BTC a cair somam +8.42 USDT — o
+// short desta estratégia só tem edge com o BTC negativo nesse dia. Cache
+// própria (15min) para não pedir isto à Bybit a cada símbolo.
+let btcDailyRegimeCache = { positive: null, fetchedAt: 0 };
+
+async function getBtcDailyPositive() {
+  if (Date.now() - btcDailyRegimeCache.fetchedAt < QQQ_CACHE_TTL) return btcDailyRegimeCache.positive;
+  try {
+    const candles = await bybit.getCandles('BTC/USDT:USDT', '1d', 2);
+    if (candles.length < 2) return btcDailyRegimeCache.positive;
+    const prevClose = candles[candles.length - 2].close;
+    const lastClose = candles[candles.length - 1].close;
+    btcDailyRegimeCache = { positive: lastClose >= prevClose, fetchedAt: Date.now() };
+  } catch (err) {
+    console.warn(`[Runner] Falha ao obter regime BTC diário: ${err.message}`);
+  }
+  return btcDailyRegimeCache.positive;
+}
+
 // Regime BTC — opt-in via strategy.btcTrendFilter (ver
 // Ema50BandCrossScaleOut). Compara o preço de fecho de 4h com a própria
 // EMA50 de 4h do BTC — mesma lógica de tendência que a estratégia aplica a
@@ -114,6 +137,12 @@ const STRATEGIES = [
     // dias QQQ+ vs +19.41 em dias QQQ-). qqqShortFilter liga o cálculo do
     // regime QQQ no runner (context.qqqPositive) — ver getQqqPositive abaixo.
     qqqShortFilter: true,
+    // Filtro BTC diário adicionado em 07/09 — mesmo padrão do QQQ, com o BTC:
+    // estudo sobre 248 shorts reais (study-ema90TopFade-btc-filter.js) — shorts
+    // abertos em dias de BTC a subir somam -202.60 USDT vs +8.42 nos dias de
+    // BTC a cair. btcDailyShortFilter liga o cálculo no runner
+    // (context.btcDailyPositive) — ver getBtcDailyPositive acima.
+    btcDailyShortFilter: true,
     enabled: true,
   },
   {
@@ -160,15 +189,19 @@ const STRATEGIES = [
     // parcial 50% a +15% (ambos os lados): +448.89 USDT no mesmo backtest —
     // melhor das 3 variantes testadas (10/15/20%).
     //
-    // Long-only desde 14/08 — estudo dia-a-dia (05-14/08, dados reais): o
-    // short perdia em dias QQQ+ e QQQ- (-59.03 e -46.32 USDT), sem edge em
-    // nenhum regime. Long-only teria dado +147.80 USDT no período vs. +42.44
-    // real (long+short). generateSignal já não abre short — ver stoch50.js.
+    // Long-only entre 14/08 e 07/09 — o estudo original (janela de 10 dias)
+    // concluiu que o short não tinha edge. O reestudo de 07/09 sobre 90 dias
+    // (src/backtests/study-stoch50-qqq-directional.js) mostrou o contrário: os
+    // shorts limitados às horas de QQQ negativo somam +305 USDT (PF 1.55). A
+    // config atual — "long sempre + short só em QQQ- na hora" — deu +682 vs
+    // +377 do long-only (PF 1.44 vs 1.38, drawdown -129 vs -151).
+    // qqqShortFilter liga o cálculo do regime QQQ no runner
+    // (context.qqqPositive === false => QQQ negativo => short permitido).
     // Ligada em 03/09 depois da lista de 39 símbolos acima ficar validada
     // em 3 amostras independentes (ver comentário junto a `symbols`).
-    takeProfitPct: 0.15,
+    qqqShortFilter: true,
+    takeProfitPct: 0.15,        // TP parcial 50% a ±15% — nos dois lados (sem takeProfitSide)
     takeProfitCloseFraction: 0.5,
-    takeProfitSide: 'long',
     enabled: true,
   },
   {
@@ -596,8 +629,9 @@ async function runStrategyOnSymbol(strategy, symbol) {
 
     const qqqPositive = strategy.qqqShortFilter ? await getQqqPositive() : null;
     const btcBullish  = strategy.btcTrendFilter ? await getBtcBullish() : null;
+    const btcDailyPositive = strategy.btcDailyShortFilter ? await getBtcDailyPositive() : null;
 
-    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, { rank, scannedAt, newScanSession, qqqPositive, btcBullish });
+    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, { rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive });
 
     const isAction = signal !== 'hold' && signal !== 'none';
     const icon = isAction ? '🔔' : '·';
