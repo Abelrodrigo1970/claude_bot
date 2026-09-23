@@ -11,6 +11,7 @@ const ema90TopFade         = require('../strategies/ema90TopFade');
 const stoch50              = require('../strategies/stoch50');
 const stockEma1270Cross    = require('../strategies/stockEma1270Cross');
 const volumeSpike3xScaleOut = require('../strategies/volumeSpike3xScaleOut');
+const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
 const ema50BandCrossScaleOut = require('../strategies/ema50BandCrossScaleOut');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
@@ -93,6 +94,25 @@ async function getBtcBullish() {
     console.warn(`[Runner] Falha ao obter regime BTC: ${err.message}`);
   }
   return btcRegimeCache.bullish;
+}
+
+// BTC 4h verde — opt-in via strategy.btc4hGreenFilter (Lista50SpikeSmaRise).
+// Estudo study-lista50-spike-btc-filter.js (60d): SMA50↑ + BTC 4h verde
+// → PF 1.92, maxDD -186 (melhor qualidade vs baseline PF 1.29).
+// Cache 15min — mesma TTL do regime EMA50.
+let btc4hGreenCache = { green: null, fetchedAt: 0 };
+
+async function getBtc4hGreen() {
+  if (Date.now() - btc4hGreenCache.fetchedAt < BTC_REGIME_CACHE_TTL) return btc4hGreenCache.green;
+  try {
+    const candles = await bybit.getCandles('BTC/USDT:USDT', '4h', 2);
+    if (candles.length < 1) return btc4hGreenCache.green;
+    const last = candles[candles.length - 1];
+    btc4hGreenCache = { green: last.close > last.open, fetchedAt: Date.now() };
+  } catch (err) {
+    console.warn(`[Runner] Falha ao obter BTC 4h verde: ${err.message}`);
+  }
+  return btc4hGreenCache.green;
 }
 
 // Registry de estratégias ativas
@@ -257,6 +277,27 @@ const STRATEGIES = [
       { pct: 0.08, fraction: 0.30 },
       { pct: 0.45, fraction: 0.30 },
     ],
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: lista50SpikeSmaRise.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbols: VOLATILE50_SYMBOLS, // Lista 50 (top50-6month-movers.json)
+    timeframe: '15m',
+    generateSignal: lista50SpikeSmaRise.generateSignal,
+    positionSize: 80,
+    // Estudo 60d (study-lista50-spike-btc-filter.js) — melhor qualidade:
+    //   entrada: spike≥5× + verde + close>SMA50 + SMA50↑ + BTC 4h verde
+    //   gestão: SL 12% · TP 30% @ +15% · resto às 48h
+    //   ~266 trades, PF ~1.92, PnL ~+704, maxDD ~-186
+    stopLossPct: 0.12,
+    takeProfitTiers: [
+      { pct: 0.15, fraction: 0.30 },
+    ],
+    maxHoldHours: 48,
+    btc4hGreenFilter: true, // context.btc4hGreen — ver getBtc4hGreen acima
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
@@ -630,8 +671,11 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const qqqPositive = strategy.qqqShortFilter ? await getQqqPositive() : null;
     const btcBullish  = strategy.btcTrendFilter ? await getBtcBullish() : null;
     const btcDailyPositive = strategy.btcDailyShortFilter ? await getBtcDailyPositive() : null;
+    const btc4hGreen = strategy.btc4hGreenFilter ? await getBtc4hGreen() : null;
 
-    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, { rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive });
+    const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, {
+      rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen,
+    });
 
     const isAction = signal !== 'hold' && signal !== 'none';
     const icon = isAction ? '🔔' : '·';
