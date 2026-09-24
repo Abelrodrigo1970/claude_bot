@@ -5,6 +5,7 @@ const {
   getState: getScannerState, startScan, getGainersState, startScanGainers,
   getPumpState, startScanPump,
   getEmaTrendTotalState, startScanEmaTrendTotal,
+  getPeriodGainersState, startScanPeriodGainers,
 } = require('./scanner');
 const trendSurfer          = require('../strategies/trendSurfer');
 const ema90TopFade         = require('../strategies/ema90TopFade');
@@ -12,6 +13,7 @@ const stoch50              = require('../strategies/stoch50');
 const stockEma1270Cross    = require('../strategies/stockEma1270Cross');
 const volumeSpike3xScaleOut = require('../strategies/volumeSpike3xScaleOut');
 const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
+const maCross12x21         = require('../strategies/maCross12x21');
 const ema50BandCrossScaleOut = require('../strategies/ema50BandCrossScaleOut');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
@@ -299,6 +301,25 @@ const STRATEGIES = [
     maxHoldHours: 48,
     btc4hGreenFilter: true, // context.btc4hGreen — ver getBtc4hGreen acima
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: maCross12x21.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    // Universo: Top Ganhos do Mês (scanner periodGainers · resultsMonth)
+    symbolSource: 'gainersMonth',
+    topN: maCross12x21.SCANNER_TOP_N,
+    timeframe: '15m',
+    generateSignal: maCross12x21.generateSignal,
+    positionSize: 80,
+    // Port Bot Scanner MA_CROSS_12X21_S2 — SL 15% · TP 60% @ +44% · resto por
+    // compressão de spread <0,5% (sinal close_long da própria estratégia).
+    stopLossPct: 0.15,
+    takeProfitTiers: [
+      { pct: 0.44, fraction: 0.60 },
+    ],
+    // Nunca corrida nem testada ao vivo neste app — arranca só em estudo.
     enabled: false,
   },
   {
@@ -663,6 +684,12 @@ async function runStrategyOnSymbol(strategy, symbol) {
       const idx = scan.results?.findIndex(r => r.symbol === symbol) ?? -1;
       rank = idx >= 0 ? idx + 1 : null;
       scannedAt = scan.scannedAt ?? null;
+    } else if (strategy.symbolSource === 'gainersMonth') {
+      const scan = getPeriodGainersState();
+      const list = scan.resultsMonth || [];
+      const idx = list.findIndex(r => r.symbol === symbol);
+      rank = idx >= 0 ? idx + 1 : null;
+      scannedAt = scan.scannedAt ?? null;
     }
 
     const posForSession = openPositions[key];
@@ -859,6 +886,12 @@ function resolveSymbols(strategy) {
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
     // results já vem ordenado por change24h desc — topN restringe ao ranking de topo
     if (strategy.topN) symbols = symbols.slice(0, strategy.topN);
+  } else if (strategy.symbolSource === 'gainersMonth') {
+    const scan = getPeriodGainersState();
+    symbols = (scan.status === 'done' && scan.resultsMonth?.length)
+      ? scan.resultsMonth.map(r => r.symbol)
+      : [];
+    if (strategy.topN) symbols = symbols.slice(0, strategy.topN);
   } else if (strategy.symbolSource === 'gainers24hDropped') {
     // Só os símbolos que estavam no Top N do scan anterior e já não estão no
     // atual — usado pela Top4RotationFade para detetar quem acabou de sair.
@@ -902,6 +935,8 @@ async function ensureSymbols(strategy) {
     await startScan(strategy.scannerPeriod, 50);
   } else if (strategy.symbolSource === 'gainers24h' || strategy.symbolSource === 'gainers24hDropped') {
     await startScanGainers(4);
+  } else if (strategy.symbolSource === 'gainersMonth') {
+    await startScanPeriodGainers(50);
   } else if (strategy.symbolSource === 'emaTrendTotal') {
     await startScanEmaTrendTotal();
   } else if (strategy.symbolSource === 'pump24h') {
@@ -912,6 +947,7 @@ async function ensureSymbols(strategy) {
 function scannerLabel(strategy) {
   if (strategy.scannerPeriod) return `Scanner EMA${strategy.scannerPeriod}`;
   if (strategy.symbolSource === 'gainers24h' || strategy.symbolSource === 'gainers24hDropped') return 'Scanner Top 24h';
+  if (strategy.symbolSource === 'gainersMonth') return 'Top Ganhos do Mês';
   if (strategy.symbolSource === 'emaTrendTotal') return 'Scanner EMA Trend (sem limite)';
   if (strategy.symbolSource === 'pump24h') return 'Scanner Pump 24h';
   return 'Scanner';
@@ -946,8 +982,8 @@ async function runAll() {
     // (corre para todas, mesmo com Bybit desligado — sinais/estudo continuam)
     for (const strategy of STRATEGIES) {
       const isDynamicSource = strategy.scannerPeriod || strategy.symbolSource === 'gainers24h' ||
-        strategy.symbolSource === 'gainers24hDropped' || strategy.symbolSource === 'emaTrendTotal' ||
-        strategy.symbolSource === 'pump24h';
+        strategy.symbolSource === 'gainers24hDropped' || strategy.symbolSource === 'gainersMonth' ||
+        strategy.symbolSource === 'emaTrendTotal' || strategy.symbolSource === 'pump24h';
       if (!isDynamicSource) continue;
       if (resolveSymbols(strategy).length === 0) {
         const label = scannerLabel(strategy);
