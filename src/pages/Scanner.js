@@ -795,6 +795,218 @@ function Volatile50Panel({ apiBase = '/api/scanner/volatile50', timeframeLabel =
   );
 }
 
+function PeriodGainersResultsTable({ results }) {
+  return (
+    <div className="card" style={{ padding: 0 }}>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Par</th>
+              <th>Preço</th>
+              <th>Market Cap</th>
+              <th>Var 1h</th>
+              <th>Var 24h</th>
+              <th>Var Semana</th>
+              <th>Var Mês</th>
+              <th>Volume</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((r, i) => {
+              const marketCap = r.marketCap ?? r.market_cap;
+              const change1h  = r.change1h  ?? r.change_1h;
+              const change24h = r.change24h ?? r.change_24h;
+              const change7d  = r.change7d  ?? r.change_7d;
+              const change30d = r.change30d ?? r.change_30d;
+              const pctCell = (v) => v == null
+                ? <td className="mono muted">—</td>
+                : <td className={`mono ${v >= 0 ? 'green' : 'red'}`}>{v >= 0 ? '+' : ''}{fmt(v)}%</td>;
+              return (
+                <tr key={r.symbol}>
+                  <td className="muted">{i + 1}</td>
+                  <td>
+                    <a
+                      className="symbol-link"
+                      href={`https://www.tradingview.com/chart/?symbol=BYBIT:${r.symbol.split('/')[0]}USDT.P`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Ver no TradingView"
+                    >
+                      <span className="symbol-name">{r.symbol.split('/')[0]}</span>
+                      <span className="symbol-suffix">/USDT</span>
+                      <span className="tv-icon">↗</span>
+                    </a>
+                  </td>
+                  <td className="mono">{fmt(r.price, 4)}</td>
+                  <td className="mono muted">{fmtVol(marketCap)}</td>
+                  {pctCell(change1h)}
+                  {pctCell(change24h)}
+                  {pctCell(change7d)}
+                  {pctCell(change30d)}
+                  <td className="mono muted">{fmtVol(r.volume)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function PeriodGainersHistoryPanel({ period }) {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [openIdx, setOpenIdx]   = useState(0);
+
+  useEffect(() => {
+    setLoading(true);
+    axios.get(`/api/scanner/topgainers/history?period=${period}&sessions=10`)
+      .then(r => setSessions(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [period]);
+
+  if (loading) return <div className="loading"><div className="spinner" /></div>;
+  if (!sessions.length) return (
+    <div className="card"><div className="empty">Nenhum histórico ainda. Corre o scanner para começar a guardar.</div></div>
+  );
+
+  return (
+    <div>
+      {sessions.map((session, idx) => (
+        <div key={session.scanned_at} className="card" style={{ marginBottom: 12 }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+            onClick={() => setOpenIdx(openIdx === idx ? -1 : idx)}
+          >
+            <div>
+              <span style={{ fontWeight: 600, color: '#e2e8f0' }}>
+                {format(new Date(session.scanned_at), 'dd/MM/yyyy HH:mm')}
+              </span>
+              <span className="muted" style={{ marginLeft: 12, fontSize: 12 }}>
+                {session.results.length} pares
+              </span>
+            </div>
+            <span className="muted">{openIdx === idx ? '▲' : '▼'}</span>
+          </div>
+          {openIdx === idx && (
+            <div style={{ marginTop: 16 }}>
+              <PeriodGainersResultsTable results={session.results} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PeriodGainersPanel() {
+  const [period, setPeriod] = useState('week'); // 'week' | 'month'
+  const [view, setView]     = useState('scan');
+  const [state, setState]   = useState({ status: 'idle', progress: 0, total: 0, resultsWeek: [], resultsMonth: [], scannedAt: null });
+  const pollRef = useRef(null);
+
+  const stopPolling = () => { clearInterval(pollRef.current); pollRef.current = null; };
+
+  const fetchState = useCallback(async () => {
+    try {
+      const { data } = await axios.get('/api/scanner/topgainers');
+      setState(data);
+      if (data.status !== 'scanning') stopPolling();
+    } catch { stopPolling(); }
+  }, []);
+
+  const startScan = async () => {
+    await axios.post('/api/scanner/topgainers/start');
+    setState(s => ({ ...s, status: 'scanning', progress: 0 }));
+    setView('scan');
+    stopPolling();
+    pollRef.current = setInterval(fetchState, 3000);
+  };
+
+  useEffect(() => {
+    fetchState();
+    return () => stopPolling();
+  }, [fetchState]);
+
+  const pct = state.total > 0 ? Math.round((state.progress / state.total) * 100) : 0;
+  const results = period === 'month' ? state.resultsMonth : state.resultsWeek;
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <div className="page-sub">
+            Top 50 pares com maior subida na semana/mês corrente (desde 2ª feira / desde dia 1, UTC) · só moedas com market cap &gt; 90M USD (CoinGecko) · atualiza a cada 4h
+            {state.scannedAt && (
+              <span className="scan-time"> · Scan: {new Date(state.scannedAt).toLocaleTimeString('pt-PT')}</span>
+            )}
+          </div>
+          <div className="scanner-tabs" style={{ marginTop: 10 }}>
+            <button className={`scanner-tab ${period === 'week' ? 'active' : ''}`} onClick={() => setPeriod('week')}>
+              Semana
+            </button>
+            <button className={`scanner-tab ${period === 'month' ? 'active' : ''}`} onClick={() => setPeriod('month')}>
+              Mês
+            </button>
+            <span style={{ width: 1, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
+            <button className={`scanner-tab ${view === 'scan' ? 'active' : ''}`} onClick={() => setView('scan')}>
+              Atual
+            </button>
+            <button className={`scanner-tab ${view === 'history' ? 'active' : ''}`} onClick={() => setView('history')}>
+              Histórico
+            </button>
+          </div>
+        </div>
+        <button className="btn btn-primary" onClick={startScan} disabled={state.status === 'scanning'}>
+          {state.status === 'scanning' ? `⏳ A escanear... (${state.progress}/${state.total})` : state.status === 'done' ? '🔄 Atualizar' : '🔍 Iniciar Scanner'}
+        </button>
+      </div>
+
+      {view === 'history' ? (
+        <PeriodGainersHistoryPanel key={period} period={period} />
+      ) : (
+        <>
+          {state.status === 'scanning' && (
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span className="muted">A analisar pares com market cap &gt; 90M...</span>
+                <span className="mono muted">{state.progress}/{state.total} ({pct}%)</span>
+              </div>
+              <div className="progress-bar"><div className="progress-fill" style={{ width: `${pct}%` }} /></div>
+            </div>
+          )}
+
+          {state.status === 'idle' && (
+            <div className="card">
+              <div className="empty">
+                Clica em <strong>Iniciar Scanner</strong> para encontrar as 50 moedas (market cap &gt; 90M) que mais subiram na semana e no mês corrente.
+              </div>
+            </div>
+          )}
+
+          {state.status === 'done' && results?.length === 0 && (
+            <div className="card">
+              <div className="empty">Sem dados neste momento.</div>
+            </div>
+          )}
+
+          {results?.length > 0 && (
+            <PeriodGainersResultsTable results={results} />
+          )}
+
+          {state.status === 'error' && (
+            <div className="card"><div className="empty red">Erro: {state.error}</div></div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Scanner() {
   const [tab, setTab] = useState(200);
 
@@ -844,9 +1056,16 @@ export default function Scanner() {
         >
           Lista 50 4h (spike)
         </button>
+        <button
+          className={`scanner-tab ${tab === 'topgainers' ? 'active' : ''}`}
+          onClick={() => setTab('topgainers')}
+        >
+          Top Ganhos (Semana/Mês)
+        </button>
       </div>
 
-      {tab === 'pump24h' ? <PumpPanel key="pump24h" />
+      {tab === 'topgainers' ? <PeriodGainersPanel key="topgainers" />
+        : tab === 'pump24h' ? <PumpPanel key="pump24h" />
         : tab === 'ematrend' ? <EmaTrendPanel key="ematrend" />
         : tab === 'ematrend-stocks' ? (
           <EmaTrendPanel

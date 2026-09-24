@@ -171,6 +171,24 @@ async function migrate() {
         scanned_at           TIMESTAMP      NOT NULL DEFAULT NOW()
       );
 
+      -- Top 50 ganhos da semana/mês corrente (ver startScanPeriodGainers em
+      -- src/services/scanner.js) — uma linha por par por período, a coluna
+      -- period distingue 'week' de 'month' dentro da mesma tabela.
+      CREATE TABLE IF NOT EXISTS scanner_period_gainers (
+        id          SERIAL PRIMARY KEY,
+        period      VARCHAR(10)    NOT NULL,  -- 'week' | 'month'
+        rank        INT            NOT NULL,
+        symbol      VARCHAR(50)    NOT NULL,
+        price       DECIMAL(20,8)  NOT NULL,
+        market_cap  DECIMAL(20,2),
+        change_1h   DECIMAL(10,4),
+        change_24h  DECIMAL(10,4),
+        change_7d   DECIMAL(10,4),
+        change_30d  DECIMAL(10,4),
+        volume      DECIMAL(20,8),
+        scanned_at  TIMESTAMP      NOT NULL DEFAULT NOW()
+      );
+
       CREATE TABLE IF NOT EXISTS strategy_settings (
         strategy_name VARCHAR(100) PRIMARY KEY,
         enabled       BOOLEAN      NOT NULL DEFAULT true,
@@ -196,6 +214,7 @@ async function migrate() {
       CREATE INDEX IF NOT EXISTS idx_scanner_ema_trend_stocks_time ON scanner_ema_trend_stocks(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_volatile50_time ON scanner_volatile50(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_volatile50_4h_time ON scanner_volatile50_4h(scanned_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_scanner_period_gainers_time ON scanner_period_gainers(period, scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_stock_symbols_active ON stock_symbols(active);
     `);
     console.log('✅ Migration completed successfully');

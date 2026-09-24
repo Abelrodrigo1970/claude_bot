@@ -14,6 +14,7 @@ const {
   startScanEmaTrendStocks, getEmaTrendStocksState,
   startScanVolatile50, getVolatile50State,
   startScanVolatile50_4h, getVolatile50State4h,
+  startScanPeriodGainers, getPeriodGainersState,
 } = require('./services/scanner');
 
 const app = express();
@@ -560,6 +561,55 @@ app.get('/api/scanner/volatile50-4h/history', async (req, res) => {
   }
 });
 
+// Top 50 ganhos da semana e do mês corrente (market cap > 90M via
+// CoinGecko) — ver startScanPeriodGainers em services/scanner.js.
+app.post('/api/scanner/topgainers/start', (req, res) => {
+  startScanPeriodGainers();
+  res.json({ ok: true });
+});
+
+// GET para cron jobs externos — scanner Top ganhos semana/mês
+app.get('/api/cron/scanTopGainers', (req, res) => {
+  res.json({ ok: true, message: 'Scanner Top Ganhos (semana/mês) iniciado', time: new Date() });
+  startScanPeriodGainers();
+});
+
+app.get('/api/scanner/topgainers', (req, res) => {
+  res.json(getPeriodGainersState());
+});
+
+// Histórico — ?period=week|month (default week) & ?sessions=10
+app.get('/api/scanner/topgainers/history', async (req, res) => {
+  try {
+    const period = req.query.period === 'month' ? 'month' : 'week';
+    const sessions = parseInt(req.query.sessions) || 10;
+
+    const { rows: sessionRows } = await pool.query(
+      `SELECT DISTINCT scanned_at FROM scanner_period_gainers WHERE period = $1 ORDER BY scanned_at DESC LIMIT $2`,
+      [period, sessions]
+    );
+
+    if (!sessionRows.length) return res.json([]);
+
+    const dates = sessionRows.map(r => r.scanned_at);
+    const { rows } = await pool.query(
+      `SELECT * FROM scanner_period_gainers WHERE period = $1 AND scanned_at = ANY($2) ORDER BY scanned_at DESC, rank ASC`,
+      [period, dates]
+    );
+
+    const grouped = {};
+    rows.forEach(r => {
+      const key = r.scanned_at.toISOString();
+      if (!grouped[key]) grouped[key] = { scanned_at: r.scanned_at, results: [] };
+      grouped[key].results.push(r);
+    });
+
+    res.json(Object.values(grouped));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── STATIC FILES (React build) ────────────────────────────────
 
 const buildPath = path.join(__dirname, '../build');
@@ -631,6 +681,15 @@ cron.schedule('5 0,4,8,12,16,20 * * *', async () => {
   console.log('\n⚡ Cron 4h: a correr scanner Lista 50 4h (spike de volume)...');
   await startScanVolatile50_4h();
   console.log('⚡ Cron 4h: scanner Lista 50 4h concluído.');
+});
+
+// A cada 4h, 10min depois de cada fecho de vela de 4h: scanner Top Ganhos
+// (semana/mês corrente) — usa CACHE_TTL de 2h, por isso corre no máximo
+// de 4 em 4h mesmo se o cron disparar mais vezes.
+cron.schedule('10 0,4,8,12,16,20 * * *', async () => {
+  console.log('\n📊 Cron 4h: a correr scanner Top Ganhos (semana/mês)...');
+  await startScanPeriodGainers();
+  console.log('📊 Cron 4h: scanner Top Ganhos concluído.');
 });
 
 // A cada 15 min: estratégias de 15m (ex: PumpEma60Band sobre o Pump 24h) —

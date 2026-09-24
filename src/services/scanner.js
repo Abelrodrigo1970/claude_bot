@@ -799,6 +799,145 @@ function getVolatile50State() { return volatile50Scanner15m.getState(); }
 async function startScanVolatile50_4h() { return volatile50Scanner4h.startScan(); }
 function getVolatile50State4h() { return volatile50Scanner4h.getState(); }
 
+// ─── SCANNER TOP GANHOS — SEMANA / MÊS CORRENTE ────────────────
+// Duas listas (Top 50 semana corrente e Top 50 mês corrente), calculadas
+// numa só passagem sobre os pares elegíveis — filtro prévio por market cap
+// (via CoinGecko, > 90M USD) para não gastar pedidos à Bybit com moedas
+// pequenas. "Semana"/"mês corrente" = desde a última 2ª feira / desde o
+// dia 1, UTC — não é uma janela rolling de 7/30 dias.
+const marketcap = require('./marketcap');
+const PERIOD_GAINERS_MIN_MARKET_CAP = 90_000_000;
+const PERIOD_GAINERS_CANDLES = 40; // cobre o pior caso (mês com 31 dias) + folga + vela em formação
+
+function startOfUTCWeek(date) {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const day = d.getUTCDay(); // 0=domingo
+  d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1) - day);
+  return d;
+}
+function startOfUTCMonth(date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
+let periodGainersState = {
+  status: 'idle', progress: 0, total: 0,
+  resultsWeek: [], resultsMonth: [], scannedAt: null, error: null,
+};
+
+async function startScanPeriodGainers(limit = 50) {
+  if (periodGainersState.status === 'scanning') return;
+  if (periodGainersState.status === 'done' && periodGainersState.scannedAt && Date.now() - periodGainersState.scannedAt < CACHE_TTL) return;
+
+  periodGainersState = { ...periodGainersState, status: 'scanning', progress: 0, total: 0, resultsWeek: [], resultsMonth: [], error: null };
+
+  try {
+    const marketCaps = await marketcap.fetchMarketCaps();
+
+    const markets = await bybit.publicExchange.loadMarkets();
+    const perps = Object.values(markets).filter(m =>
+      m.linear &&
+      m.type === 'swap' &&
+      m.settle === 'USDT' &&
+      m.active &&
+      !m.symbol.includes('USDC')
+    );
+
+    // Filtro por market cap ANTES de pedir velas — poupa centenas de pedidos à Bybit.
+    const eligible = perps.filter(m => {
+      const cap = m.base ? marketCaps.get(m.base.toUpperCase()) : null;
+      return cap != null && cap > PERIOD_GAINERS_MIN_MARKET_CAP;
+    });
+
+    console.log(`[Scanner TopGainers] ${eligible.length}/${perps.length} pares com market cap > 90M`);
+    periodGainersState.total = eligible.length;
+
+    const now = new Date();
+    const weekStart  = startOfUTCWeek(now);
+    const monthStart = startOfUTCMonth(now);
+    const results = [];
+
+    for (let i = 0; i < eligible.length; i++) {
+      periodGainersState.progress = i + 1;
+      const market = eligible[i];
+
+      try {
+        const [daily, hourly] = await Promise.all([
+          bybit.getCandles(market.symbol, '1d', PERIOD_GAINERS_CANDLES),
+          bybit.getCandles(market.symbol, '1h', 2),
+        ]);
+        if (daily.length < 8) continue;
+
+        const current = daily[daily.length - 1]; // vela de hoje (em formação) — close = preço atual
+        const price   = current.close;
+        const prevDay = daily[daily.length - 2];
+
+        // Última vela fechada ANTES do início da semana/mês corrente — baseline da variação.
+        const weekBase  = [...daily].reverse().find(c => c.time < weekStart);
+        const monthBase = [...daily].reverse().find(c => c.time < monthStart);
+
+        const change24h = prevDay   ? ((price - prevDay.close)   / prevDay.close)   * 100 : null;
+        const change7d  = weekBase  ? ((price - weekBase.close)  / weekBase.close)  * 100 : null;
+        const change30d = monthBase ? ((price - monthBase.close) / monthBase.close) * 100 : null;
+        const change1h  = hourly.length >= 2 ? ((hourly[1].close - hourly[0].close) / hourly[0].close) * 100 : null;
+
+        if (change7d == null && change30d == null) continue; // sem histórico suficiente p/ nenhuma das duas listas
+
+        results.push({
+          symbol:    market.symbol,
+          price,
+          marketCap: marketCaps.get(market.base.toUpperCase()),
+          change1h, change24h, change7d, change30d,
+          volume: current.volume * price,
+        });
+      } catch {
+        // par sem dados suficientes, ignora
+      }
+    }
+
+    const resultsWeek  = results.filter(r => r.change7d  != null).sort((a, b) => b.change7d  - a.change7d).slice(0, limit);
+    const resultsMonth = results.filter(r => r.change30d != null).sort((a, b) => b.change30d - a.change30d).slice(0, limit);
+    const scannedAt = new Date();
+
+    periodGainersState.resultsWeek  = resultsWeek;
+    periodGainersState.resultsMonth = resultsMonth;
+    periodGainersState.scannedAt    = scannedAt.getTime();
+    periodGainersState.status       = 'done';
+    console.log(`[Scanner TopGainers] semana: ${resultsWeek.length} · mês: ${resultsMonth.length}`);
+
+    // Guarda no histórico da BD (silencioso se BD não estiver configurada)
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const [period, list] of [['week', resultsWeek], ['month', resultsMonth]]) {
+          for (let i = 0; i < list.length; i++) {
+            const r = list[i];
+            await client.query(
+              `INSERT INTO scanner_period_gainers (period, rank, symbol, price, market_cap, change_1h, change_24h, change_7d, change_30d, volume, scanned_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+              [period, i + 1, r.symbol, r.price, r.marketCap, r.change1h, r.change24h, r.change7d, r.change30d, r.volume, scannedAt]
+            );
+          }
+        }
+        await client.query('COMMIT');
+        console.log('[Scanner TopGainers] resultados guardados na BD');
+      } catch (dbErr) {
+        await client.query('ROLLBACK');
+        console.warn('[Scanner TopGainers] Erro ao guardar no BD:', dbErr.message);
+      } finally {
+        client.release();
+      }
+    } catch {
+      // BD não configurada — continua sem guardar
+    }
+  } catch (err) {
+    periodGainersState.status = 'error';
+    periodGainersState.error  = err.message;
+  }
+}
+
+function getPeriodGainersState() { return periodGainersState; }
+
 module.exports = {
   startScan, getState,
   startScanGainers, getGainersState,
@@ -808,4 +947,5 @@ module.exports = {
   startScanEmaTrendTotal, getEmaTrendTotalState,
   startScanVolatile50, getVolatile50State,
   startScanVolatile50_4h, getVolatile50State4h,
+  startScanPeriodGainers, getPeriodGainersState,
 };
