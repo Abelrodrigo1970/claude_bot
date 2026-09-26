@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
+import { format } from 'date-fns';
 
 const STRATEGY_META = {
   TrendSurfer: {
@@ -48,11 +49,63 @@ function StarRating({ winRate }) {
   );
 }
 
+// Tabela de trades de UMA estratégia — usada no painel expansível de cada
+// card (pedido do utilizador, 26/09: acompanhar a evolução do portfolio
+// diretamente na página de Estratégias, sem ter de ir à página Trades).
+function StrategyTradesTable({ trades }) {
+  if (!trades.length) return <div className="empty">Nenhum trade registado ainda.</div>;
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Par</th>
+            <th>Side</th>
+            <th>Entrada</th>
+            <th>Saída</th>
+            <th>PnL (USDT)</th>
+            <th>PnL %</th>
+            <th>Status</th>
+            <th>Aberto</th>
+            <th>Fechado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {trades.map(t => {
+            const pnl = parseFloat(t.pnl || 0);
+            const pnlPct = parseFloat(t.pnl_pct || 0);
+            return (
+              <tr key={t.id}>
+                <td style={{ color: '#e2e8f0' }}>{t.symbol.split('/')[0]}/USDT</td>
+                <td><span className={`badge badge-${t.side}`}>{t.side.toUpperCase()}</span></td>
+                <td className="mono">{parseFloat(t.entry_price).toFixed(6)}</td>
+                <td className="mono">{t.exit_price ? parseFloat(t.exit_price).toFixed(6) : <span className="muted">—</span>}</td>
+                <td className={pnl >= 0 ? 'green' : 'red'}>
+                  {t.status === 'closed' ? `${pnl >= 0 ? '+' : ''}${pnl.toFixed(4)}` : <span className="muted">—</span>}
+                </td>
+                <td className={pnlPct >= 0 ? 'green' : 'red'}>
+                  {t.status === 'closed' ? `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%` : <span className="muted">—</span>}
+                </td>
+                <td><span className={`badge badge-${t.status}`}>{t.status}</span></td>
+                <td className="muted">{format(new Date(t.opened_at), 'dd/MM HH:mm')}</td>
+                <td className="muted">{t.closed_at ? format(new Date(t.closed_at), 'dd/MM HH:mm') : '—'}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function Strategies() {
   const [strategies, setStrategies] = useState([]);
   const [stats, setStats]           = useState({});
   const [runState, setRunState]     = useState({ running: false, strategy: null, current: 0, total: 0, log: [] });
   const [loading, setLoading]       = useState(true);
+  const [expanded, setExpanded]     = useState({});   // { [strategyName]: bool }
+  const [tradesBySt, setTradesBySt] = useState({});   // { [strategyName]: trade[] }
+  const [tradesLoading, setTradesLoading] = useState({}); // { [strategyName]: bool }
   const pollRef = useRef(null);
 
   const load = useCallback(async () => {
@@ -109,6 +162,23 @@ export default function Strategies() {
   };
 
   useEffect(() => () => clearInterval(pollRef.current), []);
+
+  const toggleExpanded = async (name) => {
+    const nowExpanded = !expanded[name];
+    setExpanded(prev => ({ ...prev, [name]: nowExpanded }));
+    if (nowExpanded && !tradesBySt[name]) {
+      setTradesLoading(prev => ({ ...prev, [name]: true }));
+      try {
+        const { data } = await axios.get(`/api/trades?strategy=${encodeURIComponent(name)}&limit=50`);
+        setTradesBySt(prev => ({ ...prev, [name]: data }));
+      } catch (e) {
+        console.error(`Erro ao carregar trades de ${name}:`, e);
+        setTradesBySt(prev => ({ ...prev, [name]: [] }));
+      } finally {
+        setTradesLoading(prev => ({ ...prev, [name]: false }));
+      }
+    }
+  };
 
   if (loading) return <div className="loading"><div className="spinner" /><span>A carregar...</span></div>;
 
@@ -267,6 +337,26 @@ export default function Strategies() {
                         <span className="meta-value mono blue">{openTrades}</span>
                       </span>
                     </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      style={{ marginTop: 12, fontSize: 12 }}
+                      onClick={() => toggleExpanded(s.name)}
+                      disabled={totalTrades === 0}
+                    >
+                      {expanded[s.name] ? '▲ Esconder trades' : `▼ Ver trades${totalTrades > 0 ? ` (${totalTrades})` : ''}`}
+                    </button>
+
+                    {expanded[s.name] && (
+                      <div style={{ marginTop: 12 }}>
+                        {tradesLoading[s.name] ? (
+                          <div className="loading"><div className="spinner" /></div>
+                        ) : (
+                          <StrategyTradesTable trades={tradesBySt[s.name] || []} />
+                        )}
+                      </div>
+                    )}
 
                     {s.symbolSource === 'stocks' && s.symbolCount === 0 && (
                       <div className="scanner-warning">⚠️ Stock symbols não carregados ainda.</div>
