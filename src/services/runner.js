@@ -313,12 +313,19 @@ const STRATEGIES = [
     timeframe: '15m',
     generateSignal: maCross12x21.generateSignal,
     positionSize: 80,
-    // Port Bot Scanner MA_CROSS_12X21_S2 — SL 15% · TP 60% @ +44% · resto por
-    // compressão de spread <0,5% (sinal close_long da própria estratégia).
+    // Port Bot Scanner MA_CROSS_12X21_S2 — SL 15% · TP 60% @ +44%.
+    // 27/09 (pedido do utilizador, após AKE/BR entrarem em queda de fundo no
+    // 1h): já não sai por compressão de spread — só por SL ou TP acima. Sem
+    // maxHoldHours configurado, o resto da posição (40% depois do TP1, ou
+    // 100% se o TP1 nunca disparar) fica aberto indefinidamente até um dos
+    // dois disparar.
     stopLossPct: 0.15,
     takeProfitTiers: [
       { pct: 0.44, fraction: 0.60 },
     ],
+    // Só entra long com o preço acima da EMA70 do 1h — evita repiques dentro
+    // de tendências de queda mais largas (ver ema70Filter1h em runner.js).
+    ema70Filter1h: true,
     // Nunca corrida nem testada ao vivo neste app — arranca só em estudo.
     enabled: false,
   },
@@ -700,8 +707,27 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const btcDailyPositive = strategy.btcDailyShortFilter ? await getBtcDailyPositive() : null;
     const btc4hGreen = strategy.btc4hGreenFilter ? await getBtc4hGreen() : null;
 
+    // Filtro opt-in (strategy.ema70Filter1h — pedido do utilizador 27/09 para
+    // a MaCross12x21, depois de ver AKE/BR entrarem em queda de fundo no 1h):
+    // só entra long se o preço estiver acima da EMA70 calculada no 1h. Por
+    // símbolo (ao contrário do regime BTC acima, que é de mercado), por isso
+    // sem cache partilhado — fica null se o símbolo não tiver histórico 1h
+    // suficiente, e a estratégia trata null como "não confirmado" (bloqueia).
+    let aboveEma70_1h = null;
+    if (strategy.ema70Filter1h) {
+      try {
+        const hourly = await bybit.getCandles(symbol, '1h', 100);
+        const closesH = hourly.slice(0, -1).map(c => c.close); // remove vela em formação
+        const ema70Arr = EMA.calculate({ period: 70, values: closesH });
+        const ema70 = ema70Arr[ema70Arr.length - 1];
+        if (ema70 != null) aboveEma70_1h = currentPrice > ema70;
+      } catch {
+        // símbolo sem velas 1h suficientes — fica null, estratégia bloqueia a entrada
+      }
+    }
+
     const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, {
-      rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen,
+      rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, aboveEma70_1h,
     });
 
     const isAction = signal !== 'hold' && signal !== 'none';

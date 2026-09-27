@@ -8,8 +8,14 @@
 //   + momentum 1h (4×15m) > 0%
 //   + hora PT ∈ [11 … 22] (bloqueia 4–10h)
 //   + turnover ~3h ≥ $3M
+//   + preço acima da EMA70 do 1h (context.aboveEma70_1h — ver ema70Filter1h
+//     em runner.js) — pedido do utilizador 27/09, depois de ver trades como
+//     AKE/BR entrarem num repique dentro de uma queda maior no 1h
 //
-// Gestão (runner): SL 15% · TP 60% @ +44% · resto: close_long se spread < 0,5%
+// Gestão (runner): SL 15% · TP 60% @ +44% · SEM saída por compressão de
+// spread (removida 27/09, a pedido do utilizador) — o resto da posição só
+// fecha por SL ou TP, pode ficar aberto indefinidamente até um dos dois
+// disparar (sem maxHoldHours configurado).
 const { EMA } = require('technicalindicators');
 
 const STRATEGY_NAME = 'MaCross12x21';
@@ -18,7 +24,6 @@ const FAST = 12;
 const SLOW = 21;
 const ENTRY_DIFF_MIN = 0.6;
 const ENTRY_DIFF_MAX = 1.5;
-const EXIT_DIFF = 0.5;
 const REPEAT_DELTA = 0.06;
 const MIN_DIST_SLOW = 2;
 const MAX_DIST_SLOW = 4;
@@ -115,7 +120,7 @@ function calculateIndicators(closedCandles) {
     momOk,
     turnoverOk,
     hourOk,
-    validEntry:
+    validEntryBase:
       bullishNow && spreadInBand && repeatOk && distOk && momOk && turnoverOk && hourOk,
   };
 }
@@ -137,17 +142,17 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   ind.rank = rank;
   ind.rankOk = rankOk;
 
+  // context.aboveEma70_1h vem do runner (ema70Filter1h) — null quando o
+  // símbolo não tem histórico 1h suficiente, tratado como "não confirmado"
+  // (bloqueia a entrada, não assume que está acima).
+  const ema70Ok = context.aboveEma70_1h === true;
+  ind.ema70Ok = ema70Ok;
+  ind.validEntry = ind.validEntryBase && ema70Ok;
+
   if (currentPosition === 'long') {
-    if (ind.diffPct < EXIT_DIFF) {
-      return {
-        signal: 'close_long',
-        reason: `Spread EMA12/21 ${ind.diffPct.toFixed(2)}% < ${EXIT_DIFF}% — fecha resto`,
-        indicators: ind,
-      };
-    }
     return {
       signal: 'hold',
-      reason: `Mantém long — spread ${ind.diffPct.toFixed(2)}% · SL15% / TP60%@+44% / resto por compressão`,
+      reason: `Mantém long — spread ${ind.diffPct.toFixed(2)}% · sai só por SL15% ou TP60%@+44%`,
       indicators: ind,
     };
   }
@@ -157,7 +162,7 @@ function generateSignal(candles, currentPosition = null, context = {}) {
       signal: 'long',
       reason:
         `EMA12/21 spread ${ind.diffPct.toFixed(2)}% · dist MA21 ${ind.distSlowPct.toFixed(1)}% · ` +
-        `mom1h ${ind.momentum1hPct.toFixed(2)}% · ${ind.hourPt}h PT` +
+        `mom1h ${ind.momentum1hPct.toFixed(2)}% · ${ind.hourPt}h PT · acima EMA70(1h)` +
         (rank != null ? ` · rank#${rank} mês` : ''),
       indicators: ind,
     };
@@ -171,6 +176,7 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   if (!ind.momOk) parts.push(`mom1h ${ind.momentum1hPct?.toFixed(2)}%≤0`);
   if (!ind.turnoverOk) parts.push(`turnover3h $${(ind.turnover3h / 1e6).toFixed(1)}M<3M`);
   if (!ind.hourOk) parts.push(`hora ${ind.hourPt}h PT bloqueada`);
+  if (!ema70Ok) parts.push('preço abaixo (ou sem dados) da EMA70(1h)');
   if (!rankOk) parts.push(rank == null ? 'fora do Top Ganhos Mês' : `rank#${rank}>${SCANNER_TOP_N}`);
 
   return { signal: 'hold', reason: parts.join(' · ') || 'sem entrada', indicators: ind };
