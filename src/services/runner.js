@@ -313,16 +313,13 @@ const STRATEGIES = [
     timeframe: '15m',
     generateSignal: maCross12x21.generateSignal,
     positionSize: 80,
-    // Port Bot Scanner MA_CROSS_12X21_S2 — SL 15% · TP 60% @ +44%.
-    // 27/09 (pedido do utilizador, após AKE/BR entrarem em queda de fundo no
-    // 1h): já não sai por compressão de spread — só por SL ou TP acima. Sem
-    // maxHoldHours configurado, o resto da posição (40% depois do TP1, ou
-    // 100% se o TP1 nunca disparar) fica aberto indefinidamente até um dos
-    // dois disparar.
+    // Port Bot Scanner MA_CROSS_12X21_S2, ajustado 27/09 a pedido do
+    // utilizador: SL 15% (rede de segurança) · fecho TOTAL por sinal próprio
+    // da estratégia quando o lucro atinge +78% OU o preço fecha abaixo da
+    // EMA70(1h) (ver context.unrealizedPnlPct/aboveEma70_1h em generateSignal,
+    // dentro de maCross12x21.js) — já não há TP parcial nem saída por
+    // compressão de spread.
     stopLossPct: 0.15,
-    takeProfitTiers: [
-      { pct: 0.44, fraction: 0.60 },
-    ],
     // Só entra long com o preço acima da EMA70 do 1h — evita repiques dentro
     // de tendências de queda mais largas (ver ema70Filter1h em runner.js).
     ema70Filter1h: true,
@@ -702,6 +699,16 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const posForSession = openPositions[key];
     const newScanSession = !!(posForSession && posForSession.scanTs != null && scannedAt != null && scannedAt !== posForSession.scanTs);
 
+    // PnL não-realizado da posição atual (se houver) — disponível a todas as
+    // estratégias via context.unrealizedPnlPct, para quem quiser decidir um
+    // fecho total por sinal próprio (ex: MaCross12x21, 27/09) em vez de usar
+    // os mecanismos de TP parcial acima (pensados só para fechos parciais).
+    const unrealizedPnlPct = (posForSession && posForSession.entryPrice)
+      ? (posForSession.side === 'long'
+          ? (currentPrice - posForSession.entryPrice) / posForSession.entryPrice
+          : (posForSession.entryPrice - currentPrice) / posForSession.entryPrice)
+      : null;
+
     const qqqPositive = strategy.qqqShortFilter ? await getQqqPositive() : null;
     const btcBullish  = strategy.btcTrendFilter ? await getBtcBullish() : null;
     const btcDailyPositive = strategy.btcDailyShortFilter ? await getBtcDailyPositive() : null;
@@ -727,7 +734,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
     }
 
     const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, {
-      rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, aboveEma70_1h,
+      rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, aboveEma70_1h, unrealizedPnlPct,
     });
 
     const isAction = signal !== 'hold' && signal !== 'none';

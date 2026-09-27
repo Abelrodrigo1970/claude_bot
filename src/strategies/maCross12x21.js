@@ -12,10 +12,12 @@
 //     em runner.js) — pedido do utilizador 27/09, depois de ver trades como
 //     AKE/BR entrarem num repique dentro de uma queda maior no 1h
 //
-// Gestão (runner): SL 15% · TP 60% @ +44% · SEM saída por compressão de
-// spread (removida 27/09, a pedido do utilizador) — o resto da posição só
-// fecha por SL ou TP, pode ficar aberto indefinidamente até um dos dois
-// disparar (sem maxHoldHours configurado).
+// Saída LONG (fecho TOTAL, via sinal close_long da própria estratégia):
+//   lucro não-realizado ≥ +78% (context.unrealizedPnlPct)
+//   OU preço abaixo da EMA70(1h) (context.aboveEma70_1h === false)
+// (pedido do utilizador 27/09 — substitui a saída por compressão de spread)
+//
+// Gestão (runner): SL 15% — rede de segurança, independente do sinal acima.
 const { EMA } = require('technicalindicators');
 
 const STRATEGY_NAME = 'MaCross12x21';
@@ -33,6 +35,7 @@ const MIN_TURNOVER_3H = 3_000_000;
 const HOUR_MIN_PT = 11;
 const HOUR_MAX_PT = 22;
 const BLOCKED_HOURS_PT = new Set([4, 5, 6, 7, 8, 9, 10]);
+const TAKE_PROFIT_FULL_PCT = 0.78;
 /** Top N da lista Top Ganhos do Mês. */
 const SCANNER_TOP_N = 50;
 
@@ -150,9 +153,24 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   ind.validEntry = ind.validEntryBase && ema70Ok;
 
   if (currentPosition === 'long') {
+    const pnlPct = context.unrealizedPnlPct;
+    if (pnlPct != null && pnlPct >= TAKE_PROFIT_FULL_PCT) {
+      return {
+        signal: 'close_long',
+        reason: `Lucro +${(pnlPct * 100).toFixed(1)}% ≥ ${(TAKE_PROFIT_FULL_PCT * 100).toFixed(0)}% — fecha tudo`,
+        indicators: ind,
+      };
+    }
+    if (context.aboveEma70_1h === false) {
+      return {
+        signal: 'close_long',
+        reason: 'Preço fechou abaixo da EMA70(1h) — fecha tudo',
+        indicators: ind,
+      };
+    }
     return {
       signal: 'hold',
-      reason: `Mantém long — spread ${ind.diffPct.toFixed(2)}% · sai só por SL15% ou TP60%@+44%`,
+      reason: `Mantém long — spread ${ind.diffPct.toFixed(2)}% · sai a +${(TAKE_PROFIT_FULL_PCT * 100).toFixed(0)}% ou preço<EMA70(1h) · SL15%`,
       indicators: ind,
     };
   }
