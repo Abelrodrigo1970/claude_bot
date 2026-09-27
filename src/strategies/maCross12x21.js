@@ -4,7 +4,8 @@
 // Entrada LONG (última vela 15m FECHADA):
 //   EMA12 > EMA21 e spread |12−21|/21 ∈ (0,6% … 1,5%)
 //   + novidade (repeat): prev ≤0,6% OU prev não bullish OU alargou ≥0,06 pts
-//   + |close−EMA21|/EMA21 ∈ [2% … 4%]
+//   + |close−EMA21|/EMA21 ∈ [2% … 6%] (máx. era 4%, alargado a pedido do
+//     utilizador 27/09 depois de ver o QNT falhar só pela distância)
 //   + momentum 1h (4×15m) > 0%
 //   + hora PT ∈ [11 … 22] (bloqueia 4–10h)
 //   + turnover ~3h ≥ $3M
@@ -28,7 +29,7 @@ const ENTRY_DIFF_MIN = 0.6;
 const ENTRY_DIFF_MAX = 1.5;
 const REPEAT_DELTA = 0.06;
 const MIN_DIST_SLOW = 2;
-const MAX_DIST_SLOW = 4;
+const MAX_DIST_SLOW = 6;
 const MOMENTUM_BARS = 4;
 const MIN_MOMENTUM_1H = 0;
 const MIN_TURNOVER_3H = 3_000_000;
@@ -190,7 +191,7 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   if (!ind.bullishNow) parts.push('EMA12≤EMA21');
   else if (!ind.spreadInBand) parts.push(`spread ${ind.diffPct.toFixed(2)}% fora 0,6–1,5%`);
   if (!ind.repeatOk) parts.push('sem novidade de spread');
-  if (!ind.distOk) parts.push(`dist MA21 ${ind.distSlowPct.toFixed(1)}% fora 2–4%`);
+  if (!ind.distOk) parts.push(`dist MA21 ${ind.distSlowPct.toFixed(1)}% fora 2–6%`);
   if (!ind.momOk) parts.push(`mom1h ${ind.momentum1hPct?.toFixed(2)}%≤0`);
   if (!ind.turnoverOk) parts.push(`turnover3h $${(ind.turnover3h / 1e6).toFixed(1)}M<3M`);
   if (!ind.hourOk) parts.push(`hora ${ind.hourPt}h PT bloqueada`);
