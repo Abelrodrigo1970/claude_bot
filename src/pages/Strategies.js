@@ -49,11 +49,20 @@ function StarRating({ winRate }) {
   );
 }
 
-// Tabela de trades de UMA estratégia — usada no painel expansível de cada
-// card (pedido do utilizador, 26/09: acompanhar a evolução do portfolio
-// diretamente na página de Estratégias, sem ter de ir à página Trades).
-function StrategyTradesTable({ trades }) {
-  if (!trades.length) return <div className="empty">Nenhum trade registado ainda.</div>;
+// Painel expansível de trades de UMA estratégia — pedido do utilizador
+// (26/09: lista simples de trades; 27/09: reorganizado em análise — nº de
+// trades fechados, top 10 melhores/piores, evolução diária e abertos).
+
+function SectionLabel({ children }) {
+  return (
+    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '18px 0 8px' }}>
+      {children}
+    </div>
+  );
+}
+
+function TradesMiniTable({ trades, showPnl = true, emptyLabel = 'Nenhum trade.' }) {
+  if (!trades.length) return <div className="empty" style={{ padding: '10px 0' }}>{emptyLabel}</div>;
   return (
     <div className="table-wrap">
       <table>
@@ -63,9 +72,7 @@ function StrategyTradesTable({ trades }) {
             <th>Side</th>
             <th>Entrada</th>
             <th>Saída</th>
-            <th>PnL (USDT)</th>
-            <th>PnL %</th>
-            <th>Status</th>
+            {showPnl && <><th>PnL (USDT)</th><th>PnL %</th></>}
             <th>Aberto</th>
             <th>Fechado</th>
           </tr>
@@ -80,13 +87,16 @@ function StrategyTradesTable({ trades }) {
                 <td><span className={`badge badge-${t.side}`}>{t.side.toUpperCase()}</span></td>
                 <td className="mono">{parseFloat(t.entry_price).toFixed(6)}</td>
                 <td className="mono">{t.exit_price ? parseFloat(t.exit_price).toFixed(6) : <span className="muted">—</span>}</td>
-                <td className={pnl >= 0 ? 'green' : 'red'}>
-                  {t.status === 'closed' ? `${pnl >= 0 ? '+' : ''}${pnl.toFixed(4)}` : <span className="muted">—</span>}
-                </td>
-                <td className={pnlPct >= 0 ? 'green' : 'red'}>
-                  {t.status === 'closed' ? `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%` : <span className="muted">—</span>}
-                </td>
-                <td><span className={`badge badge-${t.status}`}>{t.status}</span></td>
+                {showPnl && (
+                  <>
+                    <td className={pnl >= 0 ? 'green' : 'red'}>
+                      {t.status === 'closed' ? `${pnl >= 0 ? '+' : ''}${pnl.toFixed(4)}` : <span className="muted">—</span>}
+                    </td>
+                    <td className={pnlPct >= 0 ? 'green' : 'red'}>
+                      {t.status === 'closed' ? `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%` : <span className="muted">—</span>}
+                    </td>
+                  </>
+                )}
                 <td className="muted">{format(new Date(t.opened_at), 'dd/MM HH:mm')}</td>
                 <td className="muted">{t.closed_at ? format(new Date(t.closed_at), 'dd/MM HH:mm') : '—'}</td>
               </tr>
@@ -94,6 +104,88 @@ function StrategyTradesTable({ trades }) {
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// Agrupa trades FECHADOS por dia (closed_at, data local do browser) — mais
+// recente primeiro. PnL acumulado é sempre calculado em ordem cronológica
+// (mais antigo → mais recente), independente da ordem de exibição.
+function DailyEvolutionTable({ closedTrades }) {
+  if (!closedTrades.length) return <div className="empty" style={{ padding: '10px 0' }}>Sem trades fechados ainda.</div>;
+
+  const byDay = {};
+  closedTrades.forEach(t => {
+    const day = format(new Date(t.closed_at), 'yyyy-MM-dd');
+    (byDay[day] ??= []).push(t);
+  });
+
+  let cumulative = 0;
+  const rows = Object.keys(byDay).sort().map(day => {
+    const dayTrades = byDay[day];
+    const pnlDay = dayTrades.reduce((a, t) => a + parseFloat(t.pnl || 0), 0);
+    const wins = dayTrades.filter(t => parseFloat(t.pnl || 0) > 0).length;
+    cumulative += pnlDay;
+    return { day, trades: dayTrades.length, wins, pnlDay, cumulative };
+  }).reverse();
+
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Dia</th>
+            <th>Trades</th>
+            <th>Win Rate</th>
+            <th>PnL do Dia</th>
+            <th>PnL Acumulado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(r => {
+            const [y, m, d] = r.day.split('-');
+            return (
+              <tr key={r.day}>
+                <td className="mono">{d}/{m}/{y}</td>
+                <td className="mono muted">{r.trades}</td>
+                <td className="mono">{((r.wins / r.trades) * 100).toFixed(0)}%</td>
+                <td className={`mono ${r.pnlDay >= 0 ? 'green' : 'red'}`}>{r.pnlDay >= 0 ? '+' : ''}{r.pnlDay.toFixed(4)}</td>
+                <td className={`mono ${r.cumulative >= 0 ? 'green' : 'red'}`}>{r.cumulative >= 0 ? '+' : ''}{r.cumulative.toFixed(4)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function StrategyTradesPanel({ trades }) {
+  const closed = trades.filter(t => t.status === 'closed');
+  const open = trades.filter(t => t.status === 'open');
+  const wins = closed.filter(t => parseFloat(t.pnl || 0) > 0).length;
+  const best10 = [...closed].sort((a, b) => parseFloat(b.pnl) - parseFloat(a.pnl)).slice(0, 10);
+  const worst10 = [...closed].sort((a, b) => parseFloat(a.pnl) - parseFloat(b.pnl)).slice(0, 10);
+
+  return (
+    <div>
+      <div className="muted" style={{ fontSize: 12 }}>
+        {closed.length} trade{closed.length !== 1 ? 's' : ''} fechado{closed.length !== 1 ? 's' : ''} ·{' '}
+        {wins} vencedor{wins !== 1 ? 'es' : ''} ({closed.length ? ((wins / closed.length) * 100).toFixed(1) : '0.0'}%) ·{' '}
+        {open.length} aberta{open.length !== 1 ? 's' : ''}
+      </div>
+
+      <SectionLabel>Trades Abertos ({open.length})</SectionLabel>
+      <TradesMiniTable trades={open} showPnl={false} emptyLabel="Nenhuma posição aberta." />
+
+      <SectionLabel>Top 10 Melhores Trades</SectionLabel>
+      <TradesMiniTable trades={best10} emptyLabel="Sem trades fechados ainda." />
+
+      <SectionLabel>Top 10 Piores Trades</SectionLabel>
+      <TradesMiniTable trades={worst10} emptyLabel="Sem trades fechados ainda." />
+
+      <SectionLabel>Evolução Diária</SectionLabel>
+      <DailyEvolutionTable closedTrades={closed} />
     </div>
   );
 }
@@ -169,7 +261,7 @@ export default function Strategies() {
     if (nowExpanded && !tradesBySt[name]) {
       setTradesLoading(prev => ({ ...prev, [name]: true }));
       try {
-        const { data } = await axios.get(`/api/trades?strategy=${encodeURIComponent(name)}&limit=50`);
+        const { data } = await axios.get(`/api/trades?strategy=${encodeURIComponent(name)}&limit=500`);
         setTradesBySt(prev => ({ ...prev, [name]: data }));
       } catch (e) {
         console.error(`Erro ao carregar trades de ${name}:`, e);
@@ -353,7 +445,7 @@ export default function Strategies() {
                         {tradesLoading[s.name] ? (
                           <div className="loading"><div className="spinner" /></div>
                         ) : (
-                          <StrategyTradesTable trades={tradesBySt[s.name] || []} />
+                          <StrategyTradesPanel trades={tradesBySt[s.name] || []} />
                         )}
                       </div>
                     )}
