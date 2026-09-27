@@ -314,12 +314,16 @@ const STRATEGIES = [
     generateSignal: maCross12x21.generateSignal,
     positionSize: 80,
     // Port Bot Scanner MA_CROSS_12X21_S2, ajustado 27/09 a pedido do
-    // utilizador: SL 15% (rede de segurança) · fecho TOTAL por sinal próprio
-    // da estratégia quando o lucro atinge +78% OU o preço fecha abaixo da
-    // EMA70(1h) (ver context.unrealizedPnlPct/aboveEma70_1h em generateSignal,
-    // dentro de maCross12x21.js) — já não há TP parcial nem saída por
-    // compressão de spread.
+    // utilizador: SL 15% (rede de segurança) · TP1 parcial 30% a +43% ·
+    // fecho TOTAL do resto por sinal próprio da estratégia quando o lucro
+    // atinge +78% OU o preço fecha abaixo da EMA70(1h) (ver
+    // context.unrealizedPnlPct/aboveEma70_1h em generateSignal, dentro de
+    // maCross12x21.js). Validado em estudo de 30 dias (study-maCross12x21-
+    // 30d-tp1.js): PF 2.57, PnL +432,62 vs +166,34 das regras antigas.
     stopLossPct: 0.15,
+    takeProfitTiers: [
+      { pct: 0.43, fraction: 0.30 },
+    ],
     // Só entra long com o preço acima da EMA70 do 1h — evita repiques dentro
     // de tendências de queda mais largas (ver ema70Filter1h em runner.js).
     ema70Filter1h: true,
