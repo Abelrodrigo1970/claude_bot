@@ -118,27 +118,26 @@ async function getBtc4hGreen() {
   return btc4hGreenCache.green;
 }
 
-// Universo "top N por volume 24h" (symbolSource 'topVolume') — perpétuos
-// USDT ordenados por turnover24h. Um único fetchTickers, refrescado no máximo
-// de hora a hora (ver ensureSymbols); resolveSymbols lê só a cache.
-let topVolumeCache = { symbols: [], fetchedAt: 0 };
-const TOP_VOLUME_TTL = 60 * 60 * 1000;
-const TOP_VOLUME_MAX = 100;
+// BTC acima da EMA50 do 1h — opt-in via strategy.btc1hEma50Filter
+// (RsiReversal29). Estudo 180d (strategy-lab-bot/rsi_filters.py): o filtro
+// de tendência do BTC foi o melhor com todas as saídas testadas — com SL4/
+// TP15, PF 1.28→1.62 e maxDD 275→110. Usa só velas de 1h fechadas (como no
+// estudo). Cache 5min — muda no máximo uma vez por hora.
+let btc1hEma50Cache = { above: null, fetchedAt: 0 };
+const BTC_1H_CACHE_TTL = 5 * 60 * 1000;
 
-async function refreshTopVolume() {
-  if (Date.now() - topVolumeCache.fetchedAt < TOP_VOLUME_TTL && topVolumeCache.symbols.length) return;
+async function getBtc1hAboveEma50() {
+  if (Date.now() - btc1hEma50Cache.fetchedAt < BTC_1H_CACHE_TTL) return btc1hEma50Cache.above;
   try {
-    const tickers = await bybit.publicExchange.fetchTickers(undefined, { category: 'linear' });
-    const symbols = Object.values(tickers)
-      .filter(t => t.symbol?.endsWith('/USDT:USDT'))
-      .map(t => ({ symbol: t.symbol, turnover: parseFloat(t.info?.turnover24h || 0) }))
-      .sort((a, b) => b.turnover - a.turnover)
-      .slice(0, TOP_VOLUME_MAX)
-      .map(t => t.symbol);
-    if (symbols.length) topVolumeCache = { symbols, fetchedAt: Date.now() };
+    const candles = await bybit.getCandles('BTC/USDT:USDT', '1h', 200);
+    const closes = candles.slice(0, -1).map(c => c.close); // remove vela em formação
+    const emaArr = EMA.calculate({ period: 50, values: closes });
+    const ema50 = emaArr[emaArr.length - 1];
+    if (ema50 != null) btc1hEma50Cache = { above: closes[closes.length - 1] > ema50, fetchedAt: Date.now() };
   } catch (err) {
-    console.warn(`[Runner] Falha ao obter top por volume: ${err.message}`);
+    console.warn(`[Runner] Falha ao obter BTC 1h vs EMA50: ${err.message}`);
   }
+  return btc1hEma50Cache.above;
 }
 
 // Registry de estratégias ativas
@@ -402,20 +401,29 @@ const STRATEGIES = [
     name: rsiReversal29.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
-    symbolSource: 'topVolume', // top 30 perpétuos USDT por volume 24h
-    topN: 30,
+    // Top 30 cripto por market cap (CoinGecko, 28/09) sem stablecoins,
+    // wrapped/staked nem ouro tokenizado — o universo do estudo.
+    symbols: [
+      'BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 'XRP/USDT:USDT', 'SOL/USDT:USDT',
+      'TRX/USDT:USDT', 'ZEC/USDT:USDT', 'HYPE/USDT:USDT', 'DOGE/USDT:USDT', 'LINK/USDT:USDT',
+      'XMR/USDT:USDT', 'ADA/USDT:USDT', 'XLM/USDT:USDT', 'BCH/USDT:USDT', 'NEAR/USDT:USDT',
+      'UNI/USDT:USDT', 'LTC/USDT:USDT', 'HBAR/USDT:USDT', 'CC/USDT:USDT', 'AVAX/USDT:USDT',
+      'SUI/USDT:USDT', 'GRAM/USDT:USDT', 'QNT/USDT:USDT', 'CRO/USDT:USDT', 'TAO/USDT:USDT',
+      'SHIB1000/USDT:USDT', 'BTW/USDT:USDT', 'M/USDT:USDT', 'ENA/USDT:USDT', 'ONDO/USDT:USDT',
+    ],
     timeframe: '15m',
     generateSignal: rsiReversal29.generateSignal,
     positionSize: 60,
     // Pedida pelo utilizador (28/09): LONG quando o RSI(14) de 15m fecha
-    // abaixo de 29 e a vela seguinte fecha acima (ex: 28 → 31). SL 2% ·
-    // TP1 +4% fecha 50% · TP2 +9% fecha o resto (sinal close_long da
-    // estratégia, ver rsiReversal29.js). Backtest 60d (top 30 volume):
-    // 624 trades, WR 40,5%, PF 1,39.
-    stopLossPct: 0.02,
-    takeProfitTiers: [
-      { pct: 0.04, fraction: 0.50 },
-    ],
+    // abaixo de 29 e a vela seguinte fecha acima (ex: 28 → 31), só com o
+    // BTC acima da EMA50 do 1h. SL 4% · TP +15% fecha tudo (sinal
+    // close_long, ver rsiReversal29.js). Escolhida num estudo de 180d
+    // (1568 combinações SL/TP + 17 filtros de entrada, ver
+    // strategy-lab-bot/rsi_sweep.py e rsi_filters.py): 428 trades, PF 1,62,
+    // P&L +299, maxDD 110 ($40/trade) — vs PF 1,04 / +48 / 228 da regra
+    // original (SL2 · TP1 4% 50% · TP2 9%, sem filtro).
+    stopLossPct: 0.04,
+    btc1hEma50Filter: true, // context.btc1hAboveEma50 — ver getBtc1hAboveEma50 acima
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
@@ -762,6 +770,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const btcBullish  = strategy.btcTrendFilter ? await getBtcBullish() : null;
     const btcDailyPositive = strategy.btcDailyShortFilter ? await getBtcDailyPositive() : null;
     const btc4hGreen = strategy.btc4hGreenFilter ? await getBtc4hGreen() : null;
+    const btc1hAboveEma50 = strategy.btc1hEma50Filter ? await getBtc1hAboveEma50() : null;
 
     // Filtro opt-in (strategy.ema70Filter1h — pedido do utilizador 27/09 para
     // a MaCross12x21, depois de ver AKE/BR entrarem em queda de fundo no 1h):
@@ -783,7 +792,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
     }
 
     const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, {
-      rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, aboveEma70_1h, unrealizedPnlPct,
+      rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, btc1hAboveEma50, aboveEma70_1h, unrealizedPnlPct,
     });
 
     const isAction = signal !== 'hold' && signal !== 'none';
@@ -987,8 +996,6 @@ function resolveSymbols(strategy) {
   } else if (strategy.symbolSource === 'emaTrendTotal') {
     const scan = getEmaTrendTotalState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
-  } else if (strategy.symbolSource === 'topVolume') {
-    symbols = topVolumeCache.symbols.slice(0, strategy.topN || TOP_VOLUME_MAX);
   } else if (strategy.symbolSource === 'pump24h') {
     const scan = getPumpState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
@@ -1014,8 +1021,6 @@ function resolveSymbols(strategy) {
 
 // Corre o scanner certo para uma estratégia, se ainda não tiver símbolos disponíveis
 async function ensureSymbols(strategy) {
-  // topVolume refresca mesmo com cache preenchida — o ranking muda ao longo do dia
-  if (strategy.symbolSource === 'topVolume') return refreshTopVolume();
   if (resolveSymbols(strategy).length > 0) return;
   if (strategy.scannerPeriod) {
     await startScan(strategy.scannerPeriod, 50);
@@ -1036,7 +1041,6 @@ function scannerLabel(strategy) {
   if (strategy.symbolSource === 'gainersMonth') return 'Top Ganhos do Mês';
   if (strategy.symbolSource === 'emaTrendTotal') return 'Scanner EMA Trend (sem limite)';
   if (strategy.symbolSource === 'pump24h') return 'Scanner Pump 24h';
-  if (strategy.symbolSource === 'topVolume') return 'Top por volume 24h';
   return 'Scanner';
 }
 
@@ -1070,8 +1074,7 @@ async function runAll() {
     for (const strategy of STRATEGIES) {
       const isDynamicSource = strategy.scannerPeriod || strategy.symbolSource === 'gainers24h' ||
         strategy.symbolSource === 'gainers24hDropped' || strategy.symbolSource === 'gainersMonth' ||
-        strategy.symbolSource === 'emaTrendTotal' || strategy.symbolSource === 'pump24h' ||
-        strategy.symbolSource === 'topVolume';
+        strategy.symbolSource === 'emaTrendTotal' || strategy.symbolSource === 'pump24h';
       if (!isDynamicSource) continue;
       if (resolveSymbols(strategy).length === 0) {
         const label = scannerLabel(strategy);
