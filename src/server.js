@@ -41,6 +41,19 @@ app.get('/api/strategies', (req, res) => {
   })));
 });
 
+// Top 30 cripto por market cap (sem stablecoins) com perpétuo na Bybit —
+// universo da RsiReversal29. Cache de 6h em marketcap.js.
+app.get('/api/scanner/topmarketcap', async (req, res) => {
+  try {
+    const { publicExchange } = require('./services/bybit');
+    const { fetchTopCryptoPerps } = require('./services/marketcap');
+    const symbols = await fetchTopCryptoPerps(publicExchange, 30);
+    res.json({ count: symbols.length, symbols });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Liga/desliga uma estratégia (persistido — sobrevive a reinicios/deploys)
 app.post('/api/strategies/:name/toggle', async (req, res) => {
   try {

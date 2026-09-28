@@ -16,6 +16,7 @@ const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
 const maCross12x21         = require('../strategies/maCross12x21');
 const ema50BandCrossScaleOut = require('../strategies/ema50BandCrossScaleOut');
 const rsiReversal29        = require('../strategies/rsiReversal29');
+const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
@@ -138,6 +139,17 @@ async function getBtc1hAboveEma50() {
     console.warn(`[Runner] Falha ao obter BTC 1h vs EMA50: ${err.message}`);
   }
   return btc1hEma50Cache.above;
+}
+
+// Universo "top N cripto por market cap" (symbolSource 'topMarketCap') — ver
+// fetchTopCryptoPerps em marketcap.js (cache 6h). ensureSymbols refresca;
+// resolveSymbols lê só a última lista obtida, ou strategy.fallbackSymbols
+// enquanto o CoinGecko ainda não respondeu (arranque, 429…).
+let topMarketCapSymbols = [];
+
+async function refreshTopMarketCap(strategy) {
+  const list = await fetchTopCryptoPerps(bybit.publicExchange, strategy.topN || 30);
+  if (list.length) topMarketCapSymbols = list;
 }
 
 // Registry de estratégias ativas
@@ -401,9 +413,13 @@ const STRATEGIES = [
     name: rsiReversal29.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
-    // Top 30 cripto por market cap (CoinGecko, 28/09) sem stablecoins,
-    // wrapped/staked nem ouro tokenizado — o universo do estudo.
-    symbols: [
+    // Top 30 cripto por market cap sem stablecoins, wrapped/staked nem ouro
+    // tokenizado, atualizado de 6 em 6h (ver fetchTopCryptoPerps). A lista
+    // abaixo é o top 30 de 28/09 (universo do estudo) e só é usada se o
+    // CoinGecko falhar antes da primeira resposta.
+    symbolSource: 'topMarketCap',
+    topN: 30,
+    fallbackSymbols: [
       'BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 'XRP/USDT:USDT', 'SOL/USDT:USDT',
       'TRX/USDT:USDT', 'ZEC/USDT:USDT', 'HYPE/USDT:USDT', 'DOGE/USDT:USDT', 'LINK/USDT:USDT',
       'XMR/USDT:USDT', 'ADA/USDT:USDT', 'XLM/USDT:USDT', 'BCH/USDT:USDT', 'NEAR/USDT:USDT',
@@ -996,6 +1012,8 @@ function resolveSymbols(strategy) {
   } else if (strategy.symbolSource === 'emaTrendTotal') {
     const scan = getEmaTrendTotalState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
+  } else if (strategy.symbolSource === 'topMarketCap') {
+    symbols = topMarketCapSymbols.length ? topMarketCapSymbols : (strategy.fallbackSymbols || []);
   } else if (strategy.symbolSource === 'pump24h') {
     const scan = getPumpState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
@@ -1021,6 +1039,8 @@ function resolveSymbols(strategy) {
 
 // Corre o scanner certo para uma estratégia, se ainda não tiver símbolos disponíveis
 async function ensureSymbols(strategy) {
+  // Refresca sempre (tem cache própria de 6h) — o fallback fixo nunca está vazio
+  if (strategy.symbolSource === 'topMarketCap') return refreshTopMarketCap(strategy);
   if (resolveSymbols(strategy).length > 0) return;
   if (strategy.scannerPeriod) {
     await startScan(strategy.scannerPeriod, 50);
@@ -1041,6 +1061,7 @@ function scannerLabel(strategy) {
   if (strategy.symbolSource === 'gainersMonth') return 'Top Ganhos do Mês';
   if (strategy.symbolSource === 'emaTrendTotal') return 'Scanner EMA Trend (sem limite)';
   if (strategy.symbolSource === 'pump24h') return 'Scanner Pump 24h';
+  if (strategy.symbolSource === 'topMarketCap') return 'Top cripto por market cap';
   return 'Scanner';
 }
 
