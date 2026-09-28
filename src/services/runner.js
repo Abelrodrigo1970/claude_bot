@@ -419,6 +419,10 @@ const STRATEGIES = [
     // CoinGecko falhar antes da primeira resposta.
     symbolSource: 'topMarketCap',
     topN: 30,
+    // Pares com P&L negativo no estudo par a par de 180d (strategy-lab-bot/
+    // rsi_per_symbol.py, 29/09) — excluídos a pedido do utilizador. Amostras
+    // pequenas (8–25 trades cada): a reavaliar com os trades de papel.
+    symbolExclude: ['ADA', 'SHIB1000', 'GRAM', 'AVAX', 'BCH', 'HBAR', 'QNT', 'CC'],
     fallbackSymbols: [
       'BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 'XRP/USDT:USDT', 'SOL/USDT:USDT',
       'TRX/USDT:USDT', 'ZEC/USDT:USDT', 'HYPE/USDT:USDT', 'DOGE/USDT:USDT', 'LINK/USDT:USDT',
@@ -1027,6 +1031,13 @@ function resolveSymbols(strategy) {
     if (strategy.topN) symbols = symbols.slice(0, strategy.topN);
   }
 
+  // Exclusões por ticker base (ex: 'CC' tira 'CC/USDT:USDT') — aplicadas
+  // antes de juntar as posições abertas, para uma posição já aberta num par
+  // excluído continuar a ser gerida até fechar.
+  if (strategy.symbolExclude?.length) {
+    symbols = symbols.filter(s => !strategy.symbolExclude.includes(s.split('/')[0]));
+  }
+
   // Garante que um símbolo com posição aberta continua a ser avaliado mesmo que
   // tenha saído da lista do scanner — evita posições "órfãs" que nunca mais
   // recebem sinal de saída (ver estudo de ranking das estratégias).
@@ -1070,13 +1081,10 @@ function scannerLabel(strategy) {
 // openPosition/tryClosePositionOnExchange para onde o enabled é respeitado.
 async function runStrategy(strategy) {
   await ensureSymbols(strategy);
-  let symbols = resolveSymbols(strategy);
+  const symbols = resolveSymbols(strategy);
   if (!symbols.length) {
     console.log(`[${strategy.name}] Sem símbolos — corre o ${scannerLabel(strategy)} primeiro.`);
     return;
-  }
-  if (strategy.symbolExclude?.length) {
-    symbols = symbols.filter(s => !strategy.symbolExclude.includes(s.split('/')[0]));
   }
   for (const symbol of symbols) {
     await runStrategyOnSymbol(strategy, symbol);
