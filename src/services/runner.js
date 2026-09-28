@@ -15,6 +15,7 @@ const volumeSpike3xScaleOut = require('../strategies/volumeSpike3xScaleOut');
 const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
 const maCross12x21         = require('../strategies/maCross12x21');
 const ema50BandCrossScaleOut = require('../strategies/ema50BandCrossScaleOut');
+const rsiReversal29        = require('../strategies/rsiReversal29');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
 // SL por lado (opt-in via stopLossLongPct/stopLossShortPct) — cai para
@@ -115,6 +116,29 @@ async function getBtc4hGreen() {
     console.warn(`[Runner] Falha ao obter BTC 4h verde: ${err.message}`);
   }
   return btc4hGreenCache.green;
+}
+
+// Universo "top N por volume 24h" (symbolSource 'topVolume') — perpétuos
+// USDT ordenados por turnover24h. Um único fetchTickers, refrescado no máximo
+// de hora a hora (ver ensureSymbols); resolveSymbols lê só a cache.
+let topVolumeCache = { symbols: [], fetchedAt: 0 };
+const TOP_VOLUME_TTL = 60 * 60 * 1000;
+const TOP_VOLUME_MAX = 100;
+
+async function refreshTopVolume() {
+  if (Date.now() - topVolumeCache.fetchedAt < TOP_VOLUME_TTL && topVolumeCache.symbols.length) return;
+  try {
+    const tickers = await bybit.publicExchange.fetchTickers(undefined, { category: 'linear' });
+    const symbols = Object.values(tickers)
+      .filter(t => t.symbol?.endsWith('/USDT:USDT'))
+      .map(t => ({ symbol: t.symbol, turnover: parseFloat(t.info?.turnover24h || 0) }))
+      .sort((a, b) => b.turnover - a.turnover)
+      .slice(0, TOP_VOLUME_MAX)
+      .map(t => t.symbol);
+    if (symbols.length) topVolumeCache = { symbols, fetchedAt: Date.now() };
+  } catch (err) {
+    console.warn(`[Runner] Falha ao obter top por volume: ${err.message}`);
+  }
 }
 
 // Registry de estratégias ativas
@@ -370,6 +394,27 @@ const STRATEGIES = [
     takeProfitTiers: [
       { pct: 0.28, fraction: 0.30 },
       { pct: 0.48, fraction: 0.30 },
+    ],
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: rsiReversal29.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'topVolume', // top 30 perpétuos USDT por volume 24h
+    topN: 30,
+    timeframe: '15m',
+    generateSignal: rsiReversal29.generateSignal,
+    positionSize: 60,
+    // Pedida pelo utilizador (28/09): LONG quando o RSI(14) de 15m fecha
+    // abaixo de 29 e a vela seguinte fecha acima (ex: 28 → 31). SL 2% ·
+    // TP1 +4% fecha 50% · TP2 +9% fecha o resto (sinal close_long da
+    // estratégia, ver rsiReversal29.js). Backtest 60d (top 30 volume):
+    // 624 trades, WR 40,5%, PF 1,39.
+    stopLossPct: 0.02,
+    takeProfitTiers: [
+      { pct: 0.04, fraction: 0.50 },
     ],
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
@@ -942,6 +987,8 @@ function resolveSymbols(strategy) {
   } else if (strategy.symbolSource === 'emaTrendTotal') {
     const scan = getEmaTrendTotalState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
+  } else if (strategy.symbolSource === 'topVolume') {
+    symbols = topVolumeCache.symbols.slice(0, strategy.topN || TOP_VOLUME_MAX);
   } else if (strategy.symbolSource === 'pump24h') {
     const scan = getPumpState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
@@ -967,6 +1014,8 @@ function resolveSymbols(strategy) {
 
 // Corre o scanner certo para uma estratégia, se ainda não tiver símbolos disponíveis
 async function ensureSymbols(strategy) {
+  // topVolume refresca mesmo com cache preenchida — o ranking muda ao longo do dia
+  if (strategy.symbolSource === 'topVolume') return refreshTopVolume();
   if (resolveSymbols(strategy).length > 0) return;
   if (strategy.scannerPeriod) {
     await startScan(strategy.scannerPeriod, 50);
@@ -987,6 +1036,7 @@ function scannerLabel(strategy) {
   if (strategy.symbolSource === 'gainersMonth') return 'Top Ganhos do Mês';
   if (strategy.symbolSource === 'emaTrendTotal') return 'Scanner EMA Trend (sem limite)';
   if (strategy.symbolSource === 'pump24h') return 'Scanner Pump 24h';
+  if (strategy.symbolSource === 'topVolume') return 'Top por volume 24h';
   return 'Scanner';
 }
 
@@ -1020,7 +1070,8 @@ async function runAll() {
     for (const strategy of STRATEGIES) {
       const isDynamicSource = strategy.scannerPeriod || strategy.symbolSource === 'gainers24h' ||
         strategy.symbolSource === 'gainers24hDropped' || strategy.symbolSource === 'gainersMonth' ||
-        strategy.symbolSource === 'emaTrendTotal' || strategy.symbolSource === 'pump24h';
+        strategy.symbolSource === 'emaTrendTotal' || strategy.symbolSource === 'pump24h' ||
+        strategy.symbolSource === 'topVolume';
       if (!isDynamicSource) continue;
       if (resolveSymbols(strategy).length === 0) {
         const label = scannerLabel(strategy);
