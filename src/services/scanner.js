@@ -938,6 +938,135 @@ async function startScanPeriodGainers(limit = 50) {
 
 function getPeriodGainersState() { return periodGainersState; }
 
+// ─── SCANNER RSI SEMANAL ───────────────────────────────────────
+// Pedido pelo utilizador (06/10): todos os perpétuos USDT com RSI(14) semanal
+// acima de um limiar (65 por omissão). O RSI "atual" inclui a semana em
+// formação (preço de agora — o mesmo valor que o TradingView mostra); o da
+// última semana fechada vem ao lado, para ver se o RSI está a subir ou a
+// descer. Velas semanais da Bybit (início à 2ª feira 00:00 UTC).
+const { RSI } = require('technicalindicators');
+const RSI_WEEKLY_PERIOD = 14;
+const RSI_WEEKLY_CANDLES = 100; // folga para o RSI de Wilder convergir
+const RSI_WEEKLY_CONCURRENCY = 5;
+// Um pouco abaixo das 2h do cron — com CACHE_TTL (2h) a contar do FIM do scan
+// anterior, o cron seguinte apanhava a cache ainda válida e saltava um ciclo.
+const RSI_WEEKLY_CACHE_TTL = 100 * 60 * 1000;
+
+let rsiWeeklyState = { status: 'idle', progress: 0, total: 0, results: [], threshold: 65, scannedAt: null, error: null };
+
+async function ensureRsiWeeklyTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS scanner_rsi_weekly (
+      id            SERIAL PRIMARY KEY,
+      rank          INT            NOT NULL,
+      symbol        VARCHAR(50)    NOT NULL,
+      price         DECIMAL(20,8)  NOT NULL,
+      rsi           DECIMAL(6,2)   NOT NULL,
+      rsi_prev_week DECIMAL(6,2),
+      change_week   DECIMAL(10,4),
+      volume        DECIMAL(24,4),
+      scanned_at    TIMESTAMP      NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_scanner_rsi_weekly_time ON scanner_rsi_weekly(scanned_at DESC);
+  `);
+}
+
+async function startScanRsiWeekly(threshold = 65) {
+  if (rsiWeeklyState.status === 'scanning') return;
+  if (rsiWeeklyState.status === 'done' && rsiWeeklyState.threshold === threshold &&
+      rsiWeeklyState.scannedAt && Date.now() - rsiWeeklyState.scannedAt < RSI_WEEKLY_CACHE_TTL) return;
+
+  rsiWeeklyState = { ...rsiWeeklyState, status: 'scanning', progress: 0, total: 0, results: [], threshold, error: null };
+
+  try {
+    const markets = await bybit.publicExchange.loadMarkets();
+    const perps = Object.values(markets).filter(m =>
+      m.linear &&
+      m.type === 'swap' &&
+      m.settle === 'USDT' &&
+      m.active &&
+      !m.symbol.includes('USDC')
+    );
+    rsiWeeklyState.total = perps.length;
+    console.log(`[Scanner RSI semanal] ${perps.length} pares elegíveis — limiar ${threshold}`);
+
+    // Volume 24h (USDT) num só pedido — só para mostrar na tabela
+    let turnover = {};
+    try {
+      const tickers = await bybit.publicExchange.fetchTickers(undefined, { category: 'linear' });
+      turnover = Object.fromEntries(Object.values(tickers).map(t => [t.symbol, parseFloat(t.info?.turnover24h || 0)]));
+    } catch { /* sem volume — o RSI continua a ser calculado */ }
+
+    const results = [];
+    let next = 0;
+    async function worker() {
+      while (next < perps.length) {
+        const market = perps[next++];
+        try {
+          const weekly = await bybit.getCandles(market.symbol, '1w', RSI_WEEKLY_CANDLES);
+          if (weekly.length < RSI_WEEKLY_PERIOD + 2) continue; // listagem recente, sem semanas suficientes
+          const closes = weekly.map(c => c.close);
+          const rsiArr = RSI.calculate({ period: RSI_WEEKLY_PERIOD, values: closes });
+          const rsi = rsiArr[rsiArr.length - 1];
+          if (rsi == null || rsi <= threshold) continue;
+          const current = weekly[weekly.length - 1]; // semana em formação
+          results.push({
+            symbol:      market.symbol,
+            price:       current.close,
+            rsi,
+            rsiPrevWeek: rsiArr[rsiArr.length - 2] ?? null,
+            changeWeek:  current.open > 0 ? ((current.close - current.open) / current.open) * 100 : null,
+            volume:      turnover[market.symbol] ?? 0,
+          });
+        } catch {
+          // par sem dados, ignora
+        } finally {
+          rsiWeeklyState.progress++;
+        }
+      }
+    }
+    await Promise.all(Array.from({ length: RSI_WEEKLY_CONCURRENCY }, worker));
+
+    results.sort((a, b) => b.rsi - a.rsi);
+    const scannedAt = new Date();
+    rsiWeeklyState.results   = results;
+    rsiWeeklyState.scannedAt = scannedAt.getTime();
+    rsiWeeklyState.status    = 'done';
+    console.log(`[Scanner RSI semanal] ${results.length} pares com RSI semanal > ${threshold}`);
+
+    // Guarda no histórico da BD (silencioso se BD não estiver configurada)
+    try {
+      await ensureRsiWeeklyTable();
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (let i = 0; i < results.length; i++) {
+          const r = results[i];
+          await client.query(
+            `INSERT INTO scanner_rsi_weekly (rank, symbol, price, rsi, rsi_prev_week, change_week, volume, scanned_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [i + 1, r.symbol, r.price, r.rsi, r.rsiPrevWeek, r.changeWeek, r.volume, scannedAt]
+          );
+        }
+        await client.query('COMMIT');
+        console.log(`[Scanner RSI semanal] ${results.length} resultados guardados na BD`);
+      } catch (dbErr) {
+        await client.query('ROLLBACK');
+        console.warn('[Scanner RSI semanal] Erro ao guardar no BD:', dbErr.message);
+      } finally {
+        client.release();
+      }
+    } catch {
+      // BD não configurada — continua sem guardar
+    }
+  } catch (err) {
+    rsiWeeklyState.status = 'error';
+    rsiWeeklyState.error  = err.message;
+  }
+}
+
+function getRsiWeeklyState() { return rsiWeeklyState; }
+
 module.exports = {
   startScan, getState,
   startScanGainers, getGainersState,
@@ -948,4 +1077,5 @@ module.exports = {
   startScanVolatile50, getVolatile50State,
   startScanVolatile50_4h, getVolatile50State4h,
   startScanPeriodGainers, getPeriodGainersState,
+  startScanRsiWeekly, getRsiWeeklyState,
 };

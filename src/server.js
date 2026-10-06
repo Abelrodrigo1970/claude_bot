@@ -15,6 +15,7 @@ const {
   startScanVolatile50, getVolatile50State,
   startScanVolatile50_4h, getVolatile50State4h,
   startScanPeriodGainers, getPeriodGainersState,
+  startScanRsiWeekly, getRsiWeeklyState,
 } = require('./services/scanner');
 
 const app = express();
@@ -623,6 +624,51 @@ app.get('/api/scanner/topgainers/history', async (req, res) => {
   }
 });
 
+// Pares com RSI(14) semanal acima do limiar — ?threshold=65 (ver
+// startScanRsiWeekly em services/scanner.js).
+app.post('/api/scanner/rsiweekly/start', (req, res) => {
+  const threshold = parseFloat(req.query.threshold) || 65;
+  startScanRsiWeekly(threshold);
+  res.json({ ok: true });
+});
+
+app.get('/api/scanner/rsiweekly', (req, res) => {
+  res.json(getRsiWeeklyState());
+});
+
+// Histórico — ?sessions=10
+app.get('/api/scanner/rsiweekly/history', async (req, res) => {
+  try {
+    const sessions = parseInt(req.query.sessions) || 10;
+
+    const { rows: sessionRows } = await pool.query(
+      `SELECT DISTINCT scanned_at FROM scanner_rsi_weekly ORDER BY scanned_at DESC LIMIT $1`,
+      [sessions]
+    );
+
+    if (!sessionRows.length) return res.json([]);
+
+    const dates = sessionRows.map(r => r.scanned_at);
+    const { rows } = await pool.query(
+      `SELECT * FROM scanner_rsi_weekly WHERE scanned_at = ANY($1) ORDER BY scanned_at DESC, rank ASC`,
+      [dates]
+    );
+
+    const grouped = {};
+    rows.forEach(r => {
+      const key = r.scanned_at.toISOString();
+      if (!grouped[key]) grouped[key] = { scanned_at: r.scanned_at, results: [] };
+      grouped[key].results.push(r);
+    });
+
+    res.json(Object.values(grouped));
+  } catch (err) {
+    // 42P01 = tabela ainda não existe (é criada no primeiro scan)
+    if (err.code === '42P01') return res.json([]);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── STATIC FILES (React build) ────────────────────────────────
 
 const buildPath = path.join(__dirname, '../build');
@@ -703,6 +749,13 @@ cron.schedule('10 0,4,8,12,16,20 * * *', async () => {
   console.log('\n📊 Cron 4h: a correr scanner Top Ganhos (semana/mês)...');
   await startScanPeriodGainers();
   console.log('📊 Cron 4h: scanner Top Ganhos concluído.');
+});
+
+// A cada 2 horas: scanner RSI semanal > 65 (usa cache 2h)
+cron.schedule('40 */2 * * *', async () => {
+  console.log('\n📊 Cron 2h: a correr scanner RSI semanal...');
+  await startScanRsiWeekly(65);
+  console.log('📊 Cron 2h: scanner RSI semanal concluído.');
 });
 
 // A cada 15 min: estratégias de 15m (ex: PumpEma60Band sobre o Pump 24h) —

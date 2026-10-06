@@ -209,6 +209,19 @@ async function migrate() {
       CREATE INDEX IF NOT EXISTS idx_signals_created    ON signals(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_period_time ON scanner_results(ema_period, scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_gainers_time ON scanner_gainers(scanned_at DESC);
+      CREATE TABLE IF NOT EXISTS scanner_rsi_weekly (
+        id            SERIAL PRIMARY KEY,
+        rank          INT            NOT NULL,
+        symbol        VARCHAR(50)    NOT NULL,
+        price         DECIMAL(20,8)  NOT NULL,
+        rsi           DECIMAL(6,2)   NOT NULL,
+        rsi_prev_week DECIMAL(6,2),
+        change_week   DECIMAL(10,4),
+        volume        DECIMAL(24,4),
+        scanned_at    TIMESTAMP      NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_scanner_rsi_weekly_time ON scanner_rsi_weekly(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_pump_time ON scanner_pump(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_ema_trend_time ON scanner_ema_trend(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_ema_trend_stocks_time ON scanner_ema_trend_stocks(scanned_at DESC);

@@ -402,6 +402,197 @@ function PumpPanel() {
   );
 }
 
+// Resultados ao vivo vêm em camelCase; os do histórico (BD) em snake_case.
+function RsiWeeklyResultsTable({ results }) {
+  return (
+    <div className="card" style={{ padding: 0 }}>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Par</th>
+              <th>Preço</th>
+              <th>RSI semanal</th>
+              <th>RSI semana anterior</th>
+              <th>Var semana</th>
+              <th>Volume 24h</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((r, i) => {
+              const rsi = parseFloat(r.rsi);
+              const prev = r.rsiPrevWeek ?? r.rsi_prev_week;
+              const change = r.changeWeek ?? r.change_week;
+              return (
+                <tr key={r.symbol}>
+                  <td className="muted">{i + 1}</td>
+                  <td>
+                    <a
+                      className="symbol-link"
+                      href={`https://www.tradingview.com/chart/?symbol=BYBIT:${r.symbol.split('/')[0]}USDT.P&interval=W`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Ver no TradingView (semanal)"
+                    >
+                      <span className="symbol-name">{r.symbol.split('/')[0]}</span>
+                      <span className="symbol-suffix">/USDT</span>
+                      <span className="tv-icon">↗</span>
+                    </a>
+                  </td>
+                  <td className="mono">{fmt(r.price, 4)}</td>
+                  <td className={`mono ${rsi >= 80 ? 'red' : 'green'}`}>{fmt(rsi, 1)}</td>
+                  <td className="mono muted">
+                    {prev == null ? '—' : fmt(prev, 1)}
+                    {prev != null && <span style={{ marginLeft: 6 }}>{rsi >= parseFloat(prev) ? '↑' : '↓'}</span>}
+                  </td>
+                  <td className={`mono ${parseFloat(change) >= 0 ? 'green' : 'red'}`}>
+                    {change == null ? '—' : `${parseFloat(change) >= 0 ? '+' : ''}${fmt(change)}%`}
+                  </td>
+                  <td className="mono muted">{fmtVol(parseFloat(r.volume || 0))}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function RsiWeeklyHistoryPanel() {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [openIdx, setOpenIdx]   = useState(0);
+
+  useEffect(() => {
+    axios.get(`/api/scanner/rsiweekly/history?sessions=10`)
+      .then(r => setSessions(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="loading"><div className="spinner" /></div>;
+  if (!sessions.length) return (
+    <div className="card"><div className="empty">Nenhum histórico ainda. Corre o scanner para começar a guardar.</div></div>
+  );
+
+  return (
+    <div>
+      {sessions.map((session, idx) => (
+        <div key={session.scanned_at} className="card" style={{ marginBottom: 12 }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+            onClick={() => setOpenIdx(openIdx === idx ? -1 : idx)}
+          >
+            <div>
+              <span style={{ fontWeight: 600, color: '#e2e8f0' }}>
+                {format(new Date(session.scanned_at), 'dd/MM/yyyy HH:mm')}
+              </span>
+              <span className="muted" style={{ marginLeft: 12, fontSize: 12 }}>
+                {session.results.length} pares
+              </span>
+            </div>
+            <span className="muted">{openIdx === idx ? '▲' : '▼'}</span>
+          </div>
+          {openIdx === idx && (
+            <div style={{ marginTop: 16 }}>
+              <RsiWeeklyResultsTable results={session.results} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RsiWeeklyPanel() {
+  const [view, setView]   = useState('scan');
+  const [state, setState] = useState({ status: 'idle', progress: 0, total: 0, results: [], scannedAt: null });
+  const pollRef = useRef(null);
+
+  const stopPolling = () => { clearInterval(pollRef.current); pollRef.current = null; };
+
+  const fetchState = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`/api/scanner/rsiweekly`);
+      setState(data);
+      if (data.status !== 'scanning') stopPolling();
+    } catch { stopPolling(); }
+  }, []);
+
+  const startScan = async () => {
+    await axios.post(`/api/scanner/rsiweekly/start?threshold=65`);
+    setState(s => ({ ...s, status: 'scanning', progress: 0, results: [] }));
+    setView('scan');
+    stopPolling();
+    pollRef.current = setInterval(fetchState, 2000);
+  };
+
+  useEffect(() => {
+    fetchState();
+    // Se já estiver a correr (ex: cron), continua a acompanhar o progresso
+    pollRef.current = setInterval(fetchState, 2000);
+    return () => stopPolling();
+  }, [fetchState]);
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <div className="page-sub">
+            Pares com RSI(14) semanal acima de 65 · inclui a semana em curso · todos os perpétuos USDT · atualiza a cada 2h
+            {state.scannedAt && (
+              <span className="scan-time"> · Scan: {new Date(state.scannedAt).toLocaleTimeString('pt-PT')}</span>
+            )}
+          </div>
+          <div className="scanner-tabs" style={{ marginTop: 10 }}>
+            <button className={`scanner-tab ${view === 'scan' ? 'active' : ''}`} onClick={() => setView('scan')}>
+              Atual
+            </button>
+            <button className={`scanner-tab ${view === 'history' ? 'active' : ''}`} onClick={() => setView('history')}>
+              Histórico
+            </button>
+          </div>
+        </div>
+        <button className="btn btn-primary" onClick={startScan} disabled={state.status === 'scanning'}>
+          {state.status === 'scanning'
+            ? `⏳ A escanear... ${state.total ? `${state.progress}/${state.total}` : ''}`
+            : state.status === 'done' ? '🔄 Atualizar' : '🔍 Iniciar Scanner'}
+        </button>
+      </div>
+
+      {view === 'history' ? (
+        <RsiWeeklyHistoryPanel />
+      ) : (
+        <>
+          {state.status === 'idle' && (
+            <div className="card">
+              <div className="empty">
+                Clica em <strong>Iniciar Scanner</strong> para ver todos os pares com RSI semanal acima de 65.
+              </div>
+            </div>
+          )}
+
+          {state.status === 'done' && state.results?.length === 0 && (
+            <div className="card">
+              <div className="empty">Nenhum par com RSI semanal acima de 65 neste momento.</div>
+            </div>
+          )}
+
+          {state.results?.length > 0 && (
+            <RsiWeeklyResultsTable results={state.results} />
+          )}
+
+          {state.status === 'error' && (
+            <div className="card"><div className="empty red">Erro: {state.error}</div></div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function EmaTrendResultsTable({ results }) {
   return (
     <div className="card" style={{ padding: 0 }}>
@@ -1062,9 +1253,16 @@ export default function Scanner() {
         >
           Top Ganhos (Semana/Mês)
         </button>
+        <button
+          className={`scanner-tab ${tab === 'rsiweekly' ? 'active' : ''}`}
+          onClick={() => setTab('rsiweekly')}
+        >
+          RSI Semanal (&gt;65)
+        </button>
       </div>
 
       {tab === 'topgainers' ? <PeriodGainersPanel key="topgainers" />
+        : tab === 'rsiweekly' ? <RsiWeeklyPanel key="rsiweekly" />
         : tab === 'pump24h' ? <PumpPanel key="pump24h" />
         : tab === 'ematrend' ? <EmaTrendPanel key="ematrend" />
         : tab === 'ematrend-stocks' ? (
