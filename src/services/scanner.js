@@ -1067,6 +1067,218 @@ async function startScanRsiWeekly(threshold = 65) {
 
 function getRsiWeeklyState() { return rsiWeeklyState; }
 
+// ─── SCANNER RUMER'S BOX (dia / semana / mês) ──────────────────
+// Pedido pelo utilizador (09/10) a partir do detector de outra app (ver
+// rumersBox.js): LONG quando a vela 15m fecha acima do máximo do dia / semana
+// / mês anterior, vinda de dentro da caixa. Corre 1min depois de cada fecho de
+// vela 15m sobre todos os perpétuos USDT. Regista TODAS as quebras (como o
+// original), numeradas dentro de cada caixa (breakNo) — no universo inteiro
+// o preço volta a cruzar o máximo muitas vezes (estudo 7d: ~600 quebras/dia
+// na caixa diária, ~250 se só contar a 1ª), por isso a UI mostra por omissão
+// só a 1ª quebra de cada caixa.
+const rumersBox = require('./rumersBox');
+const RUMERS_CONCURRENCY = 6;
+const RUMERS_KEEP_MS = 7 * 24 * 60 * 60 * 1000;   // sinais mantidos em memória
+const RUMERS_COUNT_KEEP_MS = 35 * 24 * 60 * 60 * 1000; // contadores de quebras (cobre a caixa mensal)
+
+let rumersState = {
+  status: 'idle', progress: 0, total: 0, lastBarTime: null, scannedAt: null, error: null,
+  hits: [], // mais recentes primeiro
+};
+// Velas diárias por símbolo, refrescadas uma vez por dia UTC — dão as três caixas
+const rumersDailyCache = { dayStart: null, bySymbol: new Map() };
+// 'type|symbol|periodKey' → nº de quebras já registadas nessa caixa
+const rumersBreakCounts = new Map();
+let rumersLoaded = false;
+
+async function ensureRumersTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS scanner_rumers_box (
+      id            SERIAL PRIMARY KEY,
+      box_type      VARCHAR(5)     NOT NULL,
+      symbol        VARCHAR(50)    NOT NULL,
+      period_key    VARCHAR(10)    NOT NULL,
+      break_no      INT            NOT NULL,
+      entry_price   DECIMAL(20,8)  NOT NULL,
+      stop_loss     DECIMAL(20,8)  NOT NULL,
+      target1       DECIMAL(20,8)  NOT NULL,
+      strength      INT            NOT NULL,
+      break_pct     DECIMAL(10,4)  NOT NULL,
+      prev_high     DECIMAL(20,8)  NOT NULL,
+      prev_low      DECIMAL(20,8)  NOT NULL,
+      box_range_pct DECIMAL(10,4)  NOT NULL,
+      bar_time      TIMESTAMP      NOT NULL,
+      detected_at   TIMESTAMP      NOT NULL DEFAULT NOW(),
+      UNIQUE (box_type, symbol, bar_time)
+    );
+    CREATE INDEX IF NOT EXISTS idx_scanner_rumers_box_time ON scanner_rumers_box(bar_time DESC);
+  `);
+}
+
+function rumersRowToHit(r) {
+  return {
+    type: r.box_type, symbol: r.symbol, periodKey: r.period_key, breakNo: r.break_no,
+    entryPrice: parseFloat(r.entry_price), stopLoss: parseFloat(r.stop_loss), target1: parseFloat(r.target1),
+    strength: r.strength, breakPct: parseFloat(r.break_pct),
+    prevHigh: parseFloat(r.prev_high), prevLow: parseFloat(r.prev_low), boxRangePct: parseFloat(r.box_range_pct),
+    barTime: new Date(r.bar_time).getTime(),
+  };
+}
+
+// Ao arrancar: recupera da BD os sinais recentes e os contadores de quebras,
+// para o breakNo continuar certo depois de um restart/deploy.
+async function loadRumersFromDb() {
+  if (rumersLoaded) return;
+  rumersLoaded = true;
+  try {
+    await ensureRumersTable();
+    const { rows } = await pool.query(
+      `SELECT * FROM scanner_rumers_box WHERE bar_time > NOW() - INTERVAL '35 days' ORDER BY bar_time DESC`
+    );
+    for (const r of rows) {
+      const key = `${r.box_type}|${r.symbol}|${r.period_key}`;
+      rumersBreakCounts.set(key, Math.max(rumersBreakCounts.get(key) || 0, r.break_no));
+    }
+    const since = Date.now() - RUMERS_KEEP_MS;
+    rumersState.hits = rows.map(rumersRowToHit).filter(h => h.barTime >= since);
+    if (rows.length) console.log(`[Scanner Rumer's Box] ${rumersState.hits.length} sinais recentes carregados da BD`);
+  } catch { /* BD não configurada — começa vazio */ }
+}
+
+// Símbolos sem velas diárias do dia UTC atual (a cache limpa-se à meia-noite UTC)
+function rumersSymbolsNeedingDaily(symbols, now) {
+  const dayStart = Math.floor(now / 864e5) * 864e5;
+  if (rumersDailyCache.dayStart !== dayStart) {
+    rumersDailyCache.dayStart = dayStart;
+    rumersDailyCache.bySymbol.clear();
+  }
+  return symbols.filter(s => !rumersDailyCache.bySymbol.has(s));
+}
+
+async function startScanRumersBox() {
+  if (rumersState.status === 'scanning') return;
+  await loadRumersFromDb();
+
+  const now = Date.now();
+  const barTime = Math.floor(now / 900e3) * 900e3 - 900e3; // abertura da última vela 15m fechada
+  if (rumersState.lastBarTime === barTime) return; // esta vela já foi analisada
+
+  rumersState = { ...rumersState, status: 'scanning', progress: 0, total: 0, error: null };
+
+  try {
+    const markets = await bybit.publicExchange.loadMarkets();
+    const symbols = Object.values(markets).filter(m =>
+      m.linear &&
+      m.type === 'swap' &&
+      m.settle === 'USDT' &&
+      m.active &&
+      !m.symbol.includes('USDC')
+    ).map(m => m.symbol);
+
+    const needDaily = rumersSymbolsNeedingDaily(symbols, now);
+    rumersState.total = symbols.length + needDaily.length;
+    console.log(`[Scanner Rumer's Box] ${symbols.length} pares · ${needDaily.length} com velas diárias a atualizar`);
+
+    async function runPool(items, fn) {
+      let next = 0;
+      async function worker() {
+        while (next < items.length) {
+          const item = items[next++];
+          try { await fn(item); } catch { /* par sem dados, ignora */ } finally { rumersState.progress++; }
+        }
+      }
+      await Promise.all(Array.from({ length: RUMERS_CONCURRENCY }, worker));
+    }
+
+    await runPool(needDaily, async (symbol) => {
+      // 80 velas diárias cobrem o mês anterior inteiro mesmo no fim de um mês de 31 dias
+      const daily = await bybit.getCandles(symbol, '1d', 80);
+      rumersDailyCache.bySymbol.set(symbol, daily.map(c => ({ time: +c.time, high: c.high, low: c.low })));
+    });
+
+    const newHits = [];
+    await runPool(symbols, async (symbol) => {
+      const daily = rumersDailyCache.bySymbol.get(symbol);
+      if (!daily) return;
+      const c15 = (await bybit.getCandles(symbol, '15m', 4)).map(c => ({ time: +c.time, close: c.close }));
+      const closed = c15.filter(c => c.time <= barTime);
+      if (!closed.length || closed[closed.length - 1].time !== barTime) return; // sem a vela que acabou de fechar
+
+      for (const type of rumersBox.BOX_TYPES) {
+        const levels = rumersBox.computeBoxLevels(daily, type, now);
+        if (!levels) continue;
+        const hit = rumersBox.detectBreakout(closed, levels, rumersBox.RUMERS_BOX_DEFAULTS, now);
+        if (!hit) continue;
+        const key = `${type}|${symbol}|${levels.periodKey}`;
+        const breakNo = (rumersBreakCounts.get(key) || 0) + 1;
+        rumersBreakCounts.set(key, breakNo);
+        newHits.push({
+          type, symbol, periodKey: levels.periodKey, breakNo,
+          entryPrice: hit.entryPrice, stopLoss: hit.stopLoss, target1: hit.target1,
+          strength: hit.strength, breakPct: hit.breakPct,
+          prevHigh: levels.prevHigh, prevLow: levels.prevLow, boxRangePct: levels.boxRangePct,
+          barTime: hit.barTime,
+        });
+      }
+    });
+
+    newHits.sort((a, b) => b.strength - a.strength);
+    const keepSince = Date.now() - RUMERS_KEEP_MS;
+    rumersState.hits = [...newHits, ...rumersState.hits].filter(h => h.barTime >= keepSince);
+    rumersState.lastBarTime = barTime;
+    rumersState.scannedAt = Date.now();
+    rumersState.status = 'done';
+    // contadores de caixas que já não podem voltar a ser quebradas
+    const countSince = Date.now() - RUMERS_COUNT_KEEP_MS;
+    for (const key of rumersBreakCounts.keys()) {
+      const periodKey = key.split('|')[2];
+      if (Date.parse(periodKey.length === 7 ? `${periodKey}-01` : periodKey) < countSince) rumersBreakCounts.delete(key);
+    }
+    const byType = Object.fromEntries(rumersBox.BOX_TYPES.map(t => [t, newHits.filter(h => h.type === t).length]));
+    console.log(`[Scanner Rumer's Box] vela ${new Date(barTime).toISOString().slice(11, 16)} UTC — quebras: dia ${byType.day} · semana ${byType.week} · mês ${byType.month}`);
+
+    if (newHits.length) {
+      try {
+        await ensureRumersTable();
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          for (const h of newHits) {
+            await client.query(
+              `INSERT INTO scanner_rumers_box (box_type, symbol, period_key, break_no, entry_price, stop_loss, target1, strength, break_pct, prev_high, prev_low, box_range_pct, bar_time)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+               ON CONFLICT (box_type, symbol, bar_time) DO NOTHING`,
+              [h.type, h.symbol, h.periodKey, h.breakNo, h.entryPrice, h.stopLoss, h.target1, h.strength,
+               h.breakPct, h.prevHigh, h.prevLow, h.boxRangePct, new Date(h.barTime)]
+            );
+          }
+          await client.query('COMMIT');
+        } catch (dbErr) {
+          await client.query('ROLLBACK');
+          console.warn("[Scanner Rumer's Box] Erro ao guardar no BD:", dbErr.message);
+        } finally {
+          client.release();
+        }
+      } catch {
+        // BD não configurada — continua sem guardar
+      }
+    }
+  } catch (err) {
+    rumersState.status = 'error';
+    rumersState.error = err.message;
+  }
+}
+
+/** Estado + sinais filtrados: type = day|week|month, hours, firstOnly. */
+function getRumersBoxState({ type = null, hours = 24, firstOnly = true } = {}) {
+  const since = Date.now() - hours * 60 * 60 * 1000;
+  const hits = rumersState.hits
+    .filter(h => (!type || h.type === type) && h.barTime >= since && (!firstOnly || h.breakNo === 1))
+    .sort((a, b) => b.barTime - a.barTime || b.strength - a.strength);
+  const { hits: _all, ...rest } = rumersState;
+  return { ...rest, params: rumersBox.RUMERS_BOX_DEFAULTS, hits };
+}
+
 module.exports = {
   startScan, getState,
   startScanGainers, getGainersState,
@@ -1078,4 +1290,5 @@ module.exports = {
   startScanVolatile50_4h, getVolatile50State4h,
   startScanPeriodGainers, getPeriodGainersState,
   startScanRsiWeekly, getRsiWeeklyState,
+  startScanRumersBox, getRumersBoxState, loadRumersFromDb,
 };

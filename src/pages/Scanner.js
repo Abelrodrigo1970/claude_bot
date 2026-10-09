@@ -593,6 +593,134 @@ function RsiWeeklyPanel() {
   );
 }
 
+const RUMERS_TYPES = [
+  { key: 'day',   label: 'Diário',  box: 'dia anterior' },
+  { key: 'week',  label: 'Semanal', box: 'semana anterior' },
+  { key: 'month', label: 'Mensal',  box: 'mês anterior' },
+];
+
+function RumersBoxPanel() {
+  const [type, setType]           = useState('day');
+  const [hours, setHours]         = useState(24);
+  const [firstOnly, setFirstOnly] = useState(true);
+  const [state, setState]         = useState({ status: 'idle', hits: [], progress: 0, total: 0 });
+
+  const load = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`/api/scanner/rumersbox?type=${type}&hours=${hours}${firstOnly ? '' : '&all=1'}`);
+      setState(data);
+    } catch { /* mantém o último estado */ }
+  }, [type, hours, firstOnly]);
+
+  useEffect(() => {
+    load();
+    const id = setInterval(load, 15000);
+    return () => clearInterval(id);
+  }, [load]);
+
+  const range = state.params?.boxRangePct?.[type];
+  const meta = RUMERS_TYPES.find(t => t.key === type);
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <div className="page-sub">
+            LONG quando a vela 15m fecha acima do máximo do {meta.box}, vinda de dentro da caixa
+            {range && ` · caixa ${range.min}–${range.max}%`} · todos os perpétuos USDT · a cada 15min
+            {state.scannedAt && (
+              <span className="scan-time">
+                {' '}· Última vela: {new Date(state.lastBarTime + 15 * 60 * 1000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+            {state.status === 'scanning' && <span className="scan-time"> · a analisar {state.progress}/{state.total}</span>}
+          </div>
+          <div className="scanner-tabs" style={{ marginTop: 10 }}>
+            {RUMERS_TYPES.map(t => (
+              <button key={t.key} className={`scanner-tab ${type === t.key ? 'active' : ''}`} onClick={() => setType(t.key)}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <select value={hours} onChange={e => setHours(Number(e.target.value))}>
+            <option value={1}>Última hora</option>
+            <option value={4}>Últimas 4h</option>
+            <option value={24}>Últimas 24h</option>
+            <option value={168}>Últimos 7 dias</option>
+          </select>
+          <label className="muted" style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}>
+            <input type="checkbox" checked={firstOnly} onChange={e => setFirstOnly(e.target.checked)} />
+            Só 1ª quebra
+          </label>
+        </div>
+      </div>
+
+      {state.status === 'error' && (
+        <div className="card"><div className="empty red">Erro: {state.error}</div></div>
+      )}
+
+      {!state.hits?.length ? (
+        <div className="card">
+          <div className="empty">
+            {state.lastBarTime ? 'Nenhuma quebra neste período.' : 'À espera do primeiro scan (corre 1min depois de cada fecho de vela 15m).'}
+          </div>
+        </div>
+      ) : (
+        <div className="card" style={{ padding: 0 }}>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Par</th>
+                  <th>Entrada</th>
+                  <th>Caixa (mín – máx)</th>
+                  <th>Amplitude</th>
+                  <th>Quebra</th>
+                  <th>Força</th>
+                  <th>SL</th>
+                  <th>TP1</th>
+                  {!firstOnly && <th>Nº</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {state.hits.map(h => (
+                  <tr key={`${h.type}-${h.symbol}-${h.barTime}`}>
+                    <td className="mono muted">{format(new Date(h.barTime + 15 * 60 * 1000), 'dd/MM HH:mm')}</td>
+                    <td>
+                      <a
+                        className="symbol-link"
+                        href={`https://www.tradingview.com/chart/?symbol=BYBIT:${h.symbol.split('/')[0]}USDT.P&interval=15`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Ver no TradingView (15m)"
+                      >
+                        <span className="symbol-name">{h.symbol.split('/')[0]}</span>
+                        <span className="symbol-suffix">/USDT</span>
+                        <span className="tv-icon">↗</span>
+                      </a>
+                    </td>
+                    <td className="mono">{fmt(h.entryPrice, 4)}</td>
+                    <td className="mono muted">{fmt(h.prevLow, 4)} – {fmt(h.prevHigh, 4)}</td>
+                    <td className="mono muted">{fmt(h.boxRangePct, 1)}%</td>
+                    <td className="mono green">+{fmt(h.breakPct)}%</td>
+                    <td className="mono">{h.strength}</td>
+                    <td className="mono red">{fmt(h.stopLoss, 4)}</td>
+                    <td className="mono green">{fmt(h.target1, 4)}</td>
+                    {!firstOnly && <td className="mono muted">{h.breakNo}ª</td>}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EmaTrendResultsTable({ results }) {
   return (
     <div className="card" style={{ padding: 0 }}>
@@ -1259,9 +1387,16 @@ export default function Scanner() {
         >
           RSI Semanal (&gt;65)
         </button>
+        <button
+          className={`scanner-tab ${tab === 'rumersbox' ? 'active' : ''}`}
+          onClick={() => setTab('rumersbox')}
+        >
+          Rumer's Box
+        </button>
       </div>
 
       {tab === 'topgainers' ? <PeriodGainersPanel key="topgainers" />
+        : tab === 'rumersbox' ? <RumersBoxPanel key="rumersbox" />
         : tab === 'rsiweekly' ? <RsiWeeklyPanel key="rsiweekly" />
         : tab === 'pump24h' ? <PumpPanel key="pump24h" />
         : tab === 'ematrend' ? <EmaTrendPanel key="ematrend" />

@@ -16,6 +16,7 @@ const {
   startScanVolatile50_4h, getVolatile50State4h,
   startScanPeriodGainers, getPeriodGainersState,
   startScanRsiWeekly, getRsiWeeklyState,
+  startScanRumersBox, getRumersBoxState, loadRumersFromDb,
 } = require('./services/scanner');
 
 const app = express();
@@ -669,6 +670,21 @@ app.get('/api/scanner/rsiweekly/history', async (req, res) => {
   }
 });
 
+// Rumer's Box — quebras do máximo do dia/semana/mês anterior em velas 15m
+// (ver startScanRumersBox em services/scanner.js). Corre sozinho a cada 15min;
+// o start manual só analisa se a última vela fechada ainda não foi vista.
+app.post('/api/scanner/rumersbox/start', (req, res) => {
+  startScanRumersBox();
+  res.json({ ok: true });
+});
+
+// ?type=day|week|month (omisso = todos) · ?hours=24 · ?all=1 (todas as quebras, não só a 1ª)
+app.get('/api/scanner/rumersbox', (req, res) => {
+  const type = ['day', 'week', 'month'].includes(req.query.type) ? req.query.type : null;
+  const hours = Math.min(parseFloat(req.query.hours) || 24, 24 * 7);
+  res.json(getRumersBoxState({ type, hours, firstOnly: req.query.all !== '1' }));
+});
+
 // ─── STATIC FILES (React build) ────────────────────────────────
 
 const buildPath = path.join(__dirname, '../build');
@@ -751,6 +767,12 @@ cron.schedule('10 0,4,8,12,16,20 * * *', async () => {
   console.log('📊 Cron 4h: scanner Top Ganhos concluído.');
 });
 
+// A cada 15 min, 1min depois de cada fecho de vela: scanner Rumer's Box
+// (quebra do máximo do dia/semana/mês anterior) em todos os perpétuos USDT.
+cron.schedule('1,16,31,46 * * * *', async () => {
+  await startScanRumersBox();
+});
+
 // A cada 2 horas: scanner RSI semanal > 65 (usa cache 2h)
 cron.schedule('40 */2 * * *', async () => {
   console.log('\n📊 Cron 2h: a correr scanner RSI semanal...');
@@ -779,4 +801,6 @@ app.listen(PORT, () => {
 
   // Executa ao arrancar
   setTimeout(runAll, 3000);
+  // Sinais recentes do Rumer's Box e contadores de quebras (sobrevivem a deploys)
+  setTimeout(loadRumersFromDb, 5000);
 });

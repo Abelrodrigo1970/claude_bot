@@ -221,7 +221,27 @@ async function migrate() {
         scanned_at    TIMESTAMP      NOT NULL DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS scanner_rumers_box (
+        id            SERIAL PRIMARY KEY,
+        box_type      VARCHAR(5)     NOT NULL,
+        symbol        VARCHAR(50)    NOT NULL,
+        period_key    VARCHAR(10)    NOT NULL,
+        break_no      INT            NOT NULL,
+        entry_price   DECIMAL(20,8)  NOT NULL,
+        stop_loss     DECIMAL(20,8)  NOT NULL,
+        target1       DECIMAL(20,8)  NOT NULL,
+        strength      INT            NOT NULL,
+        break_pct     DECIMAL(10,4)  NOT NULL,
+        prev_high     DECIMAL(20,8)  NOT NULL,
+        prev_low      DECIMAL(20,8)  NOT NULL,
+        box_range_pct DECIMAL(10,4)  NOT NULL,
+        bar_time      TIMESTAMP      NOT NULL,
+        detected_at   TIMESTAMP      NOT NULL DEFAULT NOW(),
+        UNIQUE (box_type, symbol, bar_time)
+      );
+
       CREATE INDEX IF NOT EXISTS idx_scanner_rsi_weekly_time ON scanner_rsi_weekly(scanned_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_scanner_rumers_box_time ON scanner_rumers_box(bar_time DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_pump_time ON scanner_pump(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_ema_trend_time ON scanner_ema_trend(scanned_at DESC);
       CREATE INDEX IF NOT EXISTS idx_scanner_ema_trend_stocks_time ON scanner_ema_trend_stocks(scanned_at DESC);
