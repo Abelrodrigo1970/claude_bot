@@ -1080,6 +1080,38 @@ const rumersBox = require('./rumersBox');
 const RUMERS_CONCURRENCY = 6;
 const RUMERS_KEEP_MS = 7 * 24 * 60 * 60 * 1000;   // sinais mantidos em memória
 const RUMERS_COUNT_KEEP_MS = 35 * 24 * 60 * 60 * 1000; // contadores de quebras (cobre a caixa mensal)
+// Alertas Telegram (pedido do utilizador 09/10): só a 1ª quebra de cada caixa
+// semanal/mensal (~60/dia no estudo de 7d) — a diária dá ~250/dia, demasiado
+// ruído. Uma mensagem por vela 15m com todas as quebras dessa vela.
+const RUMERS_TELEGRAM_TYPES = new Set(
+  (process.env.RUMERS_TELEGRAM_TYPES || 'week,month').split(',').map(s => s.trim()).filter(Boolean)
+);
+const RUMERS_TELEGRAM_MAX_LINES = 25; // limite de 4096 caracteres por mensagem do Telegram
+const RUMERS_TYPE_LABEL = { day: 'Diário', week: 'Semanal', month: 'Mensal' };
+
+function sendRumersTelegram(hits, barTime) {
+  const alerts = hits.filter(h => h.breakNo === 1 && RUMERS_TELEGRAM_TYPES.has(h.type));
+  if (!alerts.length) return;
+  const fmtPx = (x) => Number(x.toPrecision(6));
+  const lines = [];
+  for (const type of ['month', 'week', 'day']) {
+    const group = alerts.filter(h => h.type === type).sort((a, b) => b.strength - a.strength);
+    if (!group.length) continue;
+    lines.push(`\n<b>${RUMERS_TYPE_LABEL[type]}</b> (caixa ${group[0].periodKey})`);
+    for (const h of group) {
+      lines.push(
+        `<b>${h.symbol.split('/')[0]}</b> ${fmtPx(h.entryPrice)} · quebra +${h.breakPct.toFixed(2)}% · caixa ${h.boxRangePct.toFixed(1)}% · ` +
+        `força ${h.strength} · SL ${fmtPx(h.stopLoss)} · TP1 ${fmtPx(h.target1)}`
+      );
+    }
+  }
+  const shown = lines.slice(0, RUMERS_TELEGRAM_MAX_LINES);
+  const extra = lines.length - shown.length;
+  const closeTime = new Date(barTime + 15 * 60 * 1000).toISOString().slice(11, 16);
+  const msg = `📦 <b>Rumer's Box</b> · LONG · vela 15m fechada às ${closeTime} UTC\n${shown.join('\n')}` +
+    (extra > 0 ? `\n\n… e mais ${extra} (ver app)` : '');
+  telegram.sendMessage(msg); // não bloqueia o scan — falha de envio é só um warning na consola
+}
 
 let rumersState = {
   status: 'idle', progress: 0, total: 0, lastBarTime: null, scannedAt: null, error: null,
@@ -1236,6 +1268,7 @@ async function startScanRumersBox() {
     }
     const byType = Object.fromEntries(rumersBox.BOX_TYPES.map(t => [t, newHits.filter(h => h.type === t).length]));
     console.log(`[Scanner Rumer's Box] vela ${new Date(barTime).toISOString().slice(11, 16)} UTC — quebras: dia ${byType.day} · semana ${byType.week} · mês ${byType.month}`);
+    sendRumersTelegram(newHits, barTime);
 
     if (newHits.length) {
       try {
