@@ -7,15 +7,11 @@ const {
   getEmaTrendTotalState, startScanEmaTrendTotal,
   getPeriodGainersState, startScanPeriodGainers,
 } = require('./scanner');
-const trendSurfer          = require('../strategies/trendSurfer');
 const ema90TopFade         = require('../strategies/ema90TopFade');
 const stoch50              = require('../strategies/stoch50');
 const stockEma1270Cross    = require('../strategies/stockEma1270Cross');
-const volumeSpike3xScaleOut = require('../strategies/volumeSpike3xScaleOut');
 const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
 const maCross12x21         = require('../strategies/maCross12x21');
-const ema50BandCrossScaleOut = require('../strategies/ema50BandCrossScaleOut');
-const rsiReversal29        = require('../strategies/rsiReversal29');
 const rumersBoxWeeklyB     = require('../strategies/rumersBoxWeeklyB');
 const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
@@ -223,16 +219,6 @@ async function refreshTopMarketCap(strategy) {
 // symbolSource: 'scanner' (padrão) | 'stocks' (tabela stock_symbols)
 const STRATEGIES = [
   {
-    name: trendSurfer.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    scannerPeriod: 90,
-    timeframe: '1h',
-    generateSignal: trendSurfer.generateSignal,
-    positionSize: 60,
-    enabled: true,
-  },
-  {
     name: ema90TopFade.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
@@ -359,31 +345,6 @@ const STRATEGIES = [
     enabled: false,
   },
   {
-    name: volumeSpike3xScaleOut.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    symbols: VOLATILE50_SYMBOLS, // mesmo universo fixo do scanner Lista 50
-    timeframe: '15m',
-    generateSignal: volumeSpike3xScaleOut.generateSignal,
-    positionSize: 60,
-    stopLossPct: 0.04,
-    // Pedida pelo utilizador (03/09): sobre o universo do scanner "Lista 50"
-    // (top50-6month-movers.json), entra long quando o volume da vela de 15m
-    // é >=3x a média das 10 anteriores (e a vela fecha em alta — confirmação
-    // de direção, ver volumeSpike3xScaleOut.js). SL fixo 4%. Dois níveis de
-    // take-profit parcial (ver takeProfitTiers no runner.js, cada fraction
-    // fecha % do que resta nesse momento, não da entrada original): TP1 a
-    // +8% fecha 30%, TP2 a +45% fecha mais 30% (~49% da entrada original
-    // fica aberto depois dos dois). O que sobra sai quando o preço fecha
-    // abaixo da EMA50 de 15m (sinal da própria estratégia).
-    takeProfitTiers: [
-      { pct: 0.08, fraction: 0.30 },
-      { pct: 0.45, fraction: 0.30 },
-    ],
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
-    enabled: false,
-  },
-  {
     name: lista50SpikeSmaRise.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
@@ -432,88 +393,6 @@ const STRATEGIES = [
     enabled: false,
   },
   {
-    name: ema50BandCrossScaleOut.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    scannerPeriod: 90, // universo do Scanner EMA90 (mesmo do TrendSurfer/EMA90TopFade)
-    topN: ema50BandCrossScaleOut.SCANNER_TOP_N, // só os 30 primeiros do ranking (pedido do utilizador, 04/09)
-    timeframe: '4h',
-    generateSignal: ema50BandCrossScaleOut.generateSignal,
-    positionSize: 60,
-    stopLossPct: 0.10,
-    btcTrendFilter: true, // ver getBtcBullish acima — só entra se o BTC também está acima da própria EMA50
-    // Pedida pelo utilizador (03/09), sobre o universo do scanner EMA90, em
-    // 4h. Entra long quando o preço está a menos de 3% acima da EMA50, OU
-    // acabou de cruzar a EMA50 para cima, E a vela de entrada não teve
-    // >20% de movimento, E o BTC está também em tendência de alta (ver
-    // ema50BandCrossScaleOut.js). SL fixo 10%. Dois níveis de take-profit
-    // parcial (runner.js takeProfitTiers): TP1 a +28% fecha 30%, TP2 a
-    // +48% fecha mais 30% (~49% da entrada original fica aberto depois dos
-    // dois). O que sobra sai quando o preço cai 2% abaixo da EMA50
-    // (tendência invalidada) OU RSI(14) > 87 (exaustão).
-    //
-    // 04/09: filtro adicional — só entra se o símbolo estiver no top 30 do
-    // ranking do scanner EMA90 (topN acima + guarda em generateSignal via
-    // context.rank). Ver src/backtests/study-ema50BandCrossScaleOut-scanner-rank.js:
-    // cortar no top 30 baixa o maxDD de ~-631 para ~-114 em 80 dias sem
-    // piorar o profit factor (1.40 vs 1.44 sem filtro).
-    //
-    // Percurso do estudo (90 dias, universo EMA90 atual, ver
-    // src/backtests/backtest-ema50BandCrossScaleOut*.js):
-    //   v1 (saída <EMA90):                          PF 1.21, PnL +604.92, maxDD -636.47
-    //   v2 (saída <2% EMA50):                        PF 1.27, PnL +670.54
-    //   v2 + filtro vela entrada <=20%:               PF 1.31, PnL +719.50
-    //   v2 + filtro BTC>EMA50 (esta versão):          PF 1.38, PnL +619.58, maxDD -558.46
-    //     (795->583 trades — menos trades, mais lucro E menos drawdown)
-    // Testámos também um limite de posições concorrentes (reduz drawdown
-    // mas corta lucro na mesma proporção — pior troca que o filtro BTC) —
-    // não incluído aqui, sem infraestrutura de limite por estratégia ainda.
-    takeProfitTiers: [
-      { pct: 0.28, fraction: 0.30 },
-      { pct: 0.48, fraction: 0.30 },
-    ],
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
-    enabled: false,
-  },
-  {
-    name: rsiReversal29.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    // Top 30 cripto por market cap sem stablecoins, wrapped/staked nem ouro
-    // tokenizado, atualizado de 6 em 6h (ver fetchTopCryptoPerps). A lista
-    // abaixo é o top 30 de 28/09 (universo do estudo) e só é usada se o
-    // CoinGecko falhar antes da primeira resposta.
-    symbolSource: 'topMarketCap',
-    topN: 30,
-    // Pares com P&L negativo no estudo par a par de 180d (strategy-lab-bot/
-    // rsi_per_symbol.py, 29/09) — excluídos a pedido do utilizador. Amostras
-    // pequenas (8–25 trades cada): a reavaliar com os trades de papel.
-    symbolExclude: ['ADA', 'SHIB1000', 'GRAM', 'AVAX', 'BCH', 'HBAR', 'QNT', 'CC'],
-    fallbackSymbols: [
-      'BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 'XRP/USDT:USDT', 'SOL/USDT:USDT',
-      'TRX/USDT:USDT', 'ZEC/USDT:USDT', 'HYPE/USDT:USDT', 'DOGE/USDT:USDT', 'LINK/USDT:USDT',
-      'XMR/USDT:USDT', 'ADA/USDT:USDT', 'XLM/USDT:USDT', 'BCH/USDT:USDT', 'NEAR/USDT:USDT',
-      'UNI/USDT:USDT', 'LTC/USDT:USDT', 'HBAR/USDT:USDT', 'CC/USDT:USDT', 'AVAX/USDT:USDT',
-      'SUI/USDT:USDT', 'GRAM/USDT:USDT', 'QNT/USDT:USDT', 'CRO/USDT:USDT', 'TAO/USDT:USDT',
-      'SHIB1000/USDT:USDT', 'BTW/USDT:USDT', 'M/USDT:USDT', 'ENA/USDT:USDT', 'ONDO/USDT:USDT',
-    ],
-    timeframe: '15m',
-    generateSignal: rsiReversal29.generateSignal,
-    positionSize: 60,
-    // Pedida pelo utilizador (28/09): LONG quando o RSI(14) de 15m fecha
-    // abaixo de 29 e a vela seguinte fecha acima (ex: 28 → 31), só com o
-    // BTC acima da EMA50 do 1h. SL 4% · TP +15% fecha tudo (sinal
-    // close_long, ver rsiReversal29.js). Escolhida num estudo de 180d
-    // (1568 combinações SL/TP + 17 filtros de entrada, ver
-    // strategy-lab-bot/rsi_sweep.py e rsi_filters.py): 428 trades, PF 1,62,
-    // P&L +299, maxDD 110 ($40/trade) — vs PF 1,04 / +48 / 228 da regra
-    // original (SL2 · TP1 4% 50% · TP2 9%, sem filtro).
-    stopLossPct: 0.04,
-    btc1hEma50Filter: true, // context.btc1hAboveEma50 — ver getBtc1hAboveEma50 acima
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
-    enabled: false,
-  },
-  {
     name: rumersBoxWeeklyB.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
@@ -537,6 +416,19 @@ const STRATEGIES = [
     enabled: false,
   },
 ];
+// TrendSurfer, VolumeSpike3xScaleOut, Ema50BandCrossScaleOut e RsiReversal29
+// removidas em 09/10 a pedido do utilizador, depois do estudo desde janeiro
+// (src/backtests/study-all-strategies-ytd.js, código de produção de cada
+// estratégia, P&L por $100 de posição, jan–out):
+//   TrendSurfer            PF 0.96 · −159 · real desde 15/07: −8,1
+//   VolumeSpike3xScaleOut  PF 1.01 · +182 com DD 1637 · real desde 03/09: −12,1
+//   Ema50BandCrossScaleOut PF 1.02 · +74  · real desde 03/09: −71,7
+//   RsiReversal29          PF 1.43 · +638 (regras escolhidas com dados abr–out)
+//                          · real desde 30/09: −49,2 em 24 trades (WR 8%)
+// Nenhuma tinha posições reais abertas; a TrendSurfer deixou 1 trade de papel
+// aberto (BOME, 09/10) na BD, sem gestão. Os módulos continuam em
+// src/strategies/. Os mecanismos opt-in que só elas usavam (btcTrendFilter,
+// btc1hEma50Filter, symbolSource 'topMarketCap') ficam no runner.
 // PumpEmaSpread, PumpTrendFlip, PumpEma60Band e StockSMA removidas em 03/09
 // — as 4 estavam com PnL negativo desde 01/06 nos dados reais (ver estudo
 // src/backtests/study-strategies-since.js 2026-06-01): PumpEma60Band
