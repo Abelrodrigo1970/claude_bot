@@ -16,6 +16,7 @@ const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
 const maCross12x21         = require('../strategies/maCross12x21');
 const ema50BandCrossScaleOut = require('../strategies/ema50BandCrossScaleOut');
 const rsiReversal29        = require('../strategies/rsiReversal29');
+const rumersBoxWeeklyB     = require('../strategies/rumersBoxWeeklyB');
 const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
@@ -139,6 +140,71 @@ async function getBtc1hAboveEma50() {
     console.warn(`[Runner] Falha ao obter BTC 1h vs EMA50: ${err.message}`);
   }
   return btc1hEma50Cache.above;
+}
+
+// BTC acima da EMA50 DIÁRIA — opt-in via strategy.btcDailyEma50Filter
+// (RumersBoxWeeklyB). Preço atual do BTC vs EMA50 das velas diárias já
+// fechadas (como no estudo rumers_pb_week.py --btc-daily). Cache 5min.
+let btcDailyEma50Cache = { above: null, fetchedAt: 0 };
+
+async function getBtcAboveEma50Daily() {
+  if (Date.now() - btcDailyEma50Cache.fetchedAt < BTC_1H_CACHE_TTL) return btcDailyEma50Cache.above;
+  try {
+    const candles = await bybit.getCandles('BTC/USDT:USDT', '1d', 200);
+    const closed = candles.slice(0, -1).map(c => c.close); // remove a vela diária em formação
+    const emaArr = EMA.calculate({ period: 50, values: closed });
+    const ema50 = emaArr[emaArr.length - 1];
+    const price = candles[candles.length - 1].close;          // preço atual
+    if (ema50 != null) btcDailyEma50Cache = { above: price > ema50, fetchedAt: Date.now() };
+  } catch (err) {
+    console.warn(`[Runner] Falha ao obter BTC vs EMA50 diária: ${err.message}`);
+  }
+  return btcDailyEma50Cache.above;
+}
+
+// Universo da RumersBoxWeeklyB (symbolSource 'rumersWeeklyB'): todos os
+// perpétuos USDT de cripto (a Bybit marca ações/ETFs/commodities/forex em
+// info.symbolType), com as velas diárias pedidas UMA vez por dia UTC para
+// calcular a caixa da semana anterior e a tendência. Só ficam no universo os
+// pares em padrão b — os outros não podem dar sinal até à semana seguinte.
+// A caixa de cada par fica em cache e segue para a estratégia via
+// context.weeklyBox.
+const NON_CRYPTO_TYPES = new Set(['stock', 'ETF', 'commodity', 'forex']);
+let weeklyBCache = { dayStart: null, boxes: new Map(), symbols: [], building: null };
+
+async function refreshRumersWeeklyB() {
+  const dayStart = Math.floor(Date.now() / 86_400_000) * 86_400_000;
+  if (weeklyBCache.dayStart === dayStart) return;
+  if (weeklyBCache.building) return weeklyBCache.building;
+  weeklyBCache.building = (async () => {
+    try {
+      const markets = await bybit.publicExchange.loadMarkets();
+      const perps = Object.values(markets).filter(m =>
+        m.linear && m.type === 'swap' && m.settle === 'USDT' && m.active &&
+        !m.symbol.includes('USDC') && !NON_CRYPTO_TYPES.has(m.info?.symbolType)
+      ).map(m => m.symbol);
+      const boxes = new Map();
+      let next = 0;
+      const worker = async () => {
+        while (next < perps.length) {
+          const symbol = perps[next++];
+          try {
+            const daily = await bybit.getCandles(symbol, '1d', 60);
+            const box = rumersBoxWeeklyB.computeWeeklyBox(daily);
+            if (box) boxes.set(symbol, box);
+          } catch { /* par sem velas diárias, ignora */ }
+        }
+      };
+      await Promise.all(Array.from({ length: 6 }, worker));
+      const symbols = [...boxes].filter(([, b]) => rumersBoxWeeklyB.isCandidate(b)).map(([s]) => s);
+      weeklyBCache = { dayStart, boxes, symbols, building: null };
+      console.log(`[Runner] RumersBoxWeeklyB: ${symbols.length} pares em padrão b (de ${perps.length} cripto)`);
+    } catch (err) {
+      weeklyBCache.building = null;
+      console.warn(`[Runner] Falha ao preparar o universo da RumersBoxWeeklyB: ${err.message}`);
+    }
+  })();
+  return weeklyBCache.building;
 }
 
 // Universo "top N cripto por market cap" (symbolSource 'topMarketCap') — ver
@@ -447,6 +513,29 @@ const STRATEGIES = [
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
+  {
+    name: rumersBoxWeeklyB.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    // Pares de cripto em padrão b na caixa semanal (ver refreshRumersWeeklyB)
+    symbolSource: 'rumersWeeklyB',
+    timeframe: '15m',
+    candleLimit: 6, // só precisa das duas últimas velas 15m fechadas
+    generateSignal: rumersBoxWeeklyB.generateSignal,
+    positionSize: 60,
+    // Pedida pelo utilizador (09/10): Rumer's Box semanal em padrão b (o preço
+    // caiu > 6% nas 3 semanas antes da caixa), LONG na quebra do máximo da
+    // semana anterior (quebra < 1%), só com o BTC acima da EMA50 diária.
+    // SL 6% · TP +25% fecha tudo (sinal close_long, ver rumersBoxWeeklyB.js)
+    // · fecho às 48h. Estudo jan–out (rumers_pb_week.py --btc-daily): 1012
+    // trades, PF 1,51 (jan–jun) / 2,67 (jul–out), +2079 $/100, drawdown 388.
+    stopLossPct: 0.06,
+    maxHoldHours: 48,
+    weeklyBoxContext: true,   // context.weeklyBox — caixa da semana anterior do par
+    btcDailyEma50Filter: true, // context.btcAboveEma50Daily — ver getBtcAboveEma50Daily
+    // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
 ];
 // PumpEmaSpread, PumpTrendFlip, PumpEma60Band e StockSMA removidas em 03/09
 // — as 4 estavam com PnL negativo desde 01/06 nos dados reais (ver estudo
@@ -629,7 +718,7 @@ let _counts = { signals: 0, holds: 0, errors: 0 };
 async function runStrategyOnSymbol(strategy, symbol) {
   const key = `${strategy.name}_${symbol}`;
   try {
-    const candles = await bybit.getCandles(symbol, strategy.timeframe, 250);
+    const candles = await bybit.getCandles(symbol, strategy.timeframe, strategy.candleLimit || 250);
     const ticker  = await bybit.getTicker(symbol);
     const currentPrice = ticker.last;
     const currentPos   = openPositions[key]?.side || null;
@@ -791,6 +880,8 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const btcDailyPositive = strategy.btcDailyShortFilter ? await getBtcDailyPositive() : null;
     const btc4hGreen = strategy.btc4hGreenFilter ? await getBtc4hGreen() : null;
     const btc1hAboveEma50 = strategy.btc1hEma50Filter ? await getBtc1hAboveEma50() : null;
+    const btcAboveEma50Daily = strategy.btcDailyEma50Filter ? await getBtcAboveEma50Daily() : null;
+    const weeklyBox = strategy.weeklyBoxContext ? (weeklyBCache.boxes.get(symbol) || null) : null;
 
     // Filtro opt-in (strategy.ema70Filter1h — pedido do utilizador 27/09 para
     // a MaCross12x21, depois de ver AKE/BR entrarem em queda de fundo no 1h):
@@ -813,6 +904,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
 
     const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, {
       rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, btc1hAboveEma50, aboveEma70_1h, unrealizedPnlPct,
+      btcAboveEma50Daily, weeklyBox, symbol,
     });
 
     const isAction = signal !== 'hold' && signal !== 'none';
@@ -1018,6 +1110,8 @@ function resolveSymbols(strategy) {
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
   } else if (strategy.symbolSource === 'topMarketCap') {
     symbols = topMarketCapSymbols.length ? topMarketCapSymbols : (strategy.fallbackSymbols || []);
+  } else if (strategy.symbolSource === 'rumersWeeklyB') {
+    symbols = weeklyBCache.symbols;
   } else if (strategy.symbolSource === 'pump24h') {
     const scan = getPumpState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
@@ -1052,6 +1146,8 @@ function resolveSymbols(strategy) {
 async function ensureSymbols(strategy) {
   // Refresca sempre (tem cache própria de 6h) — o fallback fixo nunca está vazio
   if (strategy.symbolSource === 'topMarketCap') return refreshTopMarketCap(strategy);
+  // Refresca uma vez por dia UTC (velas diárias de todos os pares de cripto)
+  if (strategy.symbolSource === 'rumersWeeklyB') return refreshRumersWeeklyB();
   if (resolveSymbols(strategy).length > 0) return;
   if (strategy.scannerPeriod) {
     await startScan(strategy.scannerPeriod, 50);
@@ -1073,6 +1169,7 @@ function scannerLabel(strategy) {
   if (strategy.symbolSource === 'emaTrendTotal') return 'Scanner EMA Trend (sem limite)';
   if (strategy.symbolSource === 'pump24h') return 'Scanner Pump 24h';
   if (strategy.symbolSource === 'topMarketCap') return 'Top cripto por market cap';
+  if (strategy.symbolSource === 'rumersWeeklyB') return "Rumer's Box semanal · padrão b";
   return 'Scanner';
 }
 
@@ -1244,7 +1341,22 @@ async function setStrategyEnabled(strategyName, enabled) {
   return strategy;
 }
 
+// RumersBoxWeeklyB: 1 entrada por caixa semanal e por par — recupera da BD as
+// entradas dos últimos 15 dias para um restart/deploy não voltar a entrar na
+// mesma caixa (a caixa de cada entrada é a semana anterior à da abertura).
+async function loadRumersWeeklyBEntries() {
+  try {
+    const { rows } = await pool.query(
+      `SELECT symbol, opened_at FROM trades WHERE strategy_name = $1 AND opened_at > NOW() - INTERVAL '15 days'`,
+      [rumersBoxWeeklyB.STRATEGY_NAME]
+    );
+    rows.forEach(r => rumersBoxWeeklyB.markEntered(r.symbol, rumersBoxWeeklyB.periodKeyOf(new Date(r.opened_at).getTime())));
+    if (rows.length) console.log(`[Runner] RumersBoxWeeklyB: ${rows.length} entradas recentes carregadas da BD`);
+  } catch { /* BD ainda não disponível */ }
+}
+
 setTimeout(loadOpenPositions, 5000);
+setTimeout(loadRumersWeeklyBEntries, 5000);
 setTimeout(loadStockSymbols, 6000);
 setTimeout(loadStrategySettings, 5000);
 
