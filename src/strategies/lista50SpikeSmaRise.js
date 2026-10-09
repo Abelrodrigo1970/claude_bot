@@ -22,6 +22,7 @@ const VOLUME_RATIO_MIN = 5;
 const VOL_LOOKBACK = 10;
 const MA_PERIOD = 50;
 const MA_SLOPE_BARS = 10;
+const BAR_MS = 15 * 60 * 1000;
 
 function calculateIndicators(candles) {
   const closes = candles.map((c) => c.close);
@@ -71,16 +72,25 @@ function calculateIndicators(candles) {
 }
 
 function generateSignal(candles, currentPosition = null, context = {}) {
+  // Só velas 15m FECHADAS. Ao vivo o runner passa também a vela em formação
+  // e o cron corre logo no início de cada vela: o spike era medido nessa vela
+  // quase vazia (volume ~0) e a entrada quase nunca disparava (5 trades em
+  // 10 dias vs ~200/mês no estudo — corrigido 09/10). Filtrar pela hora em vez
+  // de cortar sempre a última vela mantém os estudos, que já só passam velas
+  // fechadas, corretos.
+  const now = Date.now();
+  const closed = candles.filter((c) => +new Date(c.time) + BAR_MS <= now);
+
   const minCandles = MA_PERIOD + MA_SLOPE_BARS + VOL_LOOKBACK + 2;
-  if (candles.length < minCandles) {
+  if (closed.length < minCandles) {
     return {
       signal: 'none',
-      reason: `Candles insuficientes (mínimo ${minCandles})`,
+      reason: `Candles fechadas insuficientes (mínimo ${minCandles})`,
       indicators: {},
     };
   }
 
-  const ind = calculateIndicators(candles);
+  const ind = calculateIndicators(closed);
   // Só bloqueia quando o runner passa false explícito (BTC 4h vermelha).
   // Sem dados / estudos sem context → não trava.
   const btc4hOk = context.btc4hGreen !== false;
