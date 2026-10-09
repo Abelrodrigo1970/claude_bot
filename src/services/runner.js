@@ -9,9 +9,7 @@ const {
 } = require('./scanner');
 const ema90TopFade         = require('../strategies/ema90TopFade');
 const stoch50              = require('../strategies/stoch50');
-const stockEma1270Cross    = require('../strategies/stockEma1270Cross');
 const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
-const maCross12x21         = require('../strategies/maCross12x21');
 const rumersBoxWeeklyB     = require('../strategies/rumersBoxWeeklyB');
 const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
@@ -314,37 +312,6 @@ const STRATEGIES = [
     enabled: true,
   },
   {
-    name: stockEma1270Cross.STRATEGY_NAME,
-    market: 'stock',
-    symbol: null,
-    symbols: [
-      'NBIS/USDT:USDT', 'AXTI/USDT:USDT', 'MRVL/USDT:USDT', 'COHR/USDT:USDT', 'ASTS/USDT:USDT',
-      'AAOI/USDT:USDT', 'RKLB/USDT:USDT', 'HPE/USDT:USDT', 'USAR/USDT:USDT', 'SMCI/USDT:USDT',
-      'GLW/USDT:USDT', 'GOOGL/USDT:USDT', 'MSFT/USDT:USDT', 'BABA/USDT:USDT', 'META/USDT:USDT',
-    ],
-    timeframe: '1h',
-    generateSignal: stockEma1270Cross.generateSignal,
-    positionSize: 60,
-    takeProfitPct: 0.19,
-    takeProfitCloseFraction: 0.5,
-    // Cruzamento EMA12/EMA70 (1h), sempre no mercado — inverte de posição a
-    // cada cruzamento, sem filtro (ver stockEma1270Cross.js). Lista de 15
-    // símbolos curada a partir de um estudo sobre os 74 stocks/ETFs (ver
-    // backtest-stockEma1270Cross.js, 48 dias): universo completo perdia
-    // (-278.11 USDT, PF 0.83), mas estes 15 — todos individualmente
-    // positivos — deram +234.52 USDT, PF 1.99 sem SL/TP.
-    //
-    // TP parcial 50% a 19% — sweep sobre o TOP15 (ver
-    // backtest-stockEma1270Cross-top15-sltp.js e -top15-tp2.js): SL fixo
-    // (2-12%) foi sempre pior que sem SL, por isso fica sem stopLossPct.
-    // TP testado de 5% a 29% — pico em 18-20%, com 19% o melhor exato
-    // (+264.15 USDT, PF 2.13, maxDD -29.22, WR 44.9%, vs. +236.91/PF1.99/
-    // maxDD-40.44 sem TP). Diferença entre 18/19/20% é pequena (~1%),
-    // qualquer um destes é uma escolha sólida.
-    // Nunca corrida nem testada ao vivo — arranca só em estudo.
-    enabled: false,
-  },
-  {
     name: lista50SpikeSmaRise.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
@@ -363,33 +330,6 @@ const STRATEGIES = [
     maxHoldHours: 48,
     btc4hGreenFilter: true, // context.btc4hGreen — ver getBtc4hGreen acima
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
-    enabled: false,
-  },
-  {
-    name: maCross12x21.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    // Universo: Top Ganhos do Mês (scanner periodGainers · resultsMonth)
-    symbolSource: 'gainersMonth',
-    topN: maCross12x21.SCANNER_TOP_N,
-    timeframe: '15m',
-    generateSignal: maCross12x21.generateSignal,
-    positionSize: 80,
-    // Port Bot Scanner MA_CROSS_12X21_S2, ajustado 27/09 a pedido do
-    // utilizador: SL 15% (rede de segurança) · TP1 parcial 30% a +43% ·
-    // fecho TOTAL do resto por sinal próprio da estratégia quando o lucro
-    // atinge +78% OU o preço fecha abaixo da EMA70(1h) (ver
-    // context.unrealizedPnlPct/aboveEma70_1h em generateSignal, dentro de
-    // maCross12x21.js). Validado em estudo de 30 dias (study-maCross12x21-
-    // 30d-tp1.js): PF 2.57, PnL +432,62 vs +166,34 das regras antigas.
-    stopLossPct: 0.15,
-    takeProfitTiers: [
-      { pct: 0.43, fraction: 0.30 },
-    ],
-    // Só entra long com o preço acima da EMA70 do 1h — evita repiques dentro
-    // de tendências de queda mais largas (ver ema70Filter1h em runner.js).
-    ema70Filter1h: true,
-    // Nunca corrida nem testada ao vivo neste app — arranca só em estudo.
     enabled: false,
   },
   {
@@ -429,6 +369,15 @@ const STRATEGIES = [
 // aberto (BOME, 09/10) na BD, sem gestão. Os módulos continuam em
 // src/strategies/. Os mecanismos opt-in que só elas usavam (btcTrendFilter,
 // btc1hEma50Filter, symbolSource 'topMarketCap') ficam no runner.
+//
+// StockEma1270Cross e MaCross12x21 removidas também em 09/10, a pedido do
+// utilizador (ambas estavam com ordens reais; desligadas antes da remoção):
+//   StockEma1270Cross  estudo jan–out PF 1.36 (jan–jun 0.75, lista de 15 ações
+//                      escolhida com dados de ago–set) · real desde 17/08: +30,8
+//   MaCross12x21       estudo jan–out PF 1.10 (jan–jun 0.86) · real desde
+//                      25/09: −203,3 em 69 trades
+// As 17 posições reais abertas ficam para o utilizador fechar à mão na Bybit;
+// os trades correspondentes são fechados na BD ao arrancar (closeRetiredOpenTrades).
 // PumpEmaSpread, PumpTrendFlip, PumpEma60Band e StockSMA removidas em 03/09
 // — as 4 estavam com PnL negativo desde 01/06 nos dados reais (ver estudo
 // src/backtests/study-strategies-since.js 2026-06-01): PumpEma60Band
@@ -1247,7 +1196,37 @@ async function loadRumersWeeklyBEntries() {
   } catch { /* BD ainda não disponível */ }
 }
 
+// Fecho contabilístico, no arranque, dos trades que ficaram abertos na BD de
+// estratégias retiradas cujas posições reais o utilizador fechou à mão na
+// Bybit (09/10). Fecha ao preço de mercado do momento — só a BD; nenhuma ordem
+// vai para a Bybit (closeTrade não toca na exchange). Idempotente: depois do
+// primeiro arranque já não há trades abertos destas estratégias.
+const RETIRED_CLOSE_ON_BOOT = ['StockEma1270Cross', 'MaCross12x21'];
+
+async function closeRetiredOpenTrades() {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, symbol FROM trades WHERE status = 'open' AND strategy_name = ANY($1)`,
+      [RETIRED_CLOSE_ON_BOOT]
+    );
+    for (const r of rows) {
+      try {
+        const ticker = await bybit.getTicker(r.symbol);
+        await closeTrade(r.id, ticker.last);
+        await pool.query(
+          `UPDATE trades SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
+          [JSON.stringify({ closeReason: 'estratégia retirada 09/10 — posição real fechada à mão na Bybit; preço de fecho = mercado no arranque' }), r.id]
+        );
+      } catch (err) {
+        console.warn(`[Runner] Não consegui fechar o trade ${r.id} (${r.symbol}): ${err.message}`);
+      }
+    }
+    if (rows.length) console.log(`[Runner] ${rows.length} trades de estratégias retiradas fechados na BD`);
+  } catch { /* BD ainda não disponível */ }
+}
+
 setTimeout(loadOpenPositions, 5000);
+setTimeout(closeRetiredOpenTrades, 8000);
 setTimeout(loadRumersWeeklyBEntries, 5000);
 setTimeout(loadStockSymbols, 6000);
 setTimeout(loadStrategySettings, 5000);
