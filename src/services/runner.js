@@ -7,7 +7,6 @@ const {
   getEmaTrendTotalState, startScanEmaTrendTotal,
   getPeriodGainersState, startScanPeriodGainers,
 } = require('./scanner');
-const ema90TopFade         = require('../strategies/ema90TopFade');
 const stoch50              = require('../strategies/stoch50');
 const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
 const rumersBoxWeeklyB     = require('../strategies/rumersBoxWeeklyB');
@@ -217,42 +216,6 @@ async function refreshTopMarketCap(strategy) {
 // symbolSource: 'scanner' (padrão) | 'stocks' (tabela stock_symbols)
 const STRATEGIES = [
   {
-    name: ema90TopFade.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    scannerPeriod: 90,
-    // Diário (não 1h) — a estratégia é 100% rank-driven e não olhava para velas
-    // até agora, mas o filtro de RSI(14) novo (ver ema90TopFade.js) precisa de
-    // candles diárias para bater com o estudo que o validou.
-    timeframe: '1d',
-    generateSignal: ema90TopFade.generateSignal,
-    positionSize: 60,
-    stopLossPct: 0.26,
-    // Backtest intracandle (139 trades fechados, 27/07) confirma que qualquer SL
-    // piora o resultado agregado — a 26% ainda corta 5 trades que atingem essa
-    // excursão contra a posição, 3 dos quais teriam recuperado para +8.7%/+11.3%/+18.7%
-    // (total simulado +394% vs. +556% sem SL). Ligado mesmo assim agora que a
-    // estratégia está com ordens reais — o SL aqui é para limitar a perda máxima
-    // por posição, não para melhorar o retorno esperado.
-    //
-    // Filtro RSI(14)<72 nos shorts adicionado em 10/08 — estudo sobre os 158
-    // shorts fechados até então: os 42 com RSI diário>=72 na entrada somam
-    // -183.96 USDT; os outros 116 (RSI<72) somam +90.11 USDT. Ver ema90TopFade.js.
-    //
-    // Filtro QQQ adicionado em 14/08 — estudo dia-a-dia (01/07-14/08): o short
-    // só ganha dinheiro quando o Nasdaq (QQQ) fecha em baixa (-112.16 USDT em
-    // dias QQQ+ vs +19.41 em dias QQQ-). qqqShortFilter liga o cálculo do
-    // regime QQQ no runner (context.qqqPositive) — ver getQqqPositive abaixo.
-    qqqShortFilter: true,
-    // Filtro BTC diário adicionado em 07/09 — mesmo padrão do QQQ, com o BTC:
-    // estudo sobre 248 shorts reais (study-ema90TopFade-btc-filter.js) — shorts
-    // abertos em dias de BTC a subir somam -202.60 USDT vs +8.42 nos dias de
-    // BTC a cair. btcDailyShortFilter liga o cálculo no runner
-    // (context.btcDailyPositive) — ver getBtcDailyPositive acima.
-    btcDailyShortFilter: true,
-    enabled: true,
-  },
-  {
     name: stoch50.STRATEGY_NAME,
     market: 'stock',
     symbol: null,
@@ -378,6 +341,13 @@ const STRATEGIES = [
 //                      25/09: −203,3 em 69 trades
 // As 17 posições reais abertas ficam para o utilizador fechar à mão na Bybit;
 // os trades correspondentes são fechados na BD ao arrancar (closeRetiredOpenTrades).
+//
+// EMA90TopFade removida em 09/10 a pedido do utilizador (estava com ordens
+// reais; desligada antes da remoção, sem posições abertas). Estudo jan–out
+// com SL na exchange (study-ema90TopFade-engulfing.js): PF 1.04, +159 por
+// $60, DD 672 — os shorts perdem (−284), o lucro vinha dos longs depois do
+// short. Real desde 13/07: 631 trades, −76,8. A versão com engolfo de baixa
+// em 1h (PF 1.27, +919) ficou só em estudo.
 // PumpEmaSpread, PumpTrendFlip, PumpEma60Band e StockSMA removidas em 03/09
 // — as 4 estavam com PnL negativo desde 01/06 nos dados reais (ver estudo
 // src/backtests/study-strategies-since.js 2026-06-01): PumpEma60Band
