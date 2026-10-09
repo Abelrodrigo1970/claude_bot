@@ -1196,37 +1196,44 @@ async function loadRumersWeeklyBEntries() {
   } catch { /* BD ainda não disponível */ }
 }
 
-// Fecho contabilístico, no arranque, dos trades que ficaram abertos na BD de
-// estratégias retiradas cujas posições reais o utilizador fechou à mão na
-// Bybit (09/10). Fecha ao preço de mercado do momento — só a BD; nenhuma ordem
-// vai para a Bybit (closeTrade não toca na exchange). Idempotente: depois do
-// primeiro arranque já não há trades abertos destas estratégias.
-const RETIRED_CLOSE_ON_BOOT = ['StockEma1270Cross', 'MaCross12x21'];
+// "Começar do zero" (09/10): o utilizador fechou à mão TODAS as posições na
+// Bybit. No arranque, antes de carregar as posições para memória, fecha na BD
+// todos os trades ainda abertos que foram abertos antes do corte — reais e de
+// papel, incluindo os órfãos de estratégias retiradas — ao preço de mercado
+// (ou ao preço de entrada se o par já não tiver ticker). Só a BD: nenhuma ordem
+// vai para a Bybit (closeTrade não toca na exchange). Idempotente: trades
+// abertos depois do corte nunca são afetados.
+const RESET_OPEN_TRADES_BEFORE = new Date('2026-10-09T21:35:00Z');
 
-async function closeRetiredOpenTrades() {
+async function resetOpenTradesBefore() {
   try {
     const { rows } = await pool.query(
-      `SELECT id, symbol FROM trades WHERE status = 'open' AND strategy_name = ANY($1)`,
-      [RETIRED_CLOSE_ON_BOOT]
+      `SELECT id, symbol, entry_price FROM trades WHERE status = 'open' AND opened_at < $1`,
+      [RESET_OPEN_TRADES_BEFORE]
     );
+    let closed = 0;
     for (const r of rows) {
+      let price = parseFloat(r.entry_price);
+      try { price = (await bybit.getTicker(r.symbol)).last || price; } catch { /* par sem ticker — fecha à entrada */ }
       try {
-        const ticker = await bybit.getTicker(r.symbol);
-        await closeTrade(r.id, ticker.last);
+        await closeTrade(r.id, price);
         await pool.query(
           `UPDATE trades SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
-          [JSON.stringify({ closeReason: 'estratégia retirada 09/10 — posição real fechada à mão na Bybit; preço de fecho = mercado no arranque' }), r.id]
+          [JSON.stringify({ closeReason: 'reset 09/10 — todas as posições fechadas à mão na Bybit; preço de fecho = mercado no arranque' }), r.id]
         );
+        closed++;
       } catch (err) {
         console.warn(`[Runner] Não consegui fechar o trade ${r.id} (${r.symbol}): ${err.message}`);
       }
     }
-    if (rows.length) console.log(`[Runner] ${rows.length} trades de estratégias retiradas fechados na BD`);
+    if (rows.length) console.log(`[Runner] Reset: ${closed}/${rows.length} trades abertos antes de ${RESET_OPEN_TRADES_BEFORE.toISOString()} fechados na BD`);
   } catch { /* BD ainda não disponível */ }
 }
 
-setTimeout(loadOpenPositions, 5000);
-setTimeout(closeRetiredOpenTrades, 8000);
+setTimeout(async () => {
+  await resetOpenTradesBefore(); // tem de correr ANTES de carregar as posições para memória
+  await loadOpenPositions();
+}, 5000);
 setTimeout(loadRumersWeeklyBEntries, 5000);
 setTimeout(loadStockSymbols, 6000);
 setTimeout(loadStrategySettings, 5000);
