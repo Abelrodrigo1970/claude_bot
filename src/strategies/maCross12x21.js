@@ -12,13 +12,22 @@
 //   + preço acima da EMA70 do 1h (context.aboveEma70_1h — ver ema70Filter1h
 //     em runner.js) — pedido do utilizador 27/09, depois de ver trades como
 //     AKE/BR entrarem num repique dentro de uma queda maior no 1h
+//   + BTC acima da EMA70 DIÁRIA (context.btcAboveEma70Daily — ver
+//     btcDailyEma70Filter em runner.js) — adicionado 11/10, ver estudo abaixo
 //
 // Saída LONG (fecho TOTAL, via sinal close_long da própria estratégia):
-//   lucro não-realizado ≥ +78% (context.unrealizedPnlPct)
+//   lucro não-realizado ≥ +60% (context.unrealizedPnlPct)
 //   OU preço abaixo da EMA70(1h) (context.aboveEma70_1h === false)
-// (pedido do utilizador 27/09 — substitui a saída por compressão de spread)
 //
-// Gestão (runner): SL 15% — rede de segurança, independente do sinal acima.
+// Gestão (runner): SL 4% · fecho às 60h (maxHoldHours) · sem TP parcial.
+//
+// Regras de 11/10 (pedido do utilizador), escolhidas num estudo com SL 4% em
+// 2025 E 2026 (strategy-lab-bot/macross_tp.py, $80/trade): filtro BTC >
+// EMA70 diária · sem TP1 · TP +60% · fecho às 60h · saída EMA70(1h).
+//   2025: 1180 trades, PF 1,25, +580, DD 285
+//   2026 (jan–out): 497 trades, PF 1,53, +600, DD 140
+// (regras antigas — SL 15%, TP1 30% @ +43%, TP +78%, sem filtro BTC:
+//  2025 PF 1,00, 2026 PF 1,09; real 25/09–09/10: −203,3 em 69 trades)
 const { EMA } = require('technicalindicators');
 
 const STRATEGY_NAME = 'MaCross12x21';
@@ -36,7 +45,7 @@ const MIN_TURNOVER_3H = 3_000_000;
 const HOUR_MIN_PT = 11;
 const HOUR_MAX_PT = 22;
 const BLOCKED_HOURS_PT = new Set([4, 5, 6, 7, 8, 9, 10]);
-const TAKE_PROFIT_FULL_PCT = 0.78;
+const TAKE_PROFIT_FULL_PCT = 0.60;
 /** Top N da lista Top Ganhos do Mês. */
 const SCANNER_TOP_N = 50;
 
@@ -151,7 +160,11 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   // (bloqueia a entrada, não assume que está acima).
   const ema70Ok = context.aboveEma70_1h === true;
   ind.ema70Ok = ema70Ok;
-  ind.validEntry = ind.validEntryBase && ema70Ok;
+  // context.btcAboveEma70Daily vem do runner (getBtcAboveEma70Daily); null =
+  // sem dados → bloqueia (só entra com a tendência do BTC confirmada).
+  const btcOk = context.btcAboveEma70Daily === true;
+  ind.btcOk = btcOk;
+  ind.validEntry = ind.validEntryBase && ema70Ok && btcOk;
 
   if (currentPosition === 'long') {
     const pnlPct = context.unrealizedPnlPct;
@@ -171,7 +184,7 @@ function generateSignal(candles, currentPosition = null, context = {}) {
     }
     return {
       signal: 'hold',
-      reason: `Mantém long — spread ${ind.diffPct.toFixed(2)}% · sai a +${(TAKE_PROFIT_FULL_PCT * 100).toFixed(0)}% ou preço<EMA70(1h) · SL15%`,
+      reason: `Mantém long — spread ${ind.diffPct.toFixed(2)}% · sai a +${(TAKE_PROFIT_FULL_PCT * 100).toFixed(0)}% ou preço<EMA70(1h) · SL4% · 60h`,
       indicators: ind,
     };
   }
@@ -181,7 +194,7 @@ function generateSignal(candles, currentPosition = null, context = {}) {
       signal: 'long',
       reason:
         `EMA12/21 spread ${ind.diffPct.toFixed(2)}% · dist MA21 ${ind.distSlowPct.toFixed(1)}% · ` +
-        `mom1h ${ind.momentum1hPct.toFixed(2)}% · ${ind.hourPt}h PT · acima EMA70(1h)` +
+        `mom1h ${ind.momentum1hPct.toFixed(2)}% · ${ind.hourPt}h PT · acima EMA70(1h) · BTC > EMA70 1d` +
         (rank != null ? ` · rank#${rank} mês` : ''),
       indicators: ind,
     };
@@ -196,6 +209,7 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   if (!ind.turnoverOk) parts.push(`turnover3h $${(ind.turnover3h / 1e6).toFixed(1)}M<3M`);
   if (!ind.hourOk) parts.push(`hora ${ind.hourPt}h PT bloqueada`);
   if (!ema70Ok) parts.push('preço abaixo (ou sem dados) da EMA70(1h)');
+  if (!btcOk) parts.push('BTC abaixo (ou sem dados) da EMA70 diária');
   if (!rankOk) parts.push(rank == null ? 'fora do Top Ganhos Mês' : `rank#${rank}>${SCANNER_TOP_N}`);
 
   return { signal: 'hold', reason: parts.join(' · ') || 'sem entrada', indicators: ind };

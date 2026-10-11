@@ -10,6 +10,7 @@ const {
 const stoch50              = require('../strategies/stoch50');
 const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
 const rumersBoxWeeklyB     = require('../strategies/rumersBoxWeeklyB');
+const maCross12x21         = require('../strategies/maCross12x21');
 const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
@@ -135,25 +136,29 @@ async function getBtc1hAboveEma50() {
   return btc1hEma50Cache.above;
 }
 
-// BTC acima da EMA50 DIÁRIA — opt-in via strategy.btcDailyEma50Filter
-// (RumersBoxWeeklyB). Preço atual do BTC vs EMA50 das velas diárias já
-// fechadas (como no estudo rumers_pb_week.py --btc-daily). Cache 5min.
-let btcDailyEma50Cache = { above: null, fetchedAt: 0 };
+// BTC acima da EMA(N) DIÁRIA — preço atual do BTC vs EMA das velas diárias
+// já fechadas (como nos estudos). Opt-in via strategy.btcDailyEma50Filter
+// (RumersBoxWeeklyB, rumers_pb_week.py --btc-daily) e
+// strategy.btcDailyEma70Filter (MaCross12x21, macross_tp.py). Cache 5min por período.
+const btcDailyEmaCache = {};
 
-async function getBtcAboveEma50Daily() {
-  if (Date.now() - btcDailyEma50Cache.fetchedAt < BTC_1H_CACHE_TTL) return btcDailyEma50Cache.above;
+async function getBtcAboveEmaDaily(period) {
+  const c = btcDailyEmaCache[period];
+  if (c && Date.now() - c.fetchedAt < BTC_1H_CACHE_TTL) return c.above;
   try {
-    const candles = await bybit.getCandles('BTC/USDT:USDT', '1d', 200);
-    const closed = candles.slice(0, -1).map(c => c.close); // remove a vela diária em formação
-    const emaArr = EMA.calculate({ period: 50, values: closed });
-    const ema50 = emaArr[emaArr.length - 1];
+    const candles = await bybit.getCandles('BTC/USDT:USDT', '1d', 250);
+    const closed = candles.slice(0, -1).map(x => x.close); // remove a vela diária em formação
+    const emaArr = EMA.calculate({ period, values: closed });
+    const ema = emaArr[emaArr.length - 1];
     const price = candles[candles.length - 1].close;          // preço atual
-    if (ema50 != null) btcDailyEma50Cache = { above: price > ema50, fetchedAt: Date.now() };
+    if (ema != null) btcDailyEmaCache[period] = { above: price > ema, fetchedAt: Date.now() };
   } catch (err) {
-    console.warn(`[Runner] Falha ao obter BTC vs EMA50 diária: ${err.message}`);
+    console.warn(`[Runner] Falha ao obter BTC vs EMA${period} diária: ${err.message}`);
   }
-  return btcDailyEma50Cache.above;
+  return btcDailyEmaCache[period]?.above ?? null;
 }
+
+const getBtcAboveEma50Daily = () => getBtcAboveEmaDaily(50);
 
 // Universo da RumersBoxWeeklyB (symbolSource 'rumersWeeklyB'): todos os
 // perpétuos USDT de cripto (a Bybit marca ações/ETFs/commodities/forex em
@@ -316,6 +321,29 @@ const STRATEGIES = [
     weeklyBoxContext: true,   // context.weeklyBox — caixa da semana anterior do par
     btcDailyEma50Filter: true, // context.btcAboveEma50Daily — ver getBtcAboveEma50Daily
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: maCross12x21.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    // Universo: Top Ganhos do Mês (scanner periodGainers · resultsMonth)
+    symbolSource: 'gainersMonth',
+    topN: maCross12x21.SCANNER_TOP_N,
+    timeframe: '15m',
+    generateSignal: maCross12x21.generateSignal,
+    positionSize: 80,
+    // Reposta 11/10 a pedido do utilizador com regras novas (removida a 09/10
+    // com as antigas): entrada igual + filtro BTC > EMA70 diária · SL 4% ·
+    // sem TP parcial · TP +60% fecha tudo e saída abaixo da EMA70(1h) (sinais
+    // close_long em maCross12x21.js) · fecho às 60h. Estudo com as regras
+    // congeladas em 2025 e 2026 (strategy-lab-bot/macross_tp.py, $80/trade):
+    // 2025 PF 1,25 +580 DD 285 · 2026 PF 1,53 +600 DD 140.
+    stopLossPct: 0.04,
+    maxHoldHours: 60,
+    ema70Filter1h: true,       // context.aboveEma70_1h — entrada e saída
+    btcDailyEma70Filter: true, // context.btcAboveEma70Daily — ver getBtcAboveEmaDaily
+    // Arranca em estudo (trades de papel) — ligar na página Estratégias.
     enabled: false,
   },
 ];
@@ -692,6 +720,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const btc4hGreen = strategy.btc4hGreenFilter ? await getBtc4hGreen() : null;
     const btc1hAboveEma50 = strategy.btc1hEma50Filter ? await getBtc1hAboveEma50() : null;
     const btcAboveEma50Daily = strategy.btcDailyEma50Filter ? await getBtcAboveEma50Daily() : null;
+    const btcAboveEma70Daily = strategy.btcDailyEma70Filter ? await getBtcAboveEmaDaily(70) : null;
     const weeklyBox = strategy.weeklyBoxContext ? (weeklyBCache.boxes.get(symbol) || null) : null;
 
     // Filtro opt-in (strategy.ema70Filter1h — pedido do utilizador 27/09 para
@@ -715,7 +744,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
 
     const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, {
       rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, btc1hAboveEma50, aboveEma70_1h, unrealizedPnlPct,
-      btcAboveEma50Daily, weeklyBox, symbol,
+      btcAboveEma50Daily, btcAboveEma70Daily, weeklyBox, symbol,
     });
 
     const isAction = signal !== 'hold' && signal !== 'none';
