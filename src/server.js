@@ -791,6 +791,21 @@ cron.schedule('*/15 * * * *', async () => {
   console.log('⏱️  Cron 15m: concluído.');
 });
 
+// A cada 5 min, 10 s depois do fecho de cada vela de 5m: estratégias de 5m
+// (ElliotV8Ichiv2 sobre o scanner EMA200). Com 50 pares × 2 pedidos pode
+// demorar ~1 min — se a volta anterior ainda estiver a correr, salta esta.
+let fiveMinRunning = false;
+cron.schedule('10 */5 * * * *', async () => {
+  const strategies5m = STRATEGIES.filter(s => s.timeframe === '5m');
+  if (!strategies5m.length || fiveMinRunning) return;
+  fiveMinRunning = true;
+  try {
+    for (const s of strategies5m) await runStrategy(s);
+  } finally {
+    fiveMinRunning = false;
+  }
+});
+
 // ─── START ──────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 3001;

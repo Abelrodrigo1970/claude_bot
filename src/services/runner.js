@@ -11,6 +11,7 @@ const stoch50              = require('../strategies/stoch50');
 const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
 const rumersBoxWeeklyB     = require('../strategies/rumersBoxWeeklyB');
 const maCross12x21         = require('../strategies/maCross12x21');
+const elliotV8Ichiv2       = require('../strategies/elliotV8Ichiv2');
 const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
@@ -346,6 +347,37 @@ const STRATEGIES = [
     // Arranca em estudo (trades de papel) — ligar na página Estratégias.
     enabled: false,
   },
+  {
+    name: elliotV8Ichiv2.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    // Universo: scanner EMA200 (top 50 por % acima da EMA200 diária, entre os
+    // 250 perpétuos USDT com mais volume) — refrescado pelo cron diário 00:05.
+    scannerPeriod: 200,
+    // 5m: corre no cron dedicado de 5 em 5 min (ver server.js), 1000 velas
+    // para a EMA200 dos indicadores (o original pede 400 de arranque).
+    timeframe: '5m',
+    candleLimit: 1000,
+    generateSignal: elliotV8Ichiv2.generateSignal,
+    positionSize: 100,
+    // Adicionada 12/10 a pedido do utilizador: port da ElliotV8_original_ichiv2
+    // (coleção freqtrade davidzr) com SL 4% em vez dos 20% do original.
+    // Estudo no universo EMA200 top 50 reconstruído dia a dia
+    // (strategy-lab-bot/ft_vol30.py, $100/trade): 2025 PF 1,52 +1285 DD 70 ·
+    // 2026 (jan–out) PF 1,41 +2775 DD 152. Sinais validados vela a vela
+    // contra o Python original (0 diferenças depois do aquecimento).
+    stopLossPct: elliotV8Ichiv2.STOP_LOSS_PCT,
+    // SL e trailing do freqtrade verificados com os máximos/mínimos das velas
+    // 5m desde a entrada (ver candleStops em runStrategyOnSymbol), como no
+    // backtest. Em modo real o SL de 4% vai anexado à ordem na Bybit, mas o
+    // trailing continua a ser do runner (fecho a mercado, até 5 min depois).
+    candleStops: {
+      trailOffsetPct: elliotV8Ichiv2.TRAIL_OFFSET_PCT,
+      trailPositivePct: elliotV8Ichiv2.TRAIL_POSITIVE_PCT,
+    },
+    // Arranca em estudo (trades de papel) — ligar na página Estratégias.
+    enabled: false,
+  },
 ];
 // TrendSurfer, VolumeSpike3xScaleOut, Ema50BandCrossScaleOut e RsiReversal29
 // removidas em 09/10 a pedido do utilizador, depois do estudo desde janeiro
@@ -599,6 +631,44 @@ async function runStrategyOnSymbol(strategy, symbol) {
       }
     }
 
+    // SL + trailing do freqtrade verificados vela a vela (opt-in via
+    // strategy.candleStops — ElliotV8Ichiv2). Percorre as velas FECHADAS desde
+    // a vela de entrada (inclusive) com o máximo das velas ANTERIORES: o stop
+    // é o SL fixo e, depois de esse máximo passar +trailOffsetPct, também
+    // máximo × (1 − trailPositivePct). Se o mínimo de uma vela tocar o stop,
+    // o trade de papel fecha ao preço do stop (ou à abertura, se abriu abaixo)
+    // — a mesma regra do backtest (strategy-lab-bot/ft_lab.py). Só long.
+    if (strategy.candleStops && currentPos === 'long') {
+      const pos = openPositions[key];
+      if (pos && pos.entryPrice && pos.openedAt) {
+        const tfMs = { '5m': 5, '15m': 15, '1h': 60 }[strategy.timeframe] * 60 * 1000;
+        const entryBar = Math.floor(pos.openedAt / tfMs) * tfMs;
+        const now = Date.now();
+        const slLevel = pos.entryPrice * (1 - stopLossPctFor(strategy, 'long'));
+        let prevMax = pos.entryPrice;
+        for (const c of candles) {
+          const t = new Date(c.time).getTime();
+          if (t < entryBar || t + tfMs > now) continue;
+          let level = slLevel;
+          if (prevMax >= pos.entryPrice * (1 + strategy.candleStops.trailOffsetPct)) {
+            level = Math.max(level, prevMax * (1 - strategy.candleStops.trailPositivePct));
+          }
+          if (c.low <= level) {
+            const exitPrice = Math.min(level, c.open);
+            const kind = level > slLevel ? 'Trailing (+2% → 0,1%)' : `Stop-loss (${(stopLossPctFor(strategy, 'long') * 100).toFixed(0)}%)`;
+            const logLine = `${level > slLevel ? '📉' : '🛑'} [${symbol.split('/')[0]}] ${kind} na vela ${new Date(t).toISOString().slice(11, 16)} — fecha a $${exitPrice}`;
+            runState.log.unshift(logLine);
+            if (runState.log.length > 200) runState.log.pop();
+            console.log(`[${strategy.name}] ${logLine}`);
+            await closePositionFully(strategy, symbol, key, exitPrice);
+            return;
+          }
+          prevMax = Math.max(prevMax, c.high);
+        }
+        pos.extremePrice = prevMax;
+      }
+    }
+
     // Stop-loss "de papel" — a ordem real na Bybit já tem o SL anexado (ver
     // openPosition), mas isso só protege quando a estratégia está ligada. Em
     // modo estudo (enabled=false) essa ordem não existe, por isso replicamos
@@ -745,6 +815,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, {
       rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, btc1hAboveEma50, aboveEma70_1h, unrealizedPnlPct,
       btcAboveEma50Daily, btcAboveEma70Daily, weeklyBox, symbol,
+      entryPrice: posForSession?.entryPrice ?? null,
     });
 
     const isAction = signal !== 'hold' && signal !== 'none';
@@ -1066,6 +1137,8 @@ async function runAll() {
       // CandleBreakoutShort em KAITO (29/07, ~18h-19h): sinais a 5min de
       // distância em vez dos 15min esperados.
       if (strategy.timeframe === '15m') continue;
+      // Idem para as de 5m (cron dedicado de 5 em 5 min).
+      if (strategy.timeframe === '5m') continue;
 
       const symbols = resolveSymbols(strategy);
 
