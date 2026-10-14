@@ -10,6 +10,7 @@ const {
 const stoch50              = require('../strategies/stoch50');
 const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
 const rumersBoxWeeklyB     = require('../strategies/rumersBoxWeeklyB');
+const weekBB               = require('../strategies/weekBB');
 const maCross12x21         = require('../strategies/maCross12x21');
 const elliotV8Ichiv2       = require('../strategies/elliotV8Ichiv2');
 const { fetchTopCryptoPerps } = require('./marketcap');
@@ -324,6 +325,28 @@ const STRATEGIES = [
     weeklyBoxContext: true,   // context.weeklyBox — caixa da semana anterior do par
     btcDailyEma50Filter: true, // context.btcAboveEma50Daily — ver getBtcAboveEma50Daily
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
+    enabled: false,
+  },
+  {
+    name: weekBB.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    // Mesmo universo e caixa da RumersBoxWeeklyB (padrão b, caixa 1,5–14%)
+    symbolSource: 'rumersWeeklyB',
+    timeframe: '15m',
+    candleLimit: 8, // só precisa das três últimas velas 15m fechadas
+    generateSignal: weekBB.generateSignal,
+    positionSize: 60,
+    // Pedida pelo utilizador (14/10): LONG quando o preço sai por baixo da
+    // caixa semanal, volta a fechar dentro e a vela seguinte confirma (fecha
+    // acima do fecho da reentrada). SL 4% · TP +40% fecha tudo (sinal
+    // close_long, ver weekBB.js) · fecho às 72h. Estudo 2025 PF 1,43 +206
+    // DD 149 · 2026 PF 3,29 +997 DD 131 ($100/trade).
+    stopLossPct: 0.04,
+    maxHoldHours: 72,
+    weeklyBoxContext: true,
+    btcDailyEma50Filter: true,
+    // Arranca só em papel — ligar na página Estratégias.
     enabled: false,
   },
   {
@@ -1256,18 +1279,20 @@ async function setStrategyEnabled(strategyName, enabled) {
   return strategy;
 }
 
-// RumersBoxWeeklyB: 1 entrada por caixa semanal e por par — recupera da BD as
-// entradas dos últimos 15 dias para um restart/deploy não voltar a entrar na
-// mesma caixa (a caixa de cada entrada é a semana anterior à da abertura).
+// RumersBoxWeeklyB e WeekBB: 1 entrada por caixa semanal e por par — recupera
+// da BD as entradas dos últimos 15 dias para um restart/deploy não voltar a
+// entrar na mesma caixa (a caixa de cada entrada é a semana anterior à da abertura).
 async function loadRumersWeeklyBEntries() {
-  try {
-    const { rows } = await pool.query(
-      `SELECT symbol, opened_at FROM trades WHERE strategy_name = $1 AND opened_at > NOW() - INTERVAL '15 days'`,
-      [rumersBoxWeeklyB.STRATEGY_NAME]
-    );
-    rows.forEach(r => rumersBoxWeeklyB.markEntered(r.symbol, rumersBoxWeeklyB.periodKeyOf(new Date(r.opened_at).getTime())));
-    if (rows.length) console.log(`[Runner] RumersBoxWeeklyB: ${rows.length} entradas recentes carregadas da BD`);
-  } catch { /* BD ainda não disponível */ }
+  for (const mod of [rumersBoxWeeklyB, weekBB]) {
+    try {
+      const { rows } = await pool.query(
+        `SELECT symbol, opened_at FROM trades WHERE strategy_name = $1 AND opened_at > NOW() - INTERVAL '15 days'`,
+        [mod.STRATEGY_NAME]
+      );
+      rows.forEach(r => mod.markEntered(r.symbol, rumersBoxWeeklyB.periodKeyOf(new Date(r.opened_at).getTime())));
+      if (rows.length) console.log(`[Runner] ${mod.STRATEGY_NAME}: ${rows.length} entradas recentes carregadas da BD`);
+    } catch { /* BD ainda não disponível */ }
+  }
 }
 
 // "Começar do zero" (09/10): o utilizador fechou à mão TODAS as posições na
