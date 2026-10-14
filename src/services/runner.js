@@ -317,6 +317,8 @@ const STRATEGIES = [
     // SL 6% · TP +25% fecha tudo (sinal close_long, ver rumersBoxWeeklyB.js)
     // · fecho às 48h. Estudo jan–out (rumers_pb_week.py --btc-daily): 1012
     // trades, PF 1,51 (jan–jun) / 2,67 (jul–out), +2079 $/100, drawdown 388.
+    // 14/10: amplitude máxima da caixa 19% → 14% (menos posições em simultâneo,
+    // ver rumersBoxWeeklyB.js) — 2025 PF 1,34 +445 · 2026 PF 2,41 +1718.
     stopLossPct: 0.06,
     maxHoldHours: 48,
     weeklyBoxContext: true,   // context.weeklyBox — caixa da semana anterior do par

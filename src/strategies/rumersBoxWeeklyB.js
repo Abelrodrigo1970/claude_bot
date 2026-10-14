@@ -8,7 +8,7 @@
 //
 // Entrada LONG (últimas duas velas 15m FECHADAS):
 //   fecho > máximo da caixa · vela anterior fechou dentro da caixa
-//   + quebra < 1% acima do máximo · amplitude da caixa 1,5–19%
+//   + quebra < 1% acima do máximo · amplitude da caixa 1,5–14%
 //   + BTC acima da EMA50 da última vela diária fechada (context.btcAboveEma50Daily)
 //   + 1 entrada por caixa e por par (enteredBoxes)
 //
@@ -18,6 +18,12 @@
 // Estudo 1 jan–9 out (strategy-lab-bot/rumers_pb_week.py --btc-daily, só cripto,
 // $100/trade, IS jan–jun / OOS jul–out): 1012 trades, PF 1,51 / 2,67, P&L +2079,
 // drawdown 388, win rate 50%. Saídas avaliadas em velas de 15m (SL antes de TP).
+//
+// Amplitude máxima 19% → 14% (pedido do utilizador 14/10) para ter menos posições
+// em simultâneo: as caixas largas são as que perdem. Mesmo motor, 2025 e 2026:
+//   19%  2025 PF 0,89 −376 DD 891 · 2026 PF 1,98 +2079 DD 358 · pico 151/126 abertas
+//   14%  2025 PF 1,34 +445 DD 421 · 2026 PF 2,41 +1718 DD 224 · pico  95/103 abertas
+// (o PF sobe de forma contínua ao apertar a amplitude: 12% PF 1,70/2,69, 10% 2,47/3,09)
 const { computeBoxLevels } = require('../services/rumersBox');
 
 const STRATEGY_NAME = 'RumersBoxWeeklyB';
@@ -26,7 +32,7 @@ const TREND_LOOKBACK_WEEKS = 3;
 const TREND_MAX_PCT = -6;      // b: queda de mais de 6%
 const BREAK_MAX_PCT = 1;
 const RANGE_MIN_PCT = 1.5;
-const RANGE_MAX_PCT = 19;
+const RANGE_MAX_PCT = 14;
 const TAKE_PROFIT_FULL_PCT = 0.25;
 const BAR_MS = 15 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
