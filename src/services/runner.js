@@ -13,6 +13,7 @@ const rumersBoxWeeklyB     = require('../strategies/rumersBoxWeeklyB');
 const weekBB               = require('../strategies/weekBB');
 const maCross12x21         = require('../strategies/maCross12x21');
 const elliotV8Ichiv2       = require('../strategies/elliotV8Ichiv2');
+const pumpTop3RedShort     = require('../strategies/pumpTop3RedShort');
 const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
@@ -401,6 +402,26 @@ const STRATEGIES = [
       trailPositivePct: elliotV8Ichiv2.TRAIL_POSITIVE_PCT,
     },
     // Arranca em estudo (trades de papel) — ligar na página Estratégias.
+    enabled: false,
+  },
+  {
+    name: pumpTop3RedShort.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'pump24h',
+    topN: pumpTop3RedShort.TOP_N,
+    timeframe: '15m',
+    // 8h de velas: o scan Pump corre de ~4 em ~4h e a entrada é a primeira
+    // vermelha depois dele — a janela tem de chegar até essa sessão.
+    candleLimit: 32,
+    generateSignal: pumpTop3RedShort.generateSignal,
+    positionSize: 100,
+    // Estudo 25 ago–25 out 2026, top 3, short na primeira vela 15m vermelha
+    // depois de cada scan, SL 40% · TP 50% · fecho às 48h: 1 150 trades,
+    // mediana +8,6%, soma +3 208 pontos por $100. Agosto negativo (−693).
+    // Uma posição por símbolo (o runner não empilha). Ordens reais desligadas.
+    stopLossPct: 0.40,
+    maxHoldHours: 48,
     enabled: false,
   },
 ];
@@ -794,6 +815,11 @@ async function runStrategyOnSymbol(strategy, symbol) {
       const idx = list.findIndex(r => r.symbol === symbol);
       rank = idx >= 0 ? idx + 1 : null;
       scannedAt = scan.scannedAt ?? null;
+    } else if (strategy.symbolSource === 'pump24h') {
+      const scan = getPumpState();
+      const idx = scan.results?.findIndex(r => r.symbol === symbol) ?? -1;
+      rank = idx >= 0 ? idx + 1 : null;
+      scannedAt = scan.scannedAt ?? null;
     }
 
     const posForSession = openPositions[key];
@@ -1051,6 +1077,7 @@ function resolveSymbols(strategy) {
   } else if (strategy.symbolSource === 'pump24h') {
     const scan = getPumpState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
+    if (strategy.topN) symbols = symbols.slice(0, strategy.topN);
   } else if (!strategy.scannerPeriod) {
     symbols = [strategy.symbol];
   } else {

@@ -33,6 +33,12 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
+  PumpTop3RedShort: {
+    description: 'Cripto, 15m. SHORT no top 3 do scanner Pump 24h, na primeira vela vermelha depois do scan. Stop 40% se o preço subir, alvo 50% se cair, ou fecho às 48 horas. Estudo ago–out 2026: mediana +8,6%, soma +3 208 pontos por 100 USD. Uma posição por símbolo. Arranca em estudo — ligar o botão para ordens reais na Bybit.',
+    tags: ['Pump 24h', 'top 3', 'short', 'vela vermelha', '15m', '48h'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
   ElliotV8Ichiv2: {
     description: 'Cripto no 5m, só LONG, sobre o scanner EMA200 (top 50). Compra quedas rápidas: RSI(4) < 35 e preço 1,3% abaixo da EMA12, com o oscilador de Elliott (EMA50−EMA200) em tendência forte (> 3,1, com RSI14 < 57) ou em queda extrema (< −17). SL 4%; depois de +2% o stop sobe para 0,1% abaixo do máximo (trailing). Sai também por sinal (preço acima da EMA22 e RSI4 > RSI20), mas só com mais de 1% de lucro. Backtest 2025: PF 1,52 · 2026: PF 1,41.',
     tags: ['EWO', 'RSI4', 'EMA12', 'buy-the-dip', 'trailing', 'EMA200', 'freqtrade', '5m'],
