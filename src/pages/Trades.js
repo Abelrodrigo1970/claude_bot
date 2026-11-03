@@ -18,7 +18,8 @@ const selectStyle = {
 };
 const inputStyle = { ...selectStyle, width: 130 };
 
-const fmtUsdt = (v, digits = 2) => `${v >= 0 ? '+' : ''}${v.toFixed(digits)}`;
+const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+const fmtUsdt = (v, digits = 2) => (num(v) == null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(digits)}`);
 const isChild = (t) => t.metadata && t.metadata.parentTradeId != null;
 
 export default function Trades() {
@@ -74,7 +75,7 @@ export default function Trades() {
   }, [status, strategy, dateField, from, to]);
 
   const totals = useMemo(() => {
-    const t = summary.reduce(
+    const t = summary.map((r) => ({ ...r, pnl: num(r.pnl) ?? 0, fees: num(r.fees) ?? 0, avg_pct: num(r.avg_pct) })).reduce(
       (a, r) => ({
         pnl: a.pnl + r.pnl, fees: a.fees + r.fees, trades: a.trades + r.trades, wins: a.wins + r.wins,
         open: a.open + r.open_trades, pctSum: a.pctSum + (r.avg_pct ?? 0) * r.trades,
@@ -204,7 +205,7 @@ export default function Trades() {
                     <td className={r.trades ? (r.wins / r.trades >= 0.5 ? 'green' : 'yellow') : 'muted'}>
                       {r.trades ? `${((r.wins / r.trades) * 100).toFixed(1)}% (${r.wins}/${r.trades})` : '—'}
                     </td>
-                    <td className={r.pnl >= 0 ? 'green' : 'red'}>{fmtUsdt(r.pnl, 4)}</td>
+                    <td className={(num(r.pnl) ?? 0) >= 0 ? 'green' : 'red'}>{fmtUsdt(r.pnl, 4)}</td>
                     <td className={r.avg_pct == null ? 'muted' : r.avg_pct >= 0 ? 'green' : 'red'}>{r.avg_pct == null ? '—' : `${fmtUsdt(r.avg_pct)}%`}</td>
                     <td className="green">{r.best == null ? '—' : fmtUsdt(r.best, 4)}</td>
                     <td className="red">{r.worst == null ? '—' : fmtUsdt(r.worst, 4)}</td>

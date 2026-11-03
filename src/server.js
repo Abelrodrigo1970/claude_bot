@@ -112,6 +112,7 @@ app.get('/api/trades/strategies', async (req, res) => {
 });
 
 // Resultados por estratégia entre datas (hora de Lisboa, pela data de fecho).
+// - valores NaN gravados nalgumas linhas antigas são ignorados (senão a soma inteira fica NaN)
 // - pnl realizado: soma de todos os fechos no período, incluindo take-profits parciais (linhas com metadata.parentTradeId)
 // - trades / acerto / média %: por posição (trade principal fechado no período + as suas parciais)
 app.get('/api/trades/summary', async (req, res) => {
@@ -130,13 +131,13 @@ app.get('/api/trades/summary', async (req, res) => {
     const posWhere = range('p');
     const { rows } = await pool.query(`
       WITH realized AS (
-        SELECT t.strategy_name, SUM(t.pnl) AS pnl, SUM(t.fee) AS fees,
+        SELECT t.strategy_name, SUM(NULLIF(t.pnl, 'NaN')) AS pnl, SUM(NULLIF(t.fee, 'NaN')) AS fees,
                COUNT(*) FILTER (WHERE COALESCE(t.metadata, '{}'::jsonb) ? 'parentTradeId') AS partials
         FROM trades t WHERE t.status = 'closed'${realizedWhere}
         GROUP BY t.strategy_name
       ),
       pos AS (
-        SELECT p.id, p.strategy_name, SUM(r.pnl) AS pnl, SUM(r.quantity * r.entry_price) AS notional
+        SELECT p.id, p.strategy_name, SUM(NULLIF(r.pnl, 'NaN')) AS pnl, SUM(r.quantity * r.entry_price) AS notional
         FROM trades p
         JOIN trades r ON r.status = 'closed' AND (r.id = p.id OR (r.metadata->>'parentTradeId')::int = p.id)
         WHERE p.status = 'closed' AND NOT (COALESCE(p.metadata, '{}'::jsonb) ? 'parentTradeId')${posWhere}
