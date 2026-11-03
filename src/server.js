@@ -71,20 +71,96 @@ app.post('/api/strategies/:name/toggle', async (req, res) => {
 // Estado da execução em curso (para progresso na UI)
 app.get('/api/run/state', (req, res) => res.json(getRunState()));
 
-// Histórico de trades
+// Data local (Lisboa) de uma coluna TIMESTAMP gravada em UTC
+const lisbonDate = (col) => `((${col}) AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Lisbon')::date`;
+const isoDate = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+
+// Histórico de trades. Filtros: strategy, status, from/to (YYYY-MM-DD, hora de Lisboa) sobre a data de fecho
+// (dateField=closed, por omissão) ou de abertura (dateField=opened)
 app.get('/api/trades', async (req, res) => {
   try {
-    const { strategy, status, limit = 50 } = req.query;
+    const { strategy, status, limit = 50, dateField } = req.query;
+    const from = isoDate(req.query.from);
+    const to = isoDate(req.query.to);
+    const col = dateField === 'opened' ? 'opened_at' : 'closed_at';
     let query = 'SELECT * FROM trades WHERE 1=1';
     const params = [];
 
     if (strategy) { params.push(strategy); query += ` AND strategy_name=$${params.length}`; }
     if (status) { params.push(status); query += ` AND status=$${params.length}`; }
+    if (from) { params.push(from); query += ` AND ${lisbonDate(col)} >= $${params.length}::date`; }
+    if (to) { params.push(to); query += ` AND ${lisbonDate(col)} <= $${params.length}::date`; }
 
-    params.push(parseInt(limit));
-    query += ` ORDER BY opened_at DESC LIMIT $${params.length}`;
+    params.push(Math.min(parseInt(limit) || 50, 5000));
+    query += ` ORDER BY ${col} DESC NULLS LAST, id DESC LIMIT $${params.length}`;
 
     const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Estratégias que têm trades (para os filtros)
+app.get('/api/trades/strategies', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT DISTINCT strategy_name FROM trades ORDER BY strategy_name');
+    res.json(rows.map((r) => r.strategy_name));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Resultados por estratégia entre datas (hora de Lisboa, pela data de fecho).
+// - pnl realizado: soma de todos os fechos no período, incluindo take-profits parciais (linhas com metadata.parentTradeId)
+// - trades / acerto / média %: por posição (trade principal fechado no período + as suas parciais)
+app.get('/api/trades/summary', async (req, res) => {
+  try {
+    const from = isoDate(req.query.from);
+    const to = isoDate(req.query.to);
+    const params = [];
+    const range = (alias) => {
+      let w = '';
+      if (from) { params.push(from); w += ` AND ${lisbonDate(`${alias}.closed_at`)} >= $${params.length}::date`; }
+      if (to) { params.push(to); w += ` AND ${lisbonDate(`${alias}.closed_at`)} <= $${params.length}::date`; }
+      if (req.query.strategy) { params.push(req.query.strategy); w += ` AND ${alias}.strategy_name = $${params.length}`; }
+      return w;
+    };
+    const realizedWhere = range('t');
+    const posWhere = range('p');
+    const { rows } = await pool.query(`
+      WITH realized AS (
+        SELECT t.strategy_name, SUM(t.pnl) AS pnl, SUM(t.fee) AS fees,
+               COUNT(*) FILTER (WHERE COALESCE(t.metadata, '{}'::jsonb) ? 'parentTradeId') AS partials
+        FROM trades t WHERE t.status = 'closed'${realizedWhere}
+        GROUP BY t.strategy_name
+      ),
+      pos AS (
+        SELECT p.id, p.strategy_name, SUM(r.pnl) AS pnl, SUM(r.quantity * r.entry_price) AS notional
+        FROM trades p
+        JOIN trades r ON r.status = 'closed' AND (r.id = p.id OR (r.metadata->>'parentTradeId')::int = p.id)
+        WHERE p.status = 'closed' AND NOT (COALESCE(p.metadata, '{}'::jsonb) ? 'parentTradeId')${posWhere}
+        GROUP BY p.id, p.strategy_name
+      ),
+      posagg AS (
+        SELECT strategy_name, COUNT(*) AS trades, COUNT(*) FILTER (WHERE pnl > 0) AS wins,
+               AVG(pnl / NULLIF(notional, 0) * 100) AS avg_pct, MAX(pnl) AS best, MIN(pnl) AS worst
+        FROM pos GROUP BY strategy_name
+      ),
+      openagg AS (
+        SELECT strategy_name, COUNT(*) AS open_trades
+        FROM trades WHERE status = 'open' AND NOT (COALESCE(metadata, '{}'::jsonb) ? 'parentTradeId') GROUP BY strategy_name
+      )
+      SELECT COALESCE(r.strategy_name, a.strategy_name) AS strategy_name,
+             COALESCE(r.pnl, 0)::float AS pnl, COALESCE(r.fees, 0)::float AS fees, COALESCE(r.partials, 0)::int AS partials,
+             COALESCE(a.trades, 0)::int AS trades, COALESCE(a.wins, 0)::int AS wins,
+             a.avg_pct::float AS avg_pct, a.best::float AS best, a.worst::float AS worst,
+             COALESCE(o.open_trades, 0)::int AS open_trades
+      FROM realized r
+      FULL JOIN posagg a ON a.strategy_name = r.strategy_name
+      LEFT JOIN openagg o ON o.strategy_name = COALESCE(r.strategy_name, a.strategy_name)
+      ORDER BY pnl DESC
+    `, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
