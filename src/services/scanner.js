@@ -28,17 +28,29 @@ async function startScan(period = 200, limit = 50) {
   try {
     const markets = await bybit.publicExchange.loadMarkets();
 
-    const perps = Object.values(markets)
-      .filter(m =>
-        m.linear &&
-        m.settle === 'USDT' &&
-        m.active &&
-        !m.symbol.includes('USDC')
-      )
-      .sort((a, b) => parseFloat(b.info.turnover24h || 0) - parseFloat(a.info.turnover24h || 0))
-      .slice(0, 250);
+    const swaps = Object.values(markets).filter(m =>
+      m.linear &&
+      m.type === 'swap' && // exclui futuros datados (antes entravam 3 contratos de BTC)
+      m.settle === 'USDT' &&
+      m.active &&
+      !m.symbol.includes('USDC')
+    );
 
-    console.log(`[Scanner EMA${period}] ${perps.length} pares elegíveis — ex: ${perps.slice(0,3).map(m => m.symbol).join(', ')}`);
+    // Top 250 por volume real 24h (via ticker). Antes ordenava por m.info.turnover24h, que não existe nos dados
+    // de loadMarkets(): ficava a ordem alfabética e o universo era só "1000…" a "D" (até 03/11/2026).
+    let perps;
+    try {
+      const tickers = await bybit.publicExchange.fetchTickers(swaps.map(m => m.symbol));
+      perps = swaps
+        .map(m => ({ m, volume: tickers[m.symbol]?.quoteVolume || 0 }))
+        .sort((a, b) => b.volume - a.volume)
+        .slice(0, 250)
+        .map(x => x.m);
+    } catch (err) {
+      throw new Error(`sem tickers para ordenar por volume (${err.message}) — scan cancelado em vez de usar a ordem alfabética`);
+    }
+
+    console.log(`[Scanner EMA${period}] ${perps.length} pares elegíveis (top volume) — ex: ${perps.slice(0,3).map(m => m.symbol).join(', ')}`);
 
     states[period].total = perps.length;
     const results = [];
