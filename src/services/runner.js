@@ -1356,8 +1356,46 @@ async function resetOpenTradesBefore() {
   } catch { /* BD ainda não disponível */ }
 }
 
+// Proteção contra posições órfãs: trades abertos de estratégias que já não estão em STRATEGIES (retiradas ou
+// renomeadas no código) ficavam abertos sem gestão nenhuma — sem stop-loss nem saída — até alguém reparar
+// (Top6LONG/SHORT: retiradas a 03/08, posições abertas até ao reset de 09/10, com perdas até −516% e um ganho
+// de +1409% que distorcia o histórico). No arranque fecha-os na BD ao preço de mercado e regista o motivo.
+// Só a BD: não envia ordens à Bybit — se algum for uma posição real, tem de ser fechada à mão na exchange
+// (fica escrito no aviso e no closeReason). 'Manual' não é uma estratégia gerida e nunca é tocado.
+const NOT_MANAGED_BY_RUNNER = new Set(['Manual']);
+
+async function closeOrphanTrades() {
+  try {
+    const known = new Set(STRATEGIES.map(s => s.name));
+    const { rows } = await pool.query(`SELECT id, strategy_name, symbol, entry_price FROM trades WHERE status = 'open'`);
+    const orphans = rows.filter(r => !known.has(r.strategy_name) && !NOT_MANAGED_BY_RUNNER.has(r.strategy_name));
+    let closed = 0;
+    for (const r of orphans) {
+      let price = parseFloat(r.entry_price);
+      try { price = (await bybit.getTicker(r.symbol)).last || price; } catch { /* par sem ticker — fecha à entrada */ }
+      try {
+        await closeTrade(r.id, price);
+        await pool.query(
+          `UPDATE trades SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
+          [JSON.stringify({ closeReason: `estratégia ${r.strategy_name} já não existe no código — posição órfã fechada no arranque ao preço de mercado (só na BD; se era real, fechar à mão na Bybit)` }), r.id]
+        );
+        closed++;
+      } catch (err) {
+        console.warn(`[Runner] Não consegui fechar o trade órfão ${r.id} (${r.strategy_name} ${r.symbol}): ${err.message}`);
+      }
+    }
+    if (orphans.length) {
+      const names = [...new Set(orphans.map(r => r.strategy_name))].join(', ');
+      const line = `⚠️ ${closed}/${orphans.length} posições órfãs fechadas na BD (estratégias retiradas: ${names}). Se alguma era real, fechar à mão na Bybit.`;
+      runState.log.unshift(line);
+      console.warn(`[Runner] ${line}`);
+    }
+  } catch { /* BD ainda não disponível */ }
+}
+
 setTimeout(async () => {
   await resetOpenTradesBefore(); // tem de correr ANTES de carregar as posições para memória
+  await closeOrphanTrades();     // idem: órfãos não chegam a entrar em openPositions
   await loadOpenPositions();
 }, 5000);
 setTimeout(loadRumersWeeklyBEntries, 5000);
