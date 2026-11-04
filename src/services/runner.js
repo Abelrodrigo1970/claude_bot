@@ -7,12 +7,10 @@ const {
   getEmaTrendTotalState, startScanEmaTrendTotal,
   getPeriodGainersState, startScanPeriodGainers,
 } = require('./scanner');
-const stoch50              = require('../strategies/stoch50');
 const lista50SpikeSmaRise  = require('../strategies/lista50SpikeSmaRise');
 const rumersBoxWeeklyB     = require('../strategies/rumersBoxWeeklyB');
 const weekBB               = require('../strategies/weekBB');
 const maCross12x21         = require('../strategies/maCross12x21');
-const elliotV8Ichiv2       = require('../strategies/elliotV8Ichiv2');
 const pumpTop3RedShort     = require('../strategies/pumpTop3RedShort');
 const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
@@ -224,65 +222,6 @@ async function refreshTopMarketCap(strategy) {
 // symbolSource: 'scanner' (padrão) | 'stocks' (tabela stock_symbols)
 const STRATEGIES = [
   {
-    name: stoch50.STRATEGY_NAME,
-    market: 'stock',
-    symbol: null,
-    // Lista fixa (whitelist) substituída em 03/09 — troca a abordagem
-    // anterior (symbolSource:'stocks' + symbolExclude) por uma lista curada
-    // das únicas 39 stocks lucrativas, validada em 3 amostras independentes:
-    //   1) src/backtests/study-all-strategies-x-stocks.js (30 dias) — deu a
-    //      lista original de 53 "mantidas", mas tinha um bug de contagem
-    //      (buffer de warmup entrava nas estatísticas, inflava a janela
-    //      real para ~40 dias sem avisar).
-    //   2) src/backtests/validate-stoch50-filter-oos.js (30d IS recalculado
-    //      + 30d OOS, 05/07-04/08, nunca visto pela lista) — 44/73 símbolos
-    //      inverteram de sinal entre as duas janelas (lista instável ao
-    //      nível individual), mas o GRUPO "mantidos" continuou a bater o
-    //      "excluídos" na janela OOS (+0.243 vs +0.113 USDT/trade) — e daí
-    //      saíram os subconjuntos consistentes nas duas janelas: 17
-    //      consistentemente lucrativas, 12 consistentemente negativas.
-    //   3) src/backtests/study-stoch50-60days.js (60 dias, sem o bug de
-    //      contagem) — as 17 lucrativas e as 12 negativas da amostra (2)
-    //      bateram 100% certo com a classificação desta janela maior e
-    //      independente. As 39 stocks abaixo são as lucrativas desta
-    //      janela de 60 dias (PnL/trade +0.305 vs -0.226 das 35 excluídas).
-    // Ainda assim, é uma lista curada com base em backtest histórico, não
-    // uma garantia de edge futuro — a reavaliar periodicamente.
-    symbols: [
-      'AAPL/USDT:USDT', 'ADBE/USDT:USDT', 'ALAB/USDT:USDT', 'AMZN/USDT:USDT', 'ARM/USDT:USDT',
-      'AXTI/USDT:USDT', 'BABA/USDT:USDT', 'BMNR/USDT:USDT', 'CBRS/USDT:USDT', 'CIEN/USDT:USDT',
-      'COHR/USDT:USDT', 'COIN/USDT:USDT', 'CRCL/USDT:USDT', 'CRDO/USDT:USDT', 'CRWV/USDT:USDT',
-      'DELL/USDT:USDT', 'EWJ/USDT:USDT', 'EWT/USDT:USDT', 'EWY/USDT:USDT', 'GOOGL/USDT:USDT',
-      'HPE/USDT:USDT', 'HYUNDAI/USDT:USDT', 'IREN/USDT:USDT', 'KORU/USDT:USDT', 'LITE/USDT:USDT',
-      'LLY/USDT:USDT', 'LRCX/USDT:USDT', 'MRVL/USDT:USDT', 'MSFT/USDT:USDT', 'MU/USDT:USDT',
-      'NBIS/USDT:USDT', 'NVDA/USDT:USDT', 'PLTR/USDT:USDT', 'QQQ/USDT:USDT', 'SMCI/USDT:USDT',
-      'SNDK/USDT:USDT', 'SOXL/USDT:USDT', 'TQQQ/USDT:USDT', 'USAR/USDT:USDT',
-    ],
-    timeframe: '1h',
-    generateSignal: stoch50.generateSignal,
-    positionSize: 60,
-    // Stochastic K(50)/suavização 40/%D 11 — cruzamento de %K sobre %D, sem
-    // filtro. Backtest (74 símbolos, ~70 dias, sem TP): WR 36.9%, +305.71 USDT
-    // vs. config antiga (K9/D9, filtro D>20): WR 31.5%, -709.59 USDT. Com TP
-    // parcial 50% a +15% (ambos os lados): +448.89 USDT no mesmo backtest —
-    // melhor das 3 variantes testadas (10/15/20%).
-    //
-    // Long-only entre 14/08 e 07/09 — o estudo original (janela de 10 dias)
-    // concluiu que o short não tinha edge. O reestudo de 07/09 sobre 90 dias
-    // (src/backtests/study-stoch50-qqq-directional.js) mostrou o contrário: os
-    // shorts limitados às horas de QQQ negativo somam +305 USDT (PF 1.55). A
-    // config atual — "long sempre + short só em QQQ- na hora" — deu +682 vs
-    // +377 do long-only (PF 1.44 vs 1.38, drawdown -129 vs -151).
-    // qqqShortFilter liga o cálculo do regime QQQ no runner
-    // (context.qqqPositive === false => QQQ negativo => short permitido).
-    // Ligada em 03/09 depois da lista de 39 símbolos acima ficar validada
-    // em 3 amostras independentes (ver comentário junto a `symbols`).
-    qqqShortFilter: true,
-    takeProfitPct: 0.15,        // TP parcial 50% a ±15% — nos dois lados (sem takeProfitSide)
-    takeProfitCloseFraction: 0.5,
-    enabled: true,
-  },
-  {
     name: lista50SpikeSmaRise.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
@@ -370,37 +309,6 @@ const STRATEGIES = [
     maxHoldHours: 60,
     ema70Filter1h: true,       // context.aboveEma70_1h — entrada e saída
     btcDailyEma70Filter: true, // context.btcAboveEma70Daily — ver getBtcAboveEmaDaily
-    // Arranca em estudo (trades de papel) — ligar na página Estratégias.
-    enabled: false,
-  },
-  {
-    name: elliotV8Ichiv2.STRATEGY_NAME,
-    market: 'crypto',
-    symbol: null,
-    // Universo: scanner EMA200 (top 50 por % acima da EMA200 diária, entre os
-    // 250 perpétuos USDT com mais volume) — refrescado pelo cron diário 00:05.
-    scannerPeriod: 200,
-    // 5m: corre no cron dedicado de 5 em 5 min (ver server.js), 1000 velas
-    // para a EMA200 dos indicadores (o original pede 400 de arranque).
-    timeframe: '5m',
-    candleLimit: 1000,
-    generateSignal: elliotV8Ichiv2.generateSignal,
-    positionSize: 100,
-    // Adicionada 12/10 a pedido do utilizador: port da ElliotV8_original_ichiv2
-    // (coleção freqtrade davidzr) com SL 4% em vez dos 20% do original.
-    // Estudo no universo EMA200 top 50 reconstruído dia a dia
-    // (strategy-lab-bot/ft_vol30.py, $100/trade): 2025 PF 1,52 +1285 DD 70 ·
-    // 2026 (jan–out) PF 1,41 +2775 DD 152. Sinais validados vela a vela
-    // contra o Python original (0 diferenças depois do aquecimento).
-    stopLossPct: elliotV8Ichiv2.STOP_LOSS_PCT,
-    // SL e trailing do freqtrade verificados com os máximos/mínimos das velas
-    // 5m desde a entrada (ver candleStops em runStrategyOnSymbol), como no
-    // backtest. Em modo real o SL de 4% vai anexado à ordem na Bybit, mas o
-    // trailing continua a ser do runner (fecho a mercado, até 5 min depois).
-    candleStops: {
-      trailOffsetPct: elliotV8Ichiv2.TRAIL_OFFSET_PCT,
-      trailPositivePct: elliotV8Ichiv2.TRAIL_POSITIVE_PCT,
-    },
     // Arranca em estudo (trades de papel) — ligar na página Estratégias.
     enabled: false,
   },
