@@ -1,19 +1,21 @@
-// Top 3 do scanner Pump 24h · SHORT na primeira vela 15m vermelha.
+// Top 2 do scanner Pump 24h · SHORT na primeira vela 15m vermelha.
 //
-// Estudo 25 ago–25 out 2026 (velas 15m Bybit, $100/trade, stop antes do alvo
-// na mesma vela): stop 40% · alvo 50% · fecho às 48h. Soma +3 208 pontos,
-// mediana +8,6%, 65% no lucro. O alvo de 50% foi o pico da grelha; 60% e 70%
-// renderam menos porque quase não disparam dentro de 48h.
+// Estudo 26 ago–3 nov 2026 (velas 15m Bybit, $100/trade, stop dentro da vela
+// antes do alvo, comissões e funding real): top 2 · stop 15% · alvo 30% ·
+// fecho às 48h deu +890, PF 1,25, drawdown 191, pior trade −22% (o funding
+// soma-se ao stop). As regras antigas (top 3 · SL 40% · TP 50%) deram +682 com
+// drawdown 432. 48h ganhou a 24h e 72h em todas as combinações; TP parcial
+// 50/50, stop na entrada depois do parcial e filtro de funding renderam menos.
 //
 // Entrada: uma vez por scan e por símbolo, no fecho da primeira vela de 15m
 // que abre depois do scan e fecha vermelha (fecho < abertura), com o par nas
-// posições 1ª a 3ª. Sem empilhar: o runner tem uma posição por símbolo.
-// Saídas no runner: stopLossPct 0,40 · maxHoldHours 48. O alvo fecha tudo
-// aqui, com close_short, quando o lucro não realizado chega a 50%.
+// posições 1ª ou 2ª. Sem empilhar: o runner tem uma posição por símbolo.
+// Saídas no runner: stopLossPct 0,15 · maxHoldHours 48. O alvo fecha tudo
+// aqui, com close_short, quando o lucro não realizado chega a 30%.
 const STRATEGY_NAME = 'PumpTop3RedShort';
 
-const TOP_N = 3;
-const TAKE_PROFIT_PCT = 0.50;
+const TOP_N = 2;
+const TAKE_PROFIT_PCT = 0.30;
 const BAR_MS = 15 * 60 * 1000;
 
 // 'symbol|scannedAt' — uma entrada por scan. Vive em memória; um restart pode
@@ -51,11 +53,11 @@ function generateSignal(candles, currentPosition = null, context = {}) {
     if (pnlPct != null && pnlPct >= TAKE_PROFIT_PCT) {
       return {
         signal: 'close_short',
-        reason: `TP ${(pnlPct * 100).toFixed(1)}% ≥ 50% — fecha tudo`,
+        reason: `TP ${(pnlPct * 100).toFixed(1)}% ≥ 30% — fecha tudo`,
         indicators: { ...ind, pnlPct },
       };
     }
-    return { signal: 'hold', reason: 'Mantém short — TP 50% · SL 40% · fecho às 48h', indicators: ind };
+    return { signal: 'hold', reason: 'Mantém short — TP 30% · SL 15% · fecho às 48h', indicators: ind };
   }
 
   if (currentPosition) {
@@ -88,7 +90,7 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   const drop = ((bar.open - bar.close) / bar.open) * 100;
   return {
     signal: 'short',
-    reason: `Top ${rank} do Pump 24h · vela 15m vermelha ${drop.toFixed(2)}% · SL 40% · TP 50% ou 48h`,
+    reason: `Top ${rank} do Pump 24h · vela 15m vermelha ${drop.toFixed(2)}% · SL 15% · TP 30% ou 48h`,
     indicators: { ...ind, open: bar.open, close: bar.close },
   };
 }

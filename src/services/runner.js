@@ -324,11 +324,11 @@ const STRATEGIES = [
     candleLimit: 32,
     generateSignal: pumpTop3RedShort.generateSignal,
     positionSize: 100,
-    // Estudo 25 ago–25 out 2026, top 3, short na primeira vela 15m vermelha
-    // depois de cada scan, SL 40% · TP 50% · fecho às 48h: 1 150 trades,
-    // mediana +8,6%, soma +3 208 pontos por $100. Agosto negativo (−693).
+    // Estudo 26 ago–3 nov 2026 com stop dentro da vela, comissões e funding:
+    // top 2 · SL 15% · TP 30% · fecho às 48h → 474 trades, +890 por $100,
+    // PF 1,25, drawdown 191 (antes: top 3 · SL 40% · TP 50% → +682, dd 432).
     // Uma posição por símbolo (o runner não empilha). Ordens reais desligadas.
-    stopLossPct: 0.40,
+    stopLossPct: 0.15,
     maxHoldHours: 48,
     enabled: false,
   },

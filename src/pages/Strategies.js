@@ -34,8 +34,8 @@ const STRATEGY_META = {
     source: 'Custom',
   },
   PumpTop3RedShort: {
-    description: 'Cripto, 15m. SHORT no top 3 do scanner Pump 24h, na primeira vela vermelha depois do scan. Stop 40% se o preço subir, alvo 50% se cair, ou fecho às 48 horas. Estudo ago–out 2026: mediana +8,6%, soma +3 208 pontos por 100 USD. Uma posição por símbolo. Arranca em estudo — ligar o botão para ordens reais na Bybit.',
-    tags: ['Pump 24h', 'top 3', 'short', 'vela vermelha', '15m', '48h'],
+    description: 'Cripto, 15m. SHORT no top 2 do scanner Pump 24h, na primeira vela vermelha depois do scan. Stop 15% se o preço subir, alvo 30% se cair, ou fecho às 48 horas. Estudo ago–nov 2026 com comissões e funding: +890 por 100 USD em 474 trades, PF 1,25, drawdown 191. Uma posição por símbolo. Arranca em estudo — ligar o botão para ordens reais na Bybit.',
+    tags: ['Pump 24h', 'top 2', 'short', 'vela vermelha', '15m', '48h'],
     difficulty: 'Medium',
     source: 'Custom',
   },
