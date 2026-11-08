@@ -39,6 +39,12 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
+  PumpVolumeClimaxShort: {
+    description: 'Cripto, sinal no 1h (gestão a cada 15 min). SHORT quando uma moeda sobe mais de 20% em 24h com volume da hora ≥ 20× a média de 24h e RSI 1h ≥ 80, desde que não tenha disparado 3 ou mais vezes nos 30 dias anteriores (as repetentes continuam a subir). Stop 15%, metade fecha a −25%, o resto às 48h. Estudo jan–nov 2026: 454 trades, +1 407 por 100 USD, PF 1,53, positivo nas duas metades do ano. Em papel.',
+    tags: ['Pump', 'volume 20×', 'RSI 80', 'short', '1h', '48h'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
   ElliotV8Ichiv2: {
     description: 'Cripto no 5m, só LONG, sobre o scanner EMA200 (top 50). Compra quedas rápidas: RSI(4) < 35 e preço 1,3% abaixo da EMA12, com o oscilador de Elliott (EMA50−EMA200) em tendência forte (> 3,1, com RSI14 < 57) ou em queda extrema (< −17). SL 4%; depois de +2% o stop sobe para 0,1% abaixo do máximo (trailing). Sai também por sinal (preço acima da EMA22 e RSI4 > RSI20), mas só com mais de 1% de lucro. Backtest 2025: PF 1,52 · 2026: PF 1,41.',
     tags: ['EWO', 'RSI4', 'EMA12', 'buy-the-dip', 'trailing', 'EMA200', 'freqtrade', '5m'],

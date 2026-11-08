@@ -12,6 +12,7 @@ const rumersBoxWeeklyB     = require('../strategies/rumersBoxWeeklyB');
 const weekBB               = require('../strategies/weekBB');
 const maCross12x21         = require('../strategies/maCross12x21');
 const pumpTop3RedShort     = require('../strategies/pumpTop3RedShort');
+const pumpVolumeClimaxShort = require('../strategies/pumpVolumeClimaxShort');
 const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
@@ -329,6 +330,29 @@ const STRATEGIES = [
     // PF 1,25, drawdown 191 (antes: top 3 · SL 40% · TP 50% → +682, dd 432).
     // Uma posição por símbolo (o runner não empilha). Ordens reais desligadas.
     stopLossPct: 0.15,
+    maxHoldHours: 48,
+    enabled: false,
+  },
+  {
+    name: pumpVolumeClimaxShort.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'pumpLive',
+    // 15m só para gerir SL/TP a cada 15 min; o sinal usa as velas de 1h
+    // (context.candles1h — 1000 velas para contar os pumps dos últimos 30 dias).
+    timeframe: '15m',
+    candleLimit: 2,
+    hourlyCandlesLimit: 1000,
+    generateSignal: pumpVolumeClimaxShort.generateSignal,
+    positionSize: 100,
+    // Estudo 1/01–8/11/2026 (pump >20% em 24h + volume da hora ≥20× + RSI 1h
+    // ≥80 + <3 pumps em 30 dias), SL 15% · 50% a −25% · resto às 48h:
+    // 454 trades, +1 407 por $100, PF 1,53, drawdown 135, jan–jun +836 e
+    // jul–nov +570. Ordens reais desligadas (papel).
+    stopLossPct: 0.15,
+    takeProfitTiers: [
+      { pct: 0.25, fraction: 0.5 },
+    ],
     maxHoldHours: 48,
     enabled: false,
   },
@@ -771,9 +795,21 @@ async function runStrategyOnSymbol(strategy, symbol) {
       }
     }
 
+    // Velas de 1h para estratégias de 15m que tiram o sinal do 1h (opt-in via
+    // strategy.hourlyCandlesLimit — PumpVolumeClimaxShort). Só sem posição:
+    // a gestão da posição aberta não precisa delas.
+    let candles1h = null;
+    if (strategy.hourlyCandlesLimit && !currentPos) {
+      try {
+        candles1h = await bybit.getCandles(symbol, '1h', strategy.hourlyCandlesLimit);
+      } catch {
+        // sem velas 1h — a estratégia trata como histórico insuficiente
+      }
+    }
+
     const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, {
       rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, btc1hAboveEma50, aboveEma70_1h, unrealizedPnlPct,
-      btcAboveEma50Daily, btcAboveEma70Daily, weeklyBox, symbol,
+      btcAboveEma50Daily, btcAboveEma70Daily, weeklyBox, symbol, candles1h,
       entryPrice: posForSession?.entryPrice ?? null,
     });
 
@@ -937,6 +973,30 @@ async function tryClosePositionOnExchange(strategy, symbol) {
 }
 
 // Símbolos com posição aberta numa estratégia (chave: "NomeEstrategia_simbolo")
+// Universo 'pumpLive': perpétuos USDT de cripto com subida 24h ≥ 15% no ticker,
+// lido de 10 em 10 min (o scanner Pump 24h só corre de 2 em 2h). A estratégia
+// volta a confirmar a subida (>20%) nas velas de 1h. Exclui stocks/ETFs.
+let pumpLiveCache = { at: 0, symbols: [] };
+async function refreshPumpLive(minPct = 15) {
+  if (Date.now() - pumpLiveCache.at < 10 * 60 * 1000) return;
+  try {
+    const markets = await bybit.publicExchange.loadMarkets();
+    const perps = Object.values(markets).filter(m =>
+      m.linear && m.type === 'swap' && m.settle === 'USDT' && m.active && !m.symbol.includes('USDC')
+    );
+    const stocks = new Set(stockSymbolsCache);
+    const tickers = await bybit.publicExchange.fetchTickers(perps.map(m => m.symbol));
+    pumpLiveCache = {
+      at: Date.now(),
+      symbols: perps
+        .map(m => m.symbol)
+        .filter(sym => !stocks.has(sym) && (tickers[sym]?.percentage ?? -Infinity) >= minPct),
+    };
+  } catch (err) {
+    console.warn(`[Runner] pumpLive: ${err.message}`);
+  }
+}
+
 function symbolsWithOpenPositions(strategyName) {
   const prefix = `${strategyName}_`;
   return Object.keys(openPositions)
@@ -982,6 +1042,8 @@ function resolveSymbols(strategy) {
     symbols = topMarketCapSymbols.length ? topMarketCapSymbols : (strategy.fallbackSymbols || []);
   } else if (strategy.symbolSource === 'rumersWeeklyB') {
     symbols = weeklyBCache.symbols;
+  } else if (strategy.symbolSource === 'pumpLive') {
+    symbols = pumpLiveCache.symbols;
   } else if (strategy.symbolSource === 'pump24h') {
     const scan = getPumpState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
@@ -1019,6 +1081,8 @@ async function ensureSymbols(strategy) {
   if (strategy.symbolSource === 'topMarketCap') return refreshTopMarketCap(strategy);
   // Refresca uma vez por dia UTC (velas diárias de todos os pares de cripto)
   if (strategy.symbolSource === 'rumersWeeklyB') return refreshRumersWeeklyB();
+  // Refresca sempre (cache própria de 10 min)
+  if (strategy.symbolSource === 'pumpLive') return refreshPumpLive();
   if (resolveSymbols(strategy).length > 0) return;
   if (strategy.scannerPeriod) {
     await startScan(strategy.scannerPeriod, 50);
@@ -1039,6 +1103,7 @@ function scannerLabel(strategy) {
   if (strategy.symbolSource === 'gainersMonth') return 'Top Ganhos do Mês';
   if (strategy.symbolSource === 'emaTrendTotal') return 'Scanner EMA Trend (sem limite)';
   if (strategy.symbolSource === 'pump24h') return 'Scanner Pump 24h';
+  if (strategy.symbolSource === 'pumpLive') return 'Pumps 24h ≥ 15% (tickers)';
   if (strategy.symbolSource === 'topMarketCap') return 'Top cripto por market cap';
   if (strategy.symbolSource === 'rumersWeeklyB') return "Rumer's Box semanal · padrão b";
   return 'Scanner';
