@@ -461,6 +461,50 @@ app.get('/api/scanner/pump/history', async (req, res) => {
   }
 });
 
+// Símbolos que repetem no Pump 24h — ?min=30 (aparições em scans distintos)
+app.get('/api/scanner/pump/frequent', async (req, res) => {
+  try {
+    const min = Math.min(500, Math.max(1, parseInt(req.query.min, 10) || 30));
+    const { rows } = await pool.query(
+      `SELECT
+         symbol,
+         COUNT(*)::int AS appearances,
+         MAX(change_24h)::float AS max_change_24h,
+         AVG(change_24h)::float AS avg_change_24h,
+         MIN(rank)::int AS best_rank,
+         COUNT(*) FILTER (WHERE rank = 1)::int AS times_rank1,
+         COUNT(*) FILTER (WHERE rank <= 3)::int AS times_top3,
+         MIN(scanned_at) AS first_seen,
+         MAX(scanned_at) AS last_seen,
+         (SELECT COUNT(DISTINCT scanned_at)::int FROM scanner_pump) AS total_scans
+       FROM scanner_pump
+       GROUP BY symbol
+       HAVING COUNT(*) >= $1
+       ORDER BY COUNT(*) DESC, MAX(change_24h) DESC`,
+      [min]
+    );
+    const totalScans = rows[0]?.total_scans ?? 0;
+    res.json({
+      min,
+      totalScans,
+      count: rows.length,
+      symbols: rows.map(r => ({
+        symbol: r.symbol,
+        appearances: r.appearances,
+        maxChange24h: r.max_change_24h,
+        avgChange24h: r.avg_change_24h,
+        bestRank: r.best_rank,
+        timesRank1: r.times_rank1,
+        timesTop3: r.times_top3,
+        firstSeen: r.first_seen,
+        lastSeen: r.last_seen,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Inicia scan EMA Trend (21/50, diário+1h) — ?limit=50
 app.post('/api/scanner/ematrend/start', (req, res) => {
   const limit = parseInt(req.query.limit) || 50;

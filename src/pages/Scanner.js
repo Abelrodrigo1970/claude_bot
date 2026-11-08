@@ -402,6 +402,101 @@ function PumpPanel() {
   );
 }
 
+function PumpFrequentPanel() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    axios.get('/api/scanner/pump/frequent?min=30')
+      .then(r => setData(r.data))
+      .catch(e => setError(e.response?.data?.error || e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="loading"><div className="spinner" /></div>;
+  if (error) return <div className="card"><div className="empty red">Erro: {error}</div></div>;
+
+  const symbols = data?.symbols || [];
+  const totalScans = data?.totalScans || 0;
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <div className="page-sub">
+            Símbolos que entraram no Pump 24h (+10%) em pelo menos 30 scans
+            {totalScans > 0 && (
+              <span className="scan-time"> · {symbols.length} símbolos em {totalScans} scans</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {symbols.length === 0 ? (
+        <div className="card">
+          <div className="empty">Ainda não há símbolos com 30 ou mais aparições.</div>
+        </div>
+      ) : (
+        <div className="card" style={{ padding: 0 }}>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Par</th>
+                  <th>Aparições</th>
+                  <th>% scans</th>
+                  <th>Maior 24h</th>
+                  <th>Média 24h</th>
+                  <th>Melhor rank</th>
+                  <th>Vezes 1.º</th>
+                  <th>Top 3</th>
+                  <th>Primeira</th>
+                  <th>Última</th>
+                </tr>
+              </thead>
+              <tbody>
+                {symbols.map((r, i) => {
+                  const base = r.symbol.split('/')[0];
+                  const share = totalScans ? (r.appearances / totalScans) * 100 : 0;
+                  return (
+                    <tr key={r.symbol}>
+                      <td className="muted">{i + 1}</td>
+                      <td>
+                        <a
+                          className="symbol-link"
+                          href={`https://www.tradingview.com/chart/?symbol=BYBIT:${base}USDT.P`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Ver no TradingView"
+                        >
+                          <span className="symbol-name">{base}</span>
+                          <span className="symbol-suffix">/USDT</span>
+                          <span className="tv-icon">↗</span>
+                        </a>
+                      </td>
+                      <td className="mono">{r.appearances}</td>
+                      <td className="mono muted">{fmt(share, 1)}%</td>
+                      <td className="mono green">+{fmt(r.maxChange24h, 1)}%</td>
+                      <td className="mono">+{fmt(r.avgChange24h, 1)}%</td>
+                      <td className="mono">{r.bestRank}</td>
+                      <td className="mono">{r.timesRank1}</td>
+                      <td className="mono">{r.timesTop3}</td>
+                      <td className="mono muted">{format(new Date(r.firstSeen), 'dd/MM/yy')}</td>
+                      <td className="mono muted">{format(new Date(r.lastSeen), 'dd/MM/yy')}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Resultados ao vivo vêm em camelCase; os do histórico (BD) em snake_case.
 function RsiWeeklyResultsTable({ results }) {
   return (
@@ -1352,6 +1447,12 @@ export default function Scanner() {
           Pump 24h (&gt;10%)
         </button>
         <button
+          className={`scanner-tab ${tab === 'pump30' ? 'active' : ''}`}
+          onClick={() => setTab('pump30')}
+        >
+          Pump ≥30
+        </button>
+        <button
           className={`scanner-tab ${tab === 'ematrend' ? 'active' : ''}`}
           onClick={() => setTab('ematrend')}
         >
@@ -1399,6 +1500,7 @@ export default function Scanner() {
         : tab === 'rumersbox' ? <RumersBoxPanel key="rumersbox" />
         : tab === 'rsiweekly' ? <RsiWeeklyPanel key="rsiweekly" />
         : tab === 'pump24h' ? <PumpPanel key="pump24h" />
+        : tab === 'pump30' ? <PumpFrequentPanel key="pump30" />
         : tab === 'ematrend' ? <EmaTrendPanel key="ematrend" />
         : tab === 'ematrend-stocks' ? (
           <EmaTrendPanel
