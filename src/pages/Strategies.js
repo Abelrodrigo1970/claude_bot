@@ -51,6 +51,12 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
+  LiquidBreakoutLong: {
+    description: 'Cripto, sinal no 30m (gestão a cada 15 min). LONG quando uma moeda com volume 24h ≥ $50M fecha acima do máximo dos últimos 7 dias, com vela ≥ +1,5%, volume da vela ≥ 3× a média de 24h e RSI 30m ≥ 75. Stop 20%, 30% da posição fecha a +10%, o resto a +45%, ou fecho às 48h. Uma entrada por moeda a cada 24h. Estudo jan–nov 2026 em todas as moedas: 483 trades, +1 780 por 100 USD, PF 1,80, drawdown 136, positivo nas duas metades do ano. Em papel.',
+    tags: ['Rompimento', 'máx 7d', 'liquidez $50M', 'RSI 75', 'long', '30m', '48h'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
   ElliotV8Ichiv2: {
     description: 'Cripto no 5m, só LONG, sobre o scanner EMA200 (top 50). Compra quedas rápidas: RSI(4) < 35 e preço 1,3% abaixo da EMA12, com o oscilador de Elliott (EMA50−EMA200) em tendência forte (> 3,1, com RSI14 < 57) ou em queda extrema (< −17). SL 4%; depois de +2% o stop sobe para 0,1% abaixo do máximo (trailing). Sai também por sinal (preço acima da EMA22 e RSI4 > RSI20), mas só com mais de 1% de lucro. Backtest 2025: PF 1,52 · 2026: PF 1,41.',
     tags: ['EWO', 'RSI4', 'EMA12', 'buy-the-dip', 'trailing', 'EMA200', 'freqtrade', '5m'],

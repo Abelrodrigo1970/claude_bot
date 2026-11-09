@@ -14,6 +14,7 @@ const maCross12x21         = require('../strategies/maCross12x21');
 const pumpTop3RedShort     = require('../strategies/pumpTop3RedShort');
 const pumpVolumeClimaxShort = require('../strategies/pumpVolumeClimaxShort');
 const dumpVolumeClimaxLong = require('../strategies/dumpVolumeClimaxLong');
+const liquidBreakoutLong   = require('../strategies/liquidBreakoutLong');
 const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
@@ -373,6 +374,30 @@ const STRATEGIES = [
     // 322 trades, +1 522 por $100, PF 2,53, drawdown 82 — mas +853 vieram do
     // crash de 6/02 (70 entradas no mesmo dia). Ordens reais desligadas (papel).
     stopLossPct: 0.15,
+    maxHoldHours: 48,
+    enabled: false,
+  },
+  {
+    name: liquidBreakoutLong.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'liquidLive',
+    // 15m só para gerir SL/TP a cada 15 min; o sinal usa as velas de 30m
+    // (context.signalCandles — 400 velas para o máximo de 7 dias e o RSI).
+    timeframe: '15m',
+    candleLimit: 2,
+    signalCandles: { timeframe: '30m', limit: 400 },
+    generateSignal: liquidBreakoutLong.generateSignal,
+    positionSize: 100,
+    // Estudo 1/01–8/11/2026 (volume 24h ≥ $50M + fecho acima do máximo de
+    // 7 dias + vela 30m ≥ +1,5% com volume ≥ 3× + RSI 30m ≥ 75), SL 20% ·
+    // 30% a +10% · resto a +45% (close_long) · fecho às 48h: 483 trades,
+    // +1 780 por $100, PF 1,80, drawdown 136, jan–jun +1 216 e jul–nov +564.
+    // Ordens reais desligadas (papel).
+    stopLossPct: 0.20,
+    takeProfitTiers: [
+      { pct: 0.10, fraction: 0.30 },
+    ],
     maxHoldHours: 48,
     enabled: false,
   },
@@ -827,9 +852,20 @@ async function runStrategyOnSymbol(strategy, symbol) {
       }
     }
 
+    // Idem para outro timeframe qualquer (opt-in via strategy.signalCandles =
+    // { timeframe, limit } — LiquidBreakoutLong, sinal no 30m).
+    let signalCandles = null;
+    if (strategy.signalCandles && !currentPos) {
+      try {
+        signalCandles = await bybit.getCandles(symbol, strategy.signalCandles.timeframe, strategy.signalCandles.limit);
+      } catch {
+        // sem velas — a estratégia trata como histórico insuficiente
+      }
+    }
+
     const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, {
       rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, btc1hAboveEma50, aboveEma70_1h, unrealizedPnlPct,
-      btcAboveEma50Daily, btcAboveEma70Daily, weeklyBox, symbol, candles1h,
+      btcAboveEma50Daily, btcAboveEma70Daily, weeklyBox, symbol, candles1h, signalCandles,
       entryPrice: posForSession?.entryPrice ?? null,
     });
 
@@ -1000,6 +1036,11 @@ let pumpLiveCache = { at: 0, symbols: [] };
 // Universo 'dumpLive' (DumpVolumeClimaxLong): o mesmo, mas com queda 24h ≥ 15%.
 // Lê os mesmos tickers da pumpLive.
 let dumpLiveCache = { at: 0, symbols: [] };
+// Universo 'liquidLive' (LiquidBreakoutLong): volume 24h no ticker ≥ $20M —
+// folga larga sobre os $50M que a estratégia confirma nas velas de 30m (a
+// vela do rompimento pode ser a que leva a moeda acima dos $50M, e a cache
+// dos tickers tem até 10 min).
+let liquidLiveCache = { at: 0, symbols: [] };
 async function refreshPumpLive(minPct = 15) {
   if (Date.now() - pumpLiveCache.at < 10 * 60 * 1000) return;
   try {
@@ -1017,6 +1058,10 @@ async function refreshPumpLive(minPct = 15) {
     dumpLiveCache = {
       at: Date.now(),
       symbols: cryptoSymbols.filter(sym => (tickers[sym]?.percentage ?? Infinity) <= -minPct),
+    };
+    liquidLiveCache = {
+      at: Date.now(),
+      symbols: cryptoSymbols.filter(sym => (tickers[sym]?.quoteVolume ?? 0) >= 20e6),
     };
   } catch (err) {
     console.warn(`[Runner] pumpLive: ${err.message}`);
@@ -1072,6 +1117,8 @@ function resolveSymbols(strategy) {
     symbols = pumpLiveCache.symbols;
   } else if (strategy.symbolSource === 'dumpLive') {
     symbols = dumpLiveCache.symbols;
+  } else if (strategy.symbolSource === 'liquidLive') {
+    symbols = liquidLiveCache.symbols;
   } else if (strategy.symbolSource === 'pump24h') {
     const scan = getPumpState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
@@ -1110,7 +1157,7 @@ async function ensureSymbols(strategy) {
   // Refresca uma vez por dia UTC (velas diárias de todos os pares de cripto)
   if (strategy.symbolSource === 'rumersWeeklyB') return refreshRumersWeeklyB();
   // Refresca sempre (cache própria de 10 min)
-  if (strategy.symbolSource === 'pumpLive' || strategy.symbolSource === 'dumpLive') return refreshPumpLive();
+  if (strategy.symbolSource === 'pumpLive' || strategy.symbolSource === 'dumpLive' || strategy.symbolSource === 'liquidLive') return refreshPumpLive();
   if (resolveSymbols(strategy).length > 0) return;
   if (strategy.scannerPeriod) {
     await startScan(strategy.scannerPeriod, 50);
@@ -1133,6 +1180,7 @@ function scannerLabel(strategy) {
   if (strategy.symbolSource === 'pump24h') return 'Scanner Pump 24h';
   if (strategy.symbolSource === 'pumpLive') return 'Pumps 24h ≥ 15% (tickers)';
   if (strategy.symbolSource === 'dumpLive') return 'Quedas 24h ≥ 15% (tickers)';
+  if (strategy.symbolSource === 'liquidLive') return 'Volume 24h ≥ $20M (tickers)';
   if (strategy.symbolSource === 'topMarketCap') return 'Top cripto por market cap';
   if (strategy.symbolSource === 'rumersWeeklyB') return "Rumer's Box semanal · padrão b";
   return 'Scanner';
