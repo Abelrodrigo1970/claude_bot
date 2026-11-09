@@ -13,6 +13,7 @@ const weekBB               = require('../strategies/weekBB');
 const maCross12x21         = require('../strategies/maCross12x21');
 const pumpTop3RedShort     = require('../strategies/pumpTop3RedShort');
 const pumpVolumeClimaxShort = require('../strategies/pumpVolumeClimaxShort');
+const dumpVolumeClimaxLong = require('../strategies/dumpVolumeClimaxLong');
 const { fetchTopCryptoPerps } = require('./marketcap');
 const VOLATILE50_SYMBOLS   = require('../backtests/data/top50-6month-movers.json').movers.map(m => m.symbol);
 
@@ -353,6 +354,25 @@ const STRATEGIES = [
     takeProfitTiers: [
       { pct: 0.25, fraction: 0.5 },
     ],
+    maxHoldHours: 48,
+    enabled: false,
+  },
+  {
+    name: dumpVolumeClimaxLong.STRATEGY_NAME,
+    market: 'crypto',
+    symbol: null,
+    symbolSource: 'dumpLive',
+    // 15m só para gerir SL/TP a cada 15 min; o sinal usa as velas de 1h.
+    timeframe: '15m',
+    candleLimit: 2,
+    hourlyCandlesLimit: 200,
+    generateSignal: dumpVolumeClimaxLong.generateSignal,
+    positionSize: 100,
+    // Estudo 1/01–8/11/2026 (queda >15% em 24h + volume da hora ≥10× + RSI
+    // 1h ≤20), SL 15% · TP +15% fecha tudo (close_long) · fecho às 48h:
+    // 322 trades, +1 522 por $100, PF 2,53, drawdown 82 — mas +853 vieram do
+    // crash de 6/02 (70 entradas no mesmo dia). Ordens reais desligadas (papel).
+    stopLossPct: 0.15,
     maxHoldHours: 48,
     enabled: false,
   },
@@ -977,6 +997,9 @@ async function tryClosePositionOnExchange(strategy, symbol) {
 // lido de 10 em 10 min (o scanner Pump 24h só corre de 2 em 2h). A estratégia
 // volta a confirmar a subida (>20%) nas velas de 1h. Exclui stocks/ETFs.
 let pumpLiveCache = { at: 0, symbols: [] };
+// Universo 'dumpLive' (DumpVolumeClimaxLong): o mesmo, mas com queda 24h ≥ 15%.
+// Lê os mesmos tickers da pumpLive.
+let dumpLiveCache = { at: 0, symbols: [] };
 async function refreshPumpLive(minPct = 15) {
   if (Date.now() - pumpLiveCache.at < 10 * 60 * 1000) return;
   try {
@@ -986,11 +1009,14 @@ async function refreshPumpLive(minPct = 15) {
     );
     const stocks = new Set(stockSymbolsCache);
     const tickers = await bybit.publicExchange.fetchTickers(perps.map(m => m.symbol));
+    const cryptoSymbols = perps.map(m => m.symbol).filter(sym => !stocks.has(sym));
     pumpLiveCache = {
       at: Date.now(),
-      symbols: perps
-        .map(m => m.symbol)
-        .filter(sym => !stocks.has(sym) && (tickers[sym]?.percentage ?? -Infinity) >= minPct),
+      symbols: cryptoSymbols.filter(sym => (tickers[sym]?.percentage ?? -Infinity) >= minPct),
+    };
+    dumpLiveCache = {
+      at: Date.now(),
+      symbols: cryptoSymbols.filter(sym => (tickers[sym]?.percentage ?? Infinity) <= -minPct),
     };
   } catch (err) {
     console.warn(`[Runner] pumpLive: ${err.message}`);
@@ -1044,6 +1070,8 @@ function resolveSymbols(strategy) {
     symbols = weeklyBCache.symbols;
   } else if (strategy.symbolSource === 'pumpLive') {
     symbols = pumpLiveCache.symbols;
+  } else if (strategy.symbolSource === 'dumpLive') {
+    symbols = dumpLiveCache.symbols;
   } else if (strategy.symbolSource === 'pump24h') {
     const scan = getPumpState();
     symbols = (scan.status === 'done' && scan.results?.length) ? scan.results.map(r => r.symbol) : [];
@@ -1082,7 +1110,7 @@ async function ensureSymbols(strategy) {
   // Refresca uma vez por dia UTC (velas diárias de todos os pares de cripto)
   if (strategy.symbolSource === 'rumersWeeklyB') return refreshRumersWeeklyB();
   // Refresca sempre (cache própria de 10 min)
-  if (strategy.symbolSource === 'pumpLive') return refreshPumpLive();
+  if (strategy.symbolSource === 'pumpLive' || strategy.symbolSource === 'dumpLive') return refreshPumpLive();
   if (resolveSymbols(strategy).length > 0) return;
   if (strategy.scannerPeriod) {
     await startScan(strategy.scannerPeriod, 50);
@@ -1104,6 +1132,7 @@ function scannerLabel(strategy) {
   if (strategy.symbolSource === 'emaTrendTotal') return 'Scanner EMA Trend (sem limite)';
   if (strategy.symbolSource === 'pump24h') return 'Scanner Pump 24h';
   if (strategy.symbolSource === 'pumpLive') return 'Pumps 24h ≥ 15% (tickers)';
+  if (strategy.symbolSource === 'dumpLive') return 'Quedas 24h ≥ 15% (tickers)';
   if (strategy.symbolSource === 'topMarketCap') return 'Top cripto por market cap';
   if (strategy.symbolSource === 'rumersWeeklyB') return "Rumer's Box semanal · padrão b";
   return 'Scanner';

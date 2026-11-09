@@ -45,6 +45,12 @@ const STRATEGY_META = {
     difficulty: 'Medium',
     source: 'Custom',
   },
+  DumpVolumeClimaxLong: {
+    description: 'Cripto, sinal no 1h (gestão a cada 15 min). LONG quando uma moeda cai mais de 15% em 24h com volume da hora ≥ 10× a média de 24h e RSI 1h ≤ 20 (capitulação). Stop 15%, alvo +15% fecha tudo, ou fecho às 48h. Uma entrada por moeda a cada 24h. Estudo jan–nov 2026: 322 trades, +1 522 por 100 USD, PF 2,53, drawdown 82 — mas +853 vieram do crash de 6/02 (70 entradas no mesmo dia). Em papel.',
+    tags: ['Queda', 'volume 10×', 'RSI 20', 'long', '1h', '48h'],
+    difficulty: 'Medium',
+    source: 'Custom',
+  },
   ElliotV8Ichiv2: {
     description: 'Cripto no 5m, só LONG, sobre o scanner EMA200 (top 50). Compra quedas rápidas: RSI(4) < 35 e preço 1,3% abaixo da EMA12, com o oscilador de Elliott (EMA50−EMA200) em tendência forte (> 3,1, com RSI14 < 57) ou em queda extrema (< −17). SL 4%; depois de +2% o stop sobe para 0,1% abaixo do máximo (trailing). Sai também por sinal (preço acima da EMA22 e RSI4 > RSI20), mas só com mais de 1% de lucro. Backtest 2025: PF 1,52 · 2026: PF 1,41.',
     tags: ['EWO', 'RSI4', 'EMA12', 'buy-the-dip', 'trailing', 'EMA200', 'freqtrade', '5m'],
