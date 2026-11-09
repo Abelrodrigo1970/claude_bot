@@ -231,7 +231,7 @@ const STRATEGIES = [
     symbols: VOLATILE50_SYMBOLS, // Lista 50 (top50-6month-movers.json)
     timeframe: '15m',
     generateSignal: lista50SpikeSmaRise.generateSignal,
-    positionSize: 80,
+    positionSize: 60,
     // Estudo 60d (study-lista50-spike-btc-filter.js) — melhor qualidade:
     //   entrada: spike≥5× + verde + close>SMA50 + SMA50↑ + BTC 4h verde
     //   gestão: SL 12% · TP 30% @ +15% · resto às 48h
@@ -301,7 +301,7 @@ const STRATEGIES = [
     topN: maCross12x21.SCANNER_TOP_N,
     timeframe: '15m',
     generateSignal: maCross12x21.generateSignal,
-    positionSize: 80,
+    positionSize: 60,
     // Reposta 11/10 a pedido do utilizador com regras novas (removida a 09/10
     // com as antigas): entrada igual + filtro BTC > EMA70 diária · SL 4% ·
     // sem TP parcial · TP +60% fecha tudo e saída abaixo da EMA70(1h) (sinais
@@ -326,7 +326,7 @@ const STRATEGIES = [
     // vermelha depois dele — a janela tem de chegar até essa sessão.
     candleLimit: 32,
     generateSignal: pumpTop3RedShort.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     // Estudo 26 ago–3 nov 2026 com stop dentro da vela, comissões e funding:
     // top 2 · SL 15% · TP 30% · fecho às 48h → 474 trades, +890 por $100,
     // PF 1,25, drawdown 191 (antes: top 3 · SL 40% · TP 50% → +682, dd 432).
@@ -346,7 +346,7 @@ const STRATEGIES = [
     candleLimit: 2,
     hourlyCandlesLimit: 1000,
     generateSignal: pumpVolumeClimaxShort.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     // Estudo 1/01–8/11/2026 (pump >20% em 24h + volume da hora ≥20× + RSI 1h
     // ≥80 + <3 pumps em 30 dias), SL 15% · 50% a −25% · resto às 48h:
     // 454 trades, +1 407 por $100, PF 1,53, drawdown 135, jan–jun +836 e
@@ -368,7 +368,7 @@ const STRATEGIES = [
     candleLimit: 2,
     hourlyCandlesLimit: 200,
     generateSignal: dumpVolumeClimaxLong.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     // Estudo 1/01–8/11/2026 (queda >15% em 24h + volume da hora ≥10× + RSI
     // 1h ≤20), SL 15% · TP +15% fecha tudo (close_long) · fecho às 48h:
     // 322 trades, +1 522 por $100, PF 2,53, drawdown 82 — mas +853 vieram do
@@ -388,7 +388,7 @@ const STRATEGIES = [
     candleLimit: 2,
     signalCandles: { timeframe: '30m', limit: 400 },
     generateSignal: liquidBreakoutLong.generateSignal,
-    positionSize: 100,
+    positionSize: 60,
     // Estudo 1/01–8/11/2026 (volume 24h ≥ $50M + fecho acima do máximo de
     // 7 dias + vela 30m ≥ +1,5% com volume ≥ 3× + RSI 30m ≥ 75), SL 20% ·
     // 30% a +10% · resto a +45% (close_long) · fecho às 48h: 483 trades,
