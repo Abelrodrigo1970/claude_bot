@@ -1046,7 +1046,12 @@ async function refreshPumpLive(minPct = 15) {
   try {
     const markets = await bybit.publicExchange.loadMarkets();
     const perps = Object.values(markets).filter(m =>
-      m.linear && m.type === 'swap' && m.settle === 'USDT' && m.active && !m.symbol.includes('USDC')
+      m.linear && m.type === 'swap' && m.settle === 'USDT' && m.active && !m.symbol.includes('USDC') &&
+      // symbolType da Bybit: '' / 'innovation' = cripto; 'stock', 'ETF',
+      // 'commodity', 'forex' = TradFi (a stock_symbols só tem as ações ativas,
+      // deixava passar XAU, CL, XOM, SOXS...). XAUT/PAXG = ouro tokenizado.
+      !['stock', 'ETF', 'commodity', 'forex'].includes(m.info?.symbolType) &&
+      !['XAUT', 'PAXG'].includes(m.base)
     );
     const stocks = new Set(stockSymbolsCache);
     const tickers = await bybit.publicExchange.fetchTickers(perps.map(m => m.symbol));
