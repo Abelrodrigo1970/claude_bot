@@ -9,8 +9,11 @@
 //   + vela C (confirmação) fecha ACIMA do fecho da vela B — entra no fecho de C
 //   + BTC acima da EMA50 da última vela diária fechada (context.btcAboveEma50Daily)
 //   + 1 entrada por caixa e por par (enteredBoxes)
+//   + (11/11) volume da vela C ≥ 1× a média das 96 velas antes da vela A
+//     e BTC acima da EMA20 diária (context.btcAboveEma20Daily)
 //
-// Gestão (runner): SL 4% · TP +40% fecha tudo (sinal close_long) · fecho às 72h.
+// Gestão (runner): SL 4% · stop na entrada (+0,2%) depois de +5% (candleStops)
+// · TP +40% fecha tudo (sinal close_long) · fecho às 72h.
 //
 // Estudo 2025 e 2026 (motor rumers_p_reentry.extract com padrão b, velas 15m,
 // SL antes de TP na mesma vela, $100/trade, taxas 0,055%/lado):
@@ -18,11 +21,20 @@
 //   2026 (–out): 248 trades · WR 49% · PF 3,29 · +997 · DD 131 · máx ~40 abertas
 // Sem a vela de confirmação 2025 dava PF 0,95. TP acima de 40% e fechos de 5–7
 // dias foram piores. Arranca só em papel.
+//
+// 11/11 (pedido do utilizador): + BTC > EMA20 1d + volume da vela C ≥ 1× +
+// stop na entrada depois de +5%. Estudo 6/01–5/11/2026 (bc/rumers/sim4.py no
+// scratchpad da sessão, velas Bybit 15m, entrada na abertura seguinte,
+// $100/trade, sem funding), caixa ≤14%: 122 trades · acerto 65% · PF 6,68 ·
+// +935 · DD 50 · jan–jun +158 · jul–nov +777 (a versão anterior dava no mesmo
+// motor 319 trades · PF 2,20 · +877 · DD 247). Caixas acima de 14% pioravam.
 const rumersBoxWeeklyB = require('./rumersBoxWeeklyB');
 
 const STRATEGY_NAME = 'WeekBB';
 
 const TAKE_PROFIT_FULL_PCT = 0.40;
+const MIN_VOLUME_RATIO = 1;
+const VOLUME_AVG_BARS = 96; // 24h de velas 15m antes da vela A
 const RANGE_MAX_PCT = 14; // a RumersBoxWeeklyB passou a 16% a 11/11; a WeekBB fica nos 14%
 const BAR_MS = 15 * 60 * 1000;
 
@@ -34,22 +46,25 @@ function markEntered(symbol, periodKey) { enteredBoxes.add(`${symbol}|${periodKe
 
 function generateSignal(candles, currentPosition = null, context = {}) {
   const box = context.weeklyBox || null;
-  const ind = { box, btcAboveEma50Daily: context.btcAboveEma50Daily ?? null };
+  const ind = { box, btcAboveEma50Daily: context.btcAboveEma50Daily ?? null, btcAboveEma20Daily: context.btcAboveEma20Daily ?? null };
 
   if (currentPosition === 'long') {
     const pnlPct = context.unrealizedPnlPct;
     if (pnlPct != null && pnlPct >= TAKE_PROFIT_FULL_PCT) {
       return { signal: 'close_long', reason: `TP +${(pnlPct * 100).toFixed(1)}% ≥ 40% — fecha tudo`, indicators: ind };
     }
-    return { signal: 'hold', reason: 'Mantém long — TP +40% · SL 4% · fecho às 72h', indicators: ind };
+    return { signal: 'hold', reason: 'Mantém long — TP +40% · SL 4% (na entrada depois de +5%) · fecho às 72h', indicators: ind };
   }
 
   if (!box) return { signal: 'none', reason: 'Sem caixa semanal (histórico curto)', indicators: ind };
   const now = Date.now();
   const closed = (candles || []).filter((c) => +c.time + BAR_MS <= now);
-  if (closed.length < 3) return { signal: 'none', reason: 'Velas 15m insuficientes', indicators: ind };
+  if (closed.length < VOLUME_AVG_BARS + 3) return { signal: 'none', reason: 'Velas 15m insuficientes', indicators: ind };
   const [a, b, c] = closed.slice(-3);
-  Object.assign(ind, { outClose: a.close, reentryClose: b.close, confirmClose: c.close });
+  const prevQuote = closed.slice(-VOLUME_AVG_BARS - 3, -3).map((x) => x.volume * x.close);
+  const avgQuote = prevQuote.reduce((x, y) => x + y, 0) / prevQuote.length;
+  const volumeRatio = avgQuote > 0 ? (c.volume * c.close) / avgQuote : 0;
+  Object.assign(ind, { outClose: a.close, reentryClose: b.close, confirmClose: c.close, volumeRatio });
 
   // as três velas têm de ser da semana em que esta caixa vale
   const sameWeek = [a, b, c].every((x) => rumersBoxWeeklyB.periodKeyOf(+x.time) === box.periodKey);
@@ -63,10 +78,18 @@ function generateSignal(candles, currentPosition = null, context = {}) {
   if (enteredBoxes.has(`${context.symbol}|${box.periodKey}`)) blocks.push(`já entrou na caixa ${box.periodKey}`);
   if (blocks.length) return { signal: 'hold', reason: `Reentrada confirmada, mas ${blocks.join(' · ')}`, indicators: ind };
 
+  // Filtros de 11/11. Como no estudo, só o PRIMEIRO padrão válido da semana
+  // conta: se falhar o volume ou a EMA20, a caixa fica gasta (não persiste em
+  // BD — um restart pode deixar entrar num padrão posterior).
+  const late = [];
+  if (volumeRatio < MIN_VOLUME_RATIO) late.push(`volume da confirmação ${volumeRatio.toFixed(1)}× < 1×`);
+  if (context.btcAboveEma20Daily !== true) late.push('BTC abaixo (ou sem dados) da EMA20 diária');
   if (context.symbol) markEntered(context.symbol, box.periodKey);
+  if (late.length) return { signal: 'hold', reason: `Reentrada confirmada, mas ${late.join(' · ')} — caixa ${box.periodKey} descartada`, indicators: ind };
+
   return {
     signal: 'long',
-    reason: `Reentrada na caixa da semana ${box.periodKey} (saiu a ${a.close}, voltou a ${b.close}, confirmou a ${c.close}) · padrão b ${box.trendPct.toFixed(1)}% · caixa ${box.rangePct.toFixed(1)}% · BTC > EMA50 1d`,
+    reason: `Reentrada na caixa da semana ${box.periodKey} (saiu a ${a.close}, voltou a ${b.close}, confirmou a ${c.close}) · volume ${volumeRatio.toFixed(1)}× · padrão b ${box.trendPct.toFixed(1)}% · caixa ${box.rangePct.toFixed(1)}% · BTC > EMA50 e EMA20 1d`,
     indicators: ind,
   };
 }

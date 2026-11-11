@@ -284,7 +284,8 @@ const STRATEGIES = [
     // só aceita caixas de 1,5–14% (o universo vai até 16%)
     symbolSource: 'rumersWeeklyB',
     timeframe: '15m',
-    candleLimit: 8, // só precisa das três últimas velas 15m fechadas
+    // 72h de velas 15m para o stop vela a vela + 24h para a média de volume
+    candleLimit: 400,
     generateSignal: weekBB.generateSignal,
     positionSize: 60,
     // Pedida pelo utilizador (14/10): LONG quando o preço sai por baixo da
@@ -292,10 +293,15 @@ const STRATEGIES = [
     // acima do fecho da reentrada). SL 4% · TP +40% fecha tudo (sinal
     // close_long, ver weekBB.js) · fecho às 72h. Estudo 2025 PF 1,43 +206
     // DD 149 · 2026 PF 3,29 +997 DD 131 ($100/trade).
+    // 11/11: + BTC > EMA20 diária + volume da confirmação ≥1× + stop na
+    // entrada depois de +5% — 2026 PF 6,68 +935 DD 50 (antes PF 2,20 DD 247).
     stopLossPct: 0.04,
+    // SL 4% vela a vela; depois de o máximo passar +5%, stop em entrada +0,2%
+    candleStops: { trailOffsetPct: 0.05, lockPct: 0.002 },
     maxHoldHours: 72,
     weeklyBoxContext: true,
     btcDailyEma50Filter: true,
+    btcDailyEma20Filter: true,
     // Arranca só em papel — ligar na página Estratégias.
     enabled: false,
   },
