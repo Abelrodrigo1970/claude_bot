@@ -1,7 +1,7 @@
 // WeekBB — Rumer's Box semanal · padrão b · LONG na reentrada (pedido do utilizador 14/10).
 // Universo e caixa iguais aos da RumersBoxWeeklyB (symbolSource 'rumersWeeklyB',
 // context.weeklyBox): caixa = máximo/mínimo da semana anterior, padrão b (queda > 6%
-// nas 3 semanas antes da caixa), amplitude 1,5–14% (rumersBoxWeeklyB.isCandidate).
+// nas 3 semanas antes da caixa), amplitude 1,5–14% (isCandidate com RANGE_MAX_PCT).
 //
 // Entrada LONG (últimas três velas 15m FECHADAS, todas na semana corrente):
 //   vela A fecha ABAIXO do mínimo da caixa (o preço saiu por baixo)
@@ -23,6 +23,7 @@ const rumersBoxWeeklyB = require('./rumersBoxWeeklyB');
 const STRATEGY_NAME = 'WeekBB';
 
 const TAKE_PROFIT_FULL_PCT = 0.40;
+const RANGE_MAX_PCT = 14; // a RumersBoxWeeklyB passou a 16% a 11/11; a WeekBB fica nos 14%
 const BAR_MS = 15 * 60 * 1000;
 
 // 'SYMBOL|periodKey' das caixas onde já houve entrada (recarregado da BD ao
@@ -57,7 +58,7 @@ function generateSignal(candles, currentPosition = null, context = {}) {
     return { signal: 'hold', reason: `Sem saída por baixo + reentrada + confirmação na caixa ${box.low}–${box.high}`, indicators: ind };
   }
   const blocks = [];
-  if (!rumersBoxWeeklyB.isCandidate(box)) blocks.push(`caixa ${box.rangePct.toFixed(1)}% · tendência ${box.trendPct.toFixed(1)}% fora do padrão b`);
+  if (!rumersBoxWeeklyB.isCandidate(box, RANGE_MAX_PCT)) blocks.push(`caixa ${box.rangePct.toFixed(1)}% · tendência ${box.trendPct.toFixed(1)}% fora do padrão b`);
   if (context.btcAboveEma50Daily !== true) blocks.push('BTC abaixo (ou sem dados) da EMA50 diária');
   if (enteredBoxes.has(`${context.symbol}|${box.periodKey}`)) blocks.push(`já entrou na caixa ${box.periodKey}`);
   if (blocks.length) return { signal: 'hold', reason: `Reentrada confirmada, mas ${blocks.join(' · ')}`, indicators: ind };

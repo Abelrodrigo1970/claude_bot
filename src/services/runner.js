@@ -252,7 +252,8 @@ const STRATEGIES = [
     // Pares de cripto em padrão b na caixa semanal (ver refreshRumersWeeklyB)
     symbolSource: 'rumersWeeklyB',
     timeframe: '15m',
-    candleLimit: 6, // só precisa das duas últimas velas 15m fechadas
+    // 48h de velas 15m para o stop vela a vela + 24h para a média de volume
+    candleLimit: 300,
     generateSignal: rumersBoxWeeklyB.generateSignal,
     positionSize: 60,
     // Pedida pelo utilizador (09/10): Rumer's Box semanal em padrão b (o preço
@@ -263,10 +264,15 @@ const STRATEGIES = [
     // trades, PF 1,51 (jan–jun) / 2,67 (jul–out), +2079 $/100, drawdown 388.
     // 14/10: amplitude máxima da caixa 19% → 14% (menos posições em simultâneo,
     // ver rumersBoxWeeklyB.js) — 2025 PF 1,34 +445 · 2026 PF 2,41 +1718.
+    // 11/11: caixa até 16% + volume da quebra ≥1,5× + BTC > EMA20 diária +
+    // stop na entrada depois de +8% — 2026 PF 2,55 +1216 DD 150 (antes DD 415).
     stopLossPct: 0.06,
+    // SL 6% vela a vela; depois de o máximo passar +8%, stop em entrada +0,2%
+    candleStops: { trailOffsetPct: 0.08, lockPct: 0.002 },
     maxHoldHours: 48,
     weeklyBoxContext: true,   // context.weeklyBox — caixa da semana anterior do par
     btcDailyEma50Filter: true, // context.btcAboveEma50Daily — ver getBtcAboveEma50Daily
+    btcDailyEma20Filter: true, // context.btcAboveEma20Daily
     // Nunca corrida nem testada ao vivo — arranca só em estudo.
     enabled: false,
   },
@@ -274,7 +280,8 @@ const STRATEGIES = [
     name: weekBB.STRATEGY_NAME,
     market: 'crypto',
     symbol: null,
-    // Mesmo universo e caixa da RumersBoxWeeklyB (padrão b, caixa 1,5–14%)
+    // Mesmo universo e caixa da RumersBoxWeeklyB (padrão b), mas a WeekBB
+    // só aceita caixas de 1,5–14% (o universo vai até 16%)
     symbolSource: 'rumersWeeklyB',
     timeframe: '15m',
     candleLimit: 8, // só precisa das três últimas velas 15m fechadas
@@ -674,11 +681,20 @@ async function runStrategyOnSymbol(strategy, symbol) {
           if (t < entryBar || t + tfMs > now) continue;
           let level = slLevel;
           if (prevMax >= pos.entryPrice * (1 + strategy.candleStops.trailOffsetPct)) {
-            level = Math.max(level, prevMax * (1 - strategy.candleStops.trailPositivePct));
+            // lockPct (opcional): em vez de seguir o máximo, o stop fica fixo
+            // em entrada × (1 + lockPct) — stop na entrada (RumersBoxWeeklyB)
+            const trailLevel = strategy.candleStops.lockPct != null
+              ? pos.entryPrice * (1 + strategy.candleStops.lockPct)
+              : prevMax * (1 - strategy.candleStops.trailPositivePct);
+            level = Math.max(level, trailLevel);
           }
           if (c.low <= level) {
             const exitPrice = Math.min(level, c.open);
-            const kind = level > slLevel ? 'Trailing (+2% → 0,1%)' : `Stop-loss (${(stopLossPctFor(strategy, 'long') * 100).toFixed(0)}%)`;
+            const cs = strategy.candleStops;
+            const trailKind = cs.lockPct != null
+              ? `Stop na entrada (depois de +${(cs.trailOffsetPct * 100).toFixed(0)}%)`
+              : `Trailing (+${(cs.trailOffsetPct * 100).toFixed(0)}% → ${(cs.trailPositivePct * 100).toFixed(1).replace('.', ',')}%)`;
+            const kind = level > slLevel ? trailKind : `Stop-loss (${(stopLossPctFor(strategy, 'long') * 100).toFixed(0)}%)`;
             const logLine = `${level > slLevel ? '📉' : '🛑'} [${symbol.split('/')[0]}] ${kind} na vela ${new Date(t).toISOString().slice(11, 16)} — fecha a $${exitPrice}`;
             runState.log.unshift(logLine);
             if (runState.log.length > 200) runState.log.pop();
@@ -819,6 +835,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
     const btc1hAboveEma50 = strategy.btc1hEma50Filter ? await getBtc1hAboveEma50() : null;
     const btcAboveEma50Daily = strategy.btcDailyEma50Filter ? await getBtcAboveEma50Daily() : null;
     const btcAboveEma70Daily = strategy.btcDailyEma70Filter ? await getBtcAboveEmaDaily(70) : null;
+    const btcAboveEma20Daily = strategy.btcDailyEma20Filter ? await getBtcAboveEmaDaily(20) : null;
     const weeklyBox = strategy.weeklyBoxContext ? (weeklyBCache.boxes.get(symbol) || null) : null;
 
     // Filtro opt-in (strategy.ema70Filter1h — pedido do utilizador 27/09 para
@@ -865,7 +882,7 @@ async function runStrategyOnSymbol(strategy, symbol) {
 
     const { signal, reason, indicators } = strategy.generateSignal(candles, currentPos, {
       rank, scannedAt, newScanSession, qqqPositive, btcBullish, btcDailyPositive, btc4hGreen, btc1hAboveEma50, aboveEma70_1h, unrealizedPnlPct,
-      btcAboveEma50Daily, btcAboveEma70Daily, weeklyBox, symbol, candles1h, signalCandles,
+      btcAboveEma50Daily, btcAboveEma70Daily, btcAboveEma20Daily, weeklyBox, symbol, candles1h, signalCandles,
       entryPrice: posForSession?.entryPrice ?? null,
     });
 
