@@ -398,7 +398,7 @@ const STRATEGIES = [
     // 15m só para gerir SL/TP a cada 15 min; o sinal usa as velas de 30m
     // (context.signalCandles — 400 velas para o máximo de 7 dias e o RSI).
     timeframe: '15m',
-    candleLimit: 2,
+    candleLimit: 200, // 48h de velas 15m para o stop vela a vela
     signalCandles: { timeframe: '30m', limit: 400 },
     generateSignal: liquidBreakoutLong.generateSignal,
     positionSize: 60,
@@ -407,7 +407,13 @@ const STRATEGIES = [
     // 30% a +10% · resto a +45% (close_long) · fecho às 48h: 483 trades,
     // +1 780 por $100, PF 1,80, drawdown 136, jan–jun +1 216 e jul–nov +564.
     // Ordens reais desligadas (papel).
+    // 11/11 (pedido do utilizador): stop na entrada depois de +8% — estudo
+    // 1/01–5/11 (bc/rumers/sim5.py no scratchpad da sessão): +1310 · PF 1,87
+    // · DD 122 (sem ele, no mesmo motor, +1419 · PF 1,59 · DD 169). Filtros
+    // de BTC (EMA20/EMA50) e volume/RSI mais apertados pioravam.
     stopLossPct: 0.20,
+    // SL 20% vela a vela; depois de o máximo passar +8%, stop em entrada +0,2%
+    candleStops: { trailOffsetPct: 0.08, lockPct: 0.002 },
     takeProfitTiers: [
       { pct: 0.10, fraction: 0.30 },
     ],

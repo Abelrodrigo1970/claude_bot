@@ -11,8 +11,8 @@
 // Uma entrada por moeda a cada 24h; só nos primeiros 14 min depois do fecho
 // da vela (o cron de 15m corre ~:03/:33 logo a seguir aos fechos de 30m).
 //
-// Saídas: SL 20% no runner · 30% a +10% (takeProfitTiers) · resto a +45%
-// (sinal close_long) · fecho às 48h.
+// Saídas: SL 20% no runner (na entrada depois de +8%, candleStops) · 30% a
+// +10% (takeProfitTiers) · resto a +45% (sinal close_long) · fecho às 48h.
 //
 // Estudo 1/01–8/11/2026 (bc/pump no scratchpad da sessão; velas Bybit 15m de
 // 733 moedas, entrada na abertura seguinte, stop dentro da vela 15m, comissões
@@ -72,7 +72,7 @@ function generateSignal(candles, currentPosition = null, context = {}) {
     if (pnlPct != null && pnlPct >= FINAL_TP_PCT) {
       return { signal: 'close_long', reason: `TP ${(pnlPct * 100).toFixed(1)}% ≥ 45% — fecha o resto`, indicators: { pnlPct } };
     }
-    return { signal: 'hold', reason: 'Mantém long — SL 20% · 30% a +10% · resto a +45% · fecho às 48h', indicators: { pnlPct: pnlPct ?? null } };
+    return { signal: 'hold', reason: 'Mantém long — SL 20% (na entrada depois de +8%) · 30% a +10% · resto a +45% · fecho às 48h', indicators: { pnlPct: pnlPct ?? null } };
   }
   if (currentPosition) {
     return { signal: 'hold', reason: `Posição ${currentPosition} — esta estratégia só gere longs`, indicators: {} };
