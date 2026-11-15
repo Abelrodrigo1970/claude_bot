@@ -795,15 +795,19 @@ app.get('/api/scanner/rsiweekly/history', async (req, res) => {
 // (ver startScanRumersBox em services/scanner.js). Corre sozinho a cada 15min;
 // o start manual só analisa se a última vela fechada ainda não foi vista.
 app.post('/api/scanner/rumersbox/start', (req, res) => {
-  startScanRumersBox();
+  startScanRumersBox({ forceInside: req.body?.forceInside === true || req.query.forceInside === '1' });
   res.json({ ok: true });
 });
 
-// ?type=day|week|month (omisso = todos) · ?hours=24 · ?all=1 (todas as quebras, não só a 1ª)
+// ?type=day|week|month · ?hours=24 · ?all=1 · ?view=breaks|inside · ?sort=nearTop|nearBottom|posAsc|posDesc|boxAsc|boxDesc
 app.get('/api/scanner/rumersbox', (req, res) => {
   const type = ['day', 'week', 'month'].includes(req.query.type) ? req.query.type : null;
   const hours = Math.min(parseFloat(req.query.hours) || 24, 24 * 7);
-  res.json(getRumersBoxState({ type, hours, firstOnly: req.query.all !== '1' }));
+  const view = req.query.view === 'inside' ? 'inside' : 'breaks';
+  const sort = ['nearTop', 'nearBottom', 'posAsc', 'posDesc', 'boxAsc', 'boxDesc'].includes(req.query.sort)
+    ? req.query.sort
+    : 'nearTop';
+  res.json(getRumersBoxState({ type, hours, firstOnly: req.query.all !== '1', view, sort }));
 });
 
 // ─── STATIC FILES (React build) ────────────────────────────────

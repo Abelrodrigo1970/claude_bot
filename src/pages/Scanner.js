@@ -694,18 +694,36 @@ const RUMERS_TYPES = [
   { key: 'month', label: 'Mensal',  box: 'mês anterior' },
 ];
 
+const RUMERS_SORTS = [
+  { key: 'nearTop', label: 'Mais perto do topo' },
+  { key: 'nearBottom', label: 'Mais perto do fundo' },
+  { key: 'posDesc', label: '% na caixa (alto → baixo)' },
+  { key: 'posAsc', label: '% na caixa (baixo → alto)' },
+  { key: 'boxDesc', label: 'Amplitude (maior)' },
+  { key: 'boxAsc', label: 'Amplitude (menor)' },
+];
+
 function RumersBoxPanel() {
   const [type, setType]           = useState('day');
   const [hours, setHours]         = useState(24);
   const [firstOnly, setFirstOnly] = useState(true);
-  const [state, setState]         = useState({ status: 'idle', hits: [], progress: 0, total: 0 });
+  const [view, setView]           = useState('inside'); // inside | breaks
+  const [sort, setSort]           = useState('nearTop');
+  const [state, setState]         = useState({ status: 'idle', hits: [], inside: [], progress: 0, total: 0 });
 
   const load = useCallback(async () => {
     try {
-      const { data } = await axios.get(`/api/scanner/rumersbox?type=${type}&hours=${hours}${firstOnly ? '' : '&all=1'}`);
+      const q = new URLSearchParams({
+        type,
+        hours: String(hours),
+        view,
+        sort,
+      });
+      if (!firstOnly) q.set('all', '1');
+      const { data } = await axios.get(`/api/scanner/rumersbox?${q}`);
       setState(data);
     } catch { /* mantém o último estado */ }
-  }, [type, hours, firstOnly]);
+  }, [type, hours, firstOnly, view, sort]);
 
   useEffect(() => {
     load();
@@ -713,19 +731,37 @@ function RumersBoxPanel() {
     return () => clearInterval(id);
   }, [load]);
 
+  // Se a vista "dentro" está vazia, pede um scan (só uma vez por montagem/tipo).
+  useEffect(() => {
+    if (view !== 'inside') return;
+    if (state.inside?.length || state.status === 'scanning') return;
+    axios.post('/api/scanner/rumersbox/start', { forceInside: true }).catch(() => {});
+  }, [view, type, state.inside?.length, state.status]);
+
+  const refreshInside = async () => {
+    try {
+      await axios.post('/api/scanner/rumersbox/start', { forceInside: true });
+      setTimeout(load, 800);
+    } catch { /* ignore */ }
+  };
+
   const range = state.params?.boxRangePct?.[type];
   const meta = RUMERS_TYPES.find(t => t.key === type);
+  const inside = state.inside || [];
+  const hits = state.hits || [];
 
   return (
     <div>
       <div className="page-header">
         <div>
           <div className="page-sub">
-            LONG quando a vela 15m fecha acima do máximo do {meta.box}, vinda de dentro da caixa
+            {view === 'inside'
+              ? `Pares com preço dentro da caixa do ${meta.box}`
+              : `LONG quando a vela 15m fecha acima do máximo do ${meta.box}, vinda de dentro da caixa`}
             {range && ` · caixa ${range.min}–${range.max}%`} · todos os perpétuos USDT · a cada 15min
             {state.scannedAt && (
               <span className="scan-time">
-                {' '}· Última vela: {new Date(state.lastBarTime + 15 * 60 * 1000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                {' '}· Actualizado: {new Date(state.scannedAt).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
             {state.status === 'scanning' && <span className="scan-time"> · a analisar {state.progress}/{state.total}</span>}
@@ -737,18 +773,41 @@ function RumersBoxPanel() {
               </button>
             ))}
           </div>
+          <div className="scanner-tabs" style={{ marginTop: 8 }}>
+            <button className={`scanner-tab ${view === 'inside' ? 'active' : ''}`} onClick={() => setView('inside')}>
+              Dentro da box{inside.length ? ` · ${inside.length}` : ''}
+            </button>
+            <button className={`scanner-tab ${view === 'breaks' ? 'active' : ''}`} onClick={() => setView('breaks')}>
+              Quebras{hits.length ? ` · ${hits.length}` : ''}
+            </button>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <select value={hours} onChange={e => setHours(Number(e.target.value))}>
-            <option value={1}>Última hora</option>
-            <option value={4}>Últimas 4h</option>
-            <option value={24}>Últimas 24h</option>
-            <option value={168}>Últimos 7 dias</option>
-          </select>
-          <label className="muted" style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input type="checkbox" checked={firstOnly} onChange={e => setFirstOnly(e.target.checked)} />
-            Só 1ª quebra
-          </label>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {view === 'inside' ? (
+            <>
+              <select value={sort} onChange={e => setSort(e.target.value)} title="Ordenar">
+                {RUMERS_SORTS.map(s => (
+                  <option key={s.key} value={s.key}>{s.label}</option>
+                ))}
+              </select>
+              <button className="btn btn-secondary" onClick={refreshInside} disabled={state.status === 'scanning'}>
+                Actualizar
+              </button>
+            </>
+          ) : (
+            <>
+              <select value={hours} onChange={e => setHours(Number(e.target.value))}>
+                <option value={1}>Última hora</option>
+                <option value={4}>Últimas 4h</option>
+                <option value={24}>Últimas 24h</option>
+                <option value={168}>Últimos 7 dias</option>
+              </select>
+              <label className="muted" style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input type="checkbox" checked={firstOnly} onChange={e => setFirstOnly(e.target.checked)} />
+                Só 1ª quebra
+              </label>
+            </>
+          )}
         </div>
       </div>
 
@@ -756,7 +815,88 @@ function RumersBoxPanel() {
         <div className="card"><div className="empty red">Erro: {state.error}</div></div>
       )}
 
-      {!state.hits?.length ? (
+      {view === 'inside' ? (
+        !inside.length ? (
+          <div className="card">
+            <div className="empty">
+              {state.status === 'scanning'
+                ? 'A procurar pares dentro da caixa…'
+                : 'Nenhum par dentro da caixa neste momento. Clica em Actualizar.'}
+            </div>
+          </div>
+        ) : (
+          <div className="card" style={{ padding: 0 }}>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Par</th>
+                    <th>Preço</th>
+                    <th>Caixa (mín – máx)</th>
+                    <th>Amplitude</th>
+                    <th>% na box</th>
+                    <th>Ao topo</th>
+                    <th>Ao fundo</th>
+                    <th>Posição</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inside.map((h, i) => (
+                    <tr key={`${h.type}-${h.symbol}`}>
+                      <td className="muted">{i + 1}</td>
+                      <td>
+                        <a
+                          className="symbol-link"
+                          href={`https://www.tradingview.com/chart/?symbol=BYBIT:${h.symbol.split('/')[0]}USDT.P&interval=15`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Ver no TradingView (15m)"
+                        >
+                          <span className="symbol-name">{h.symbol.split('/')[0]}</span>
+                          <span className="symbol-suffix">/USDT</span>
+                          <span className="tv-icon">↗</span>
+                        </a>
+                      </td>
+                      <td className="mono">{fmt(h.price, 4)}</td>
+                      <td className="mono muted">{fmt(h.prevLow, 4)} – {fmt(h.prevHigh, 4)}</td>
+                      <td className="mono muted">{fmt(h.boxRangePct, 1)}%</td>
+                      <td className="mono">{fmt(h.posPct, 1)}%</td>
+                      <td className="mono red">{fmt(h.distTopPct)}%</td>
+                      <td className="mono green">{fmt(h.distBottomPct)}%</td>
+                      <td style={{ minWidth: 110 }}>
+                        <div
+                          title={`${fmt(h.posPct, 1)}% do fundo ao topo`}
+                          style={{
+                            position: 'relative',
+                            height: 10,
+                            borderRadius: 4,
+                            background: 'linear-gradient(90deg, #22c55e33, #eab30833, #ef444433)',
+                            border: '1px solid var(--border, #333)',
+                          }}
+                        >
+                          <span
+                            style={{
+                              position: 'absolute',
+                              top: -2,
+                              left: `calc(${Math.min(100, Math.max(0, h.posPct))}% - 5px)`,
+                              width: 10,
+                              height: 14,
+                              borderRadius: 2,
+                              background: '#fff',
+                              boxShadow: '0 0 0 1px #0008',
+                            }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      ) : !hits.length ? (
         <div className="card">
           <div className="empty">
             {state.lastBarTime ? 'Nenhuma quebra neste período.' : 'À espera do primeiro scan (corre 1min depois de cada fecho de vela 15m).'}
@@ -781,7 +921,7 @@ function RumersBoxPanel() {
                 </tr>
               </thead>
               <tbody>
-                {state.hits.map(h => (
+                {hits.map(h => (
                   <tr key={`${h.type}-${h.symbol}-${h.barTime}`}>
                     <td className="mono muted">{format(new Date(h.barTime + 15 * 60 * 1000), 'dd/MM HH:mm')}</td>
                     <td>

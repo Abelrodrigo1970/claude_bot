@@ -143,10 +143,37 @@ function detectBreakout(candles15m, levels, params = RUMERS_BOX_DEFAULTS, nowMs 
   };
 }
 
+/**
+ * Preço dentro da caixa (mín ≤ preço ≤ máx), com a mesma faixa de amplitude.
+ * posPct = 0 no mínimo da caixa, 100 no máximo.
+ */
+function positionInBox(price, levels, params = RUMERS_BOX_DEFAULTS) {
+  if (!levels || !(price > 0)) return null;
+  const range = params.boxRangePct?.[levels.type] ?? RUMERS_BOX_DEFAULTS.boxRangePct[levels.type];
+  if (levels.boxRangePct < range.min || levels.boxRangePct > range.max) return null;
+
+  const { prevHigh, prevLow } = levels;
+  if (!(price >= prevLow && price <= prevHigh)) return null;
+
+  const height = prevHigh - prevLow;
+  if (!(height > 0)) return null;
+  const posPct = ((price - prevLow) / height) * 100;
+  return {
+    price,
+    posPct,
+    distTopPct: ((prevHigh - price) / price) * 100,
+    distBottomPct: ((price - prevLow) / price) * 100,
+    distTopBoxPct: ((prevHigh - price) / height) * 100,
+    distBottomBoxPct: ((price - prevLow) / height) * 100,
+    levels,
+  };
+}
+
 module.exports = {
   RUMERS_BOX_DEFAULTS,
   BOX_TYPES,
   computeBoxLevels,
   detectBreakout,
+  positionInBox,
   previousPeriod,
 };

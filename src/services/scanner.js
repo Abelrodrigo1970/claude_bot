@@ -1128,6 +1128,7 @@ function sendRumersTelegram(hits, barTime) {
 let rumersState = {
   status: 'idle', progress: 0, total: 0, lastBarTime: null, scannedAt: null, error: null,
   hits: [], // mais recentes primeiro
+  inside: [], // símbolos com preço dentro da caixa (atualizado em cada scan)
 };
 // Velas diárias por símbolo, refrescadas uma vez por dia UTC — dão as três caixas
 const rumersDailyCache = { dayStart: null, bySymbol: new Map() };
@@ -1199,58 +1200,139 @@ function rumersSymbolsNeedingDaily(symbols, now) {
   return symbols.filter(s => !rumersDailyCache.bySymbol.has(s));
 }
 
-async function startScanRumersBox() {
+async function rumersUniverse() {
+  const markets = await bybit.publicExchange.loadMarkets();
+  return Object.values(markets).filter(m =>
+    m.linear &&
+    m.type === 'swap' &&
+    m.settle === 'USDT' &&
+    m.active &&
+    !m.symbol.includes('USDC')
+  ).map(m => m.symbol);
+}
+
+async function runRumersPool(items, fn) {
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const item = items[next++];
+      try { await fn(item); } catch { /* par sem dados, ignora */ } finally { rumersState.progress++; }
+    }
+  }
+  await Promise.all(Array.from({ length: RUMERS_CONCURRENCY }, worker));
+}
+
+/** Atualiza só a lista "dentro da caixa" (usa a cache diária + preço 15m). */
+async function refreshRumersInside(barTime = null, now = Date.now()) {
+  const symbols = await rumersUniverse();
+  const needDaily = rumersSymbolsNeedingDaily(symbols, now);
+  if (needDaily.length) {
+    rumersState.total = Math.max(rumersState.total, needDaily.length);
+    await runRumersPool(needDaily, async (symbol) => {
+      const daily = await bybit.getCandles(symbol, '1d', 80);
+      rumersDailyCache.bySymbol.set(symbol, daily.map(c => ({ time: +c.time, high: c.high, low: c.low })));
+    });
+  }
+  const open = barTime ?? (Math.floor(now / 900e3) * 900e3 - 900e3);
+  const inside = [];
+  rumersState.total = symbols.length;
+  rumersState.progress = 0;
+  await runRumersPool(symbols, async (symbol) => {
+    const daily = rumersDailyCache.bySymbol.get(symbol);
+    if (!daily) return;
+    const c15 = (await bybit.getCandles(symbol, '15m', 4)).map(c => ({ time: +c.time, close: c.close }));
+    const closed = c15.filter(c => c.time <= open);
+    if (!closed.length) return;
+    const lastClose = closed[closed.length - 1].close;
+    for (const type of rumersBox.BOX_TYPES) {
+      const levels = rumersBox.computeBoxLevels(daily, type, now);
+      if (!levels) continue;
+      const pos = rumersBox.positionInBox(lastClose, levels, rumersBox.RUMERS_BOX_DEFAULTS);
+      if (!pos) continue;
+      inside.push({
+        type, symbol, periodKey: levels.periodKey,
+        price: pos.price,
+        prevHigh: levels.prevHigh, prevLow: levels.prevLow, prevMid: levels.prevMid,
+        boxRangePct: levels.boxRangePct,
+        posPct: pos.posPct,
+        distTopPct: pos.distTopPct,
+        distBottomPct: pos.distBottomPct,
+        distTopBoxPct: pos.distTopBoxPct,
+        distBottomBoxPct: pos.distBottomBoxPct,
+        barTime: closed[closed.length - 1].time,
+      });
+    }
+  });
+  rumersState.inside = inside;
+  rumersState.scannedAt = Date.now();
+  return inside;
+}
+
+async function startScanRumersBox({ forceInside = false } = {}) {
   if (rumersState.status === 'scanning') return;
   await loadRumersFromDb();
 
   const now = Date.now();
   const barTime = Math.floor(now / 900e3) * 900e3 - 900e3; // abertura da última vela 15m fechada
-  if (rumersState.lastBarTime === barTime) return; // esta vela já foi analisada
+  // Quebras já vistas nesta vela: só refresca a lista "dentro da caixa" se pedirem.
+  if (rumersState.lastBarTime === barTime) {
+    if (!forceInside && rumersState.inside?.length) return;
+    rumersState = { ...rumersState, status: 'scanning', progress: 0, total: 0, error: null };
+    try {
+      await refreshRumersInside(barTime, now);
+      rumersState.status = 'done';
+      console.log(`[Scanner Rumer's Box] dentro da caixa: ${rumersState.inside.length} (só refresh)`);
+    } catch (err) {
+      rumersState.status = 'error';
+      rumersState.error = err.message;
+    }
+    return;
+  }
 
   rumersState = { ...rumersState, status: 'scanning', progress: 0, total: 0, error: null };
 
   try {
-    const markets = await bybit.publicExchange.loadMarkets();
-    const symbols = Object.values(markets).filter(m =>
-      m.linear &&
-      m.type === 'swap' &&
-      m.settle === 'USDT' &&
-      m.active &&
-      !m.symbol.includes('USDC')
-    ).map(m => m.symbol);
-
+    const symbols = await rumersUniverse();
     const needDaily = rumersSymbolsNeedingDaily(symbols, now);
     rumersState.total = symbols.length + needDaily.length;
     console.log(`[Scanner Rumer's Box] ${symbols.length} pares · ${needDaily.length} com velas diárias a atualizar`);
 
-    async function runPool(items, fn) {
-      let next = 0;
-      async function worker() {
-        while (next < items.length) {
-          const item = items[next++];
-          try { await fn(item); } catch { /* par sem dados, ignora */ } finally { rumersState.progress++; }
-        }
-      }
-      await Promise.all(Array.from({ length: RUMERS_CONCURRENCY }, worker));
-    }
-
-    await runPool(needDaily, async (symbol) => {
+    await runRumersPool(needDaily, async (symbol) => {
       // 80 velas diárias cobrem o mês anterior inteiro mesmo no fim de um mês de 31 dias
       const daily = await bybit.getCandles(symbol, '1d', 80);
       rumersDailyCache.bySymbol.set(symbol, daily.map(c => ({ time: +c.time, high: c.high, low: c.low })));
     });
 
     const newHits = [];
-    await runPool(symbols, async (symbol) => {
+    const inside = [];
+    await runRumersPool(symbols, async (symbol) => {
       const daily = rumersDailyCache.bySymbol.get(symbol);
       if (!daily) return;
       const c15 = (await bybit.getCandles(symbol, '15m', 4)).map(c => ({ time: +c.time, close: c.close }));
       const closed = c15.filter(c => c.time <= barTime);
       if (!closed.length || closed[closed.length - 1].time !== barTime) return; // sem a vela que acabou de fechar
+      const lastClose = closed[closed.length - 1].close;
 
       for (const type of rumersBox.BOX_TYPES) {
         const levels = rumersBox.computeBoxLevels(daily, type, now);
         if (!levels) continue;
+
+        const pos = rumersBox.positionInBox(lastClose, levels, rumersBox.RUMERS_BOX_DEFAULTS);
+        if (pos) {
+          inside.push({
+            type, symbol, periodKey: levels.periodKey,
+            price: pos.price,
+            prevHigh: levels.prevHigh, prevLow: levels.prevLow, prevMid: levels.prevMid,
+            boxRangePct: levels.boxRangePct,
+            posPct: pos.posPct,
+            distTopPct: pos.distTopPct,
+            distBottomPct: pos.distBottomPct,
+            distTopBoxPct: pos.distTopBoxPct,
+            distBottomBoxPct: pos.distBottomBoxPct,
+            barTime,
+          });
+        }
+
         const hit = rumersBox.detectBreakout(closed, levels, rumersBox.RUMERS_BOX_DEFAULTS, now);
         if (!hit) continue;
         const key = `${type}|${symbol}|${levels.periodKey}`;
@@ -1269,6 +1351,7 @@ async function startScanRumersBox() {
     newHits.sort((a, b) => b.strength - a.strength);
     const keepSince = Date.now() - RUMERS_KEEP_MS;
     rumersState.hits = [...newHits, ...rumersState.hits].filter(h => h.barTime >= keepSince);
+    rumersState.inside = inside;
     rumersState.lastBarTime = barTime;
     rumersState.scannedAt = Date.now();
     rumersState.status = 'done';
@@ -1279,7 +1362,7 @@ async function startScanRumersBox() {
       if (Date.parse(periodKey.length === 7 ? `${periodKey}-01` : periodKey) < countSince) rumersBreakCounts.delete(key);
     }
     const byType = Object.fromEntries(rumersBox.BOX_TYPES.map(t => [t, newHits.filter(h => h.type === t).length]));
-    console.log(`[Scanner Rumer's Box] vela ${new Date(barTime).toISOString().slice(11, 16)} UTC — quebras: dia ${byType.day} · semana ${byType.week} · mês ${byType.month}`);
+    console.log(`[Scanner Rumer's Box] vela ${new Date(barTime).toISOString().slice(11, 16)} UTC — quebras: dia ${byType.day} · semana ${byType.week} · mês ${byType.month} · dentro ${inside.length}`);
     sendRumersTelegram(newHits, barTime);
 
     if (newHits.length) {
@@ -1314,14 +1397,44 @@ async function startScanRumersBox() {
   }
 }
 
-/** Estado + sinais filtrados: type = day|week|month, hours, firstOnly. */
-function getRumersBoxState({ type = null, hours = 24, firstOnly = true } = {}) {
+function sortRumersInside(rows, sort = 'nearTop') {
+  const copy = [...rows];
+  switch (sort) {
+    case 'nearBottom':
+      return copy.sort((a, b) => a.distBottomPct - b.distBottomPct || a.posPct - b.posPct);
+    case 'posAsc':
+      return copy.sort((a, b) => a.posPct - b.posPct || a.symbol.localeCompare(b.symbol));
+    case 'posDesc':
+      return copy.sort((a, b) => b.posPct - a.posPct || a.symbol.localeCompare(b.symbol));
+    case 'boxAsc':
+      return copy.sort((a, b) => a.boxRangePct - b.boxRangePct || a.symbol.localeCompare(b.symbol));
+    case 'boxDesc':
+      return copy.sort((a, b) => b.boxRangePct - a.boxRangePct || a.symbol.localeCompare(b.symbol));
+    case 'nearTop':
+    default:
+      return copy.sort((a, b) => a.distTopPct - b.distTopPct || b.posPct - a.posPct);
+  }
+}
+
+/** Estado + sinais filtrados: type = day|week|month, hours, firstOnly, view, sort. */
+function getRumersBoxState({ type = null, hours = 24, firstOnly = true, view = 'breaks', sort = 'nearTop' } = {}) {
   const since = Date.now() - hours * 60 * 60 * 1000;
   const hits = rumersState.hits
     .filter(h => (!type || h.type === type) && h.barTime >= since && (!firstOnly || h.breakNo === 1))
     .sort((a, b) => b.barTime - a.barTime || b.strength - a.strength);
-  const { hits: _all, ...rest } = rumersState;
-  return { ...rest, params: rumersBox.RUMERS_BOX_DEFAULTS, hits };
+  const inside = sortRumersInside(
+    (rumersState.inside || []).filter(h => !type || h.type === type),
+    sort,
+  );
+  const { hits: _all, inside: _in, ...rest } = rumersState;
+  return {
+    ...rest,
+    params: rumersBox.RUMERS_BOX_DEFAULTS,
+    view,
+    sort,
+    hits,
+    inside,
+  };
 }
 
 module.exports = {
